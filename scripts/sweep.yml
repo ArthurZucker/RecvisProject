@@ -1,0 +1,19 @@
+program: main.py
+method: random
+metric:
+  goal: minimize
+  name: loss
+parameters:
+  lr:
+    values: [ 0.05]
+  epochs:
+    value: 27
+  batch_size: 
+    values : [128,512,1024]
+  cw_len:
+    values : [200,400,500,600,1000]
+early_terminate:
+  type: hyperband
+  s: 2
+  eta: 3
+  max_iter: 4
