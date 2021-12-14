@@ -1,12 +1,15 @@
-# PytorchTemplate
-This Pytorch template regroups every of my favorite tools, and was made in order for everyone to easily implement, train and test models. ment and develop models, log and 
+# Recvis final project : 
 
-A more detailed description of the available features, used libraries and references will come soon. 
+## Abstract 
 
-# TO DO 
- - [ ] Explain structure of the repository
- - [ ] Include image examples from wandb 
- - [ ] Clean up the code / pylint 
- - [ ] Check for dataleaks 
- - [ ] etc
+## Project proposal 
+
+
+# TO DO : 
+
+- [ ] Define metric and baseline to compare our architectures 
+- [ ] Download dataset and create dataloader 
+- [ ] Create Transformer network
+- [ ] Create BarlowTwins agent 
+- [ ] Implement feature map visualization 
 
