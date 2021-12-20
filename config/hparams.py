@@ -15,6 +15,9 @@ Most notably, the agent, dataset, optimizer and loss can all be specified and au
 @dataclass
 class hparams:
     """Hyperparameters of Yout Model"""
+    # weight and biases
+    wandb_entity = "recvis"
+    wandb_project = "test-sem-seg"
     # validation frequency 
     validate_every: int = 1
     # num_classes
