@@ -38,6 +38,17 @@ We have to find various ways of combining the different attention maps and heads
 
 ## Planning and workload : 
 
+### Tasks : 
+
+- [ ] Download dataset
+- [ ] Take a look at google cloud platform and put the dataset inside
+- [ ] Use pytorch lightning
+- [ ] Implement Barlow Twins with resnet50 
+- [ ] Implement Dino using hugging face transformers (?) / pytorch lighting? 
+- [ ] BT SwinViT w/o attention
+- [ ] BT SwinViT w attention
+- [ ] Ablation studies
+- [ ] Feature visualization, embeddings etc
 
 # References and links : 
 https://github.com/bytedance/ibot/blob/main/analysis/attention_map/visualize_attention.py 
