@@ -57,3 +57,8 @@ https://github.com/facebookresearch/barlowtwins
 
 # wandb key : 
 1bd5c9f2298e5875d25866099bd98a8437c50cb6 
+
+
+# Code to add : 
+
+- [ ] Add AMP level : `trainer = Trainer(amp_level='O2')`
