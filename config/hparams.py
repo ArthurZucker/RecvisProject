@@ -48,3 +48,5 @@ class hparams:
     split_val: float = 0.2
     # validation frequency 
     val_freq: int = 1
+    # developpment mode, only run 1 batch of train val and test
+    dev_run: bool = True
