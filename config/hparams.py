@@ -25,3 +25,7 @@ class hparams:
     max_epochs: int = 40
     # path to download pascal voc
     asset_path: str = osp.join(os.getcwd(), "assets")
+    # loss to train the model 
+    loss: str = "CrossEntropy"
+    # learning rate 
+    lr : float = 0.03

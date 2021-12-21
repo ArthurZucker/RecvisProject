@@ -29,6 +29,7 @@ class Base_Trainer:
             callbacks=[
                 checkpoint_callback,  # our model checkpoint callback
                 LogPredictionsCallback(),
+                EarlyStopping(monitor="val_loss")
             ],  # logging of sample predictions
             gpus=-1,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
