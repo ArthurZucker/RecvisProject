@@ -6,9 +6,10 @@ Auteur: Arthur Zucker
 """
 from __future__ import absolute_import, division
 
-import wandb
+from pytorch_lightning import seed_everything
 from simple_parsing import ArgumentParser
 
+from pytorch_lightning.loggers import WandbLogger
 from agents import *
 from config.hparams import hparams
 
@@ -21,8 +22,10 @@ args = parser.parse_args()
 
 def main():
     # initialize wandb instance
-    run = wandb.init(config=vars(args.hparams), project=args.hparams.wandb_project,entity = args.hparams.wandb_entity, allow_val_change=True)
+    run = WandbLogger(config=vars(args.hparams), project=args.hparams.wandb_project, entity = args.hparams.wandb_entity, allow_val_change=True)
     config = wandb.config
+    seed_everything(wandb.config.seed_everything)
+    return
     # Create the Agent and pass all the configuration to it then run it..
     agent_class = globals()[config.agent]
     agent = agent_class(config, run)
