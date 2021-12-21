@@ -3,7 +3,7 @@ from utils.logger import init_logger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from utils.callbacks import LogPredictionsCallback
 from utils.agent_utils import get_net, get_datamodule
-
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 class Base_Trainer:
     def __init__(self, config, run) -> None:
         super().__init__()
@@ -26,7 +26,7 @@ class Base_Trainer:
         # trainer = pl.Trainer.from_argparse_args(self.config)
 
         trainer = pl.Trainer(
-            logger=self.run,  # W&B integration
+            logger=self.wb_run,  # W&B integration
             callbacks=[
                 checkpoint_callback,  # our model checkpoint callback
                 LogPredictionsCallback(),
