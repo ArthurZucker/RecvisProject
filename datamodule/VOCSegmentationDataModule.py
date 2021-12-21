@@ -1,5 +1,6 @@
 import os
 
+import torch
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
@@ -19,6 +20,12 @@ class VOCSegmentationDataModule(LightningDataModule):
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]
         )
+        self.target_transform = transforms.Compose(
+            [
+                transforms.Resize((256,256)),
+                transforms.ToTensor(),
+            ]
+        )
     # When doing distributed training, Datamodules have two optional arguments for
     # granular control over download/prepare/splitting data:
 
@@ -34,7 +41,7 @@ class VOCSegmentationDataModule(LightningDataModule):
         # split dataset
         if stage in (None, "fit"):
             init_dataset = VOCSegmentation(
-                self.root, image_set='trainval', transform=self.transform
+                self.root, image_set='trainval', transform=self.transform, target_transform=self.target_transform
             )
             # Split between train and valid set (80/20)
             val_length =int(len(init_dataset)*self.config.split_val)
@@ -42,15 +49,17 @@ class VOCSegmentationDataModule(LightningDataModule):
             self.voc_train, self.voc_val = random_split(init_dataset, lengths)
         if stage == "test":
             self.voc_test = VOCSegmentation(
-                self.root, image_set='val', transform=self.transform
+                self.root, image_set='val', transform=self.transform, target_transform=self.target_transform
             )
         if stage == "predict":
             # during prediction, the logginf is disabled
             self.voc_predict = VOCSegmentation(
-                self.root, image_set='val', transform=self.transform
+                self.root, image_set='val', transform=self.transform, target_transform=self.target_transform
             )
-
+    # TODO num_workers
     # return the dataloader for each split
+    # TODO overwrite get item to cast input masks to torch.LongTensor!!!!!
+    
     def train_dataloader(self):
         voc_train = DataLoader(self.voc_train, batch_size=self.batch_size)
         return voc_train
