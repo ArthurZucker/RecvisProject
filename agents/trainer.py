@@ -18,11 +18,16 @@ class Base_Trainer:
         self.logger = init_logger("Trainer", "DEBUG")
 
         trainer = pl.Trainer(
-            logger=self.wb_run, gpus=1, auto_scale_batch_size= "power",auto_lr_find=True, accelerator="auto"
+            logger=self.wb_run, gpus=1, auto_scale_batch_size= "power", auto_lr_find=True, accelerator="auto"
         )
         self.datamodule = get_datamodule(config)
         trainer.tune(self.model, datamodule=self.datamodule)
         checkpoint_callback = ModelCheckpoint(monitor="val_accuracy", mode="max")
+
+        # TODO feature hook for feature fizualization, for every 
+        # should be implemented as a callback? 
+        # self.activation = np.array([])        
+        # self.feature_hook = self.model.net.fc.register_forward_hook(self.getActivation(f'{self.model.net.fc}'))
 
         # ------------------------
         # 3 INIT TRAINER

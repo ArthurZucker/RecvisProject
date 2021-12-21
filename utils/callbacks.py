@@ -30,3 +30,10 @@ class LogPredictionsCallback(Callback):
                 for x_i, y_i, y_pred in list(zip(x[:n], y[:n], outputs[:n]))
             ]
             trainer.logger.log_table(key="sample_table", columns=columns, data=data)
+
+        # TODO add sample input image visualization 
+
+class LogFeatureVisualizationCallback(Callback):      
+    pass 
+    # TODO add feature vizualization for training and validation data
+    # should probably use hooks to keep the model structure 

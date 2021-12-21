@@ -8,6 +8,13 @@ import wandb
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import RocCurveDisplay
 
+from torchmetrics import IoU
+
+# FIXME iou = IoU(num_classes=2)
+# FIXME iou(pred, target)
+# TODO https://torchmetrics.readthedocs.io/en/stable/references/modules.html#base-class MODULE METRICS
+# 
+
 class IOUMetric:
     """
     Class to calculate mean-iou using fast_hist method
@@ -20,8 +27,9 @@ class IOUMetric:
     def _fast_hist(self, label_pred, label_true):
         mask = (label_true >= 0) & (label_true < self.num_classes)
         hist = np.bincount(
-            self.num_classes * label_true[mask].astype(int) +
-            label_pred[mask], minlength=self.num_classes ** 2).reshape(self.num_classes, self.num_classes)
+            self.num_classes * label_true[mask].astype(int) + label_pred[mask],
+            minlength=self.num_classes ** 2,
+        ).reshape(self.num_classes, self.num_classes)
         return hist
 
     def add_batch(self, predictions, gts):
@@ -32,7 +40,9 @@ class IOUMetric:
         acc = np.diag(self.hist).sum() / self.hist.sum()
         acc_cls = np.diag(self.hist) / self.hist.sum(axis=1)
         acc_cls = np.nanmean(acc_cls)
-        iu = np.diag(self.hist) / (self.hist.sum(axis=1) + self.hist.sum(axis=0) - np.diag(self.hist))
+        iu = np.diag(self.hist) / (
+            self.hist.sum(axis=1) + self.hist.sum(axis=0) - np.diag(self.hist)
+        )
         mean_iu = np.nanmean(iu)
         freq = self.hist.sum(axis=1) / self.hist.sum()
         fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
@@ -114,57 +124,63 @@ def cls_accuracy(output, target, topk=(1,)):
         res.append(correct_k / batch_size)
     return res
 
-def consusion_matrix(output,target):
+
+def confusion_matrix(output, target):
     from sklearn.metrics import ConfusionMatrixDisplay
-    ConfusionMatrixDisplay.from_predictions(target.astype(np.int32), output.astype(np.int32))
+
+    ConfusionMatrixDisplay.from_predictions(
+        target.astype(np.int32), output.astype(np.int32)
+    )
     plot = wandb.Image(plt)
     plt.close()
     return plot
-    
+
 
 def multi_cls_accuracy(output, target):
     plt.ioff()
-    p,r,f,_ = mt.precision_recall_fscore_support(target, output, average='weighted')
+    p, r, f, _ = mt.precision_recall_fscore_support(target, output, average="weighted")
     plot = wandb.Image(plt)
     plt.close()
-    return p,r,f,plot
+    return p, r, f, plot
 
-def compute_metrics(multi_output, multi_target,num_classes):
+
+def compute_metrics(multi_output, multi_target, num_classes):
     onehot_encoder = OneHotEncoder(sparse=False)
-    onehot_encoder.fit(np.arange(num_classes).reshape(-1,1))
-    output = onehot_encoder.transform(multi_output.reshape(-1,1))
-    target = onehot_encoder.transform(multi_target.reshape(-1,1))
-    ap = mt.average_precision_score(target, output,average="weighted")
-    f1 = mt.f1_score(target, output, average='weighted',zero_division=1)
-    pr = mt.precision_score(target, output, average='weighted',zero_division=1)
-    rc = mt.recall_score(target, output, average='weighted',zero_division=1)
-
+    onehot_encoder.fit(np.arange(num_classes).reshape(-1, 1))
+    output = onehot_encoder.transform(multi_output.reshape(-1, 1))
+    target = onehot_encoder.transform(multi_target.reshape(-1, 1))
+    ap = mt.average_precision_score(target, output, average="weighted")
+    f1 = mt.f1_score(target, output, average="weighted", zero_division=1)
+    pr = mt.precision_score(target, output, average="weighted", zero_division=1)
+    rc = mt.recall_score(target, output, average="weighted", zero_division=1)
 
     # plt.ioff()
     # plt.figure()
     # plt.title('Receiver operating characteristic weighted')
     # plt.legend(loc="lower right")
 
-    dic = {"epoch/Average Precision (weighted)"  : ap,
-           "epoch/F1 score (weighted) "          : f1,
-           "epoch/Precision (weighted)"          : pr,
-           "epoch/Recall (weighted)"             : rc
-        }
-           # "epoch/Roc (weighted)"                : wandb.Image(plt)}
+    dic = {
+        "epoch/Average Precision (weighted)": ap,
+        "epoch/F1 score (weighted) ": f1,
+        "epoch/Precision (weighted)": pr,
+        "epoch/Recall (weighted)": rc,
+    }
+    # "epoch/Roc (weighted)"                : wandb.Image(plt)}
     # plt.close()
     return dic
 
-def multi_cls_roc(target, output,num_classes):
+
+def multi_cls_roc(target, output, num_classes):
     from sklearn.preprocessing import label_binarize
+
     target = label_binarize(target, classes=np.arange(num_classes))
     output = label_binarize(output, classes=np.arange(num_classes))
-    
+
     import matplotlib.pyplot as plt
     from itertools import cycle
     from sklearn.metrics import precision_recall_curve
     from sklearn.metrics import average_precision_score
 
-    
     precision = dict()
     recall = dict()
     average_precision = dict()
@@ -176,25 +192,26 @@ def multi_cls_roc(target, output,num_classes):
     precision["weighted"], recall["weighted"], _ = precision_recall_curve(
         target.ravel(), output.ravel()
     )
-    average_precision["weighted"] = average_precision_score(target, output, average="weighted")
+    average_precision["weighted"] = average_precision_score(
+        target, output, average="weighted"
+    )
     plt.ioff()
     plt.figure()
-    
+
     display = mt.PrecisionRecallDisplay(
-    recall=recall["weighted"],
-    precision=precision["weighted"],
-    average_precision=average_precision["weighted"],
+        recall=recall["weighted"],
+        precision=precision["weighted"],
+        average_precision=average_precision["weighted"],
     )
     display.plot()
     _ = display.ax_.set_title("weighted-averaged over all classes")
-
 
     # setup plot details
     colors = cycle(["navy", "turquoise", "darkorange", "cornflowerblue", "teal"])
 
     _, ax = plt.subplots(figsize=(7, 8))
 
-    # number of isoline to plot 
+    # number of isoline to plot
     num_iso = 6
     f_scores = np.linspace(0.2, 0.8, num=num_iso)
     lines, labels = [], []
@@ -230,4 +247,4 @@ def multi_cls_roc(target, output,num_classes):
     ax.set_title("Extension of Precision-Recall curve to multi-class")
     wandb_plot = wandb.Image(plt)
     plt.close()
-    return wandb_plot,np.mean(average_precision["weighted"])
+    return wandb_plot, np.mean(average_precision["weighted"])
