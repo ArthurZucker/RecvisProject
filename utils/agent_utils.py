@@ -38,9 +38,18 @@ def get_model(args):
     """
     Fetch Network Function Pointer
     """
-    module='graphs.models.'+args.arch
+    module='models.'+args.arch
     mod = importlib.import_module(module)
     net = getattr(mod, (args.arch.title()))
+    return net(args)
+ 
+def get_datamodule(args):
+    """
+    Fetch Network Function Pointer
+    """
+    module='datamodule.'+args.datamodule
+    mod = importlib.import_module(module)
+    net = getattr(mod, (args.datamodule))
     return net(args)
 
 """

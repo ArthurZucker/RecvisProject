@@ -1,24 +1,19 @@
-import os
-
-import torch
 import torchmetrics
-from pytorch_lightning import LightningModule
-from torch.nn import CrossEntropyLoss, Linear
 from torch.nn import functional as F
-from torch.optim import Adam
 
-from modelss.base import BASE_LitModule
-from modelss.custom_layers.unet_convs import *
 
-class VOC_LitModule(BASE_LitModule):
-    
-    def __init__(self, n_channels, n_classes, bilinear=True):
-        super(VOC_LitModule, self).__init__()
-        self.n_channels = n_channels
-        self.n_classes = n_classes
-        self.bilinear = bilinear
+from models.base import BASE_LitModule
+from models.custom_layers.unet_convs import *
 
-        self.inc = DoubleConv(n_channels, 64)
+
+class Base_Voc(BASE_LitModule):
+    def __init__(self, config, bilinear=True):
+        super(Base_Voc, self).__init__(config)
+        self.n_channels = config.n_channels
+        self.n_classes = config.n_classes
+        self.bilinear = config.bilinear
+
+        self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)
         self.down2 = Down(128, 256)
         self.down3 = Down(256, 512)
@@ -28,19 +23,17 @@ class VOC_LitModule(BASE_LitModule):
         self.up2 = Up(512, 256 // factor, bilinear)
         self.up3 = Up(256, 128 // factor, bilinear)
         self.up4 = Up(128, 64, bilinear)
-        self.outc = OutConv(64, n_classes)
+        self.outc = OutConv(64, self.n_classes)
 
         # loss
-        self.loss = self.config.loss
-
-        # optimizer parameters
-        self.lr = self.config.lr
+        # self.loss = self.config.loss
 
         # metrics
         self.accuracy = torchmetrics.Accuracy()
 
         # save hyper-parameters to self.hparams (auto-logged by W&B)
-        self.save_hyperparameters()
+        # requires the function to have hyper parameters __init__(self,...)
+        # self.save_hyperparameters()
 
     def forward(self, x):
         x1 = self.inc(x)

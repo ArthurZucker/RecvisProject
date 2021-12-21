@@ -8,26 +8,20 @@ from pytorch_lightning import LightningModule
 
 class BASE_LitModule(LightningModule):
 
-    def __init__(self, n_classes=10, n_layer_1=128, n_layer_2=256, lr=1e-3):
+    def __init__(self,config):
         '''method used to define our model parameters'''
         super().__init__()
-
-        # mnist images are (1, 28, 28) (channels, width, height)
-        self.layer_1 = Linear(28 * 28, n_layer_1)
-        self.layer_2 = Linear(n_layer_1, n_layer_2)
-        self.layer_3 = Linear(n_layer_2, n_classes)
-
         # loss
         self.loss = CrossEntropyLoss()
 
         # optimizer parameters
-        self.lr = lr
+        self.lr = config.lr
 
         # metrics
         self.accuracy = torchmetrics.Accuracy()
 
         # save hyper-parameters to self.hparams (auto-logged by W&B)
-        self.save_hyperparameters()
+        # self.save_hyperparameters()
 
     def forward(self, x):
         '''method used for inference input -> output'''

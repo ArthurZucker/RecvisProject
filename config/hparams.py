@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from posixpath import split
 from typing import List
 import numpy as np
 from simple_parsing.helpers import list_field
@@ -29,3 +30,19 @@ class hparams:
     loss: str = "CrossEntropy"
     # learning rate 
     lr : float = 0.03
+    # agent to use for training
+    agent: str = "Base_Trainer"
+    # architecture to use
+    arch : str = "base_voc"
+    # data module 
+    datamodule: str = "VOCSegmentationDataModule"
+    # classes 
+    n_classes : int = 21
+    # number of channels
+    n_channels: int = 3
+    # use bilinear interpolation 
+    bilinear: bool = True
+    # batch size for training
+    batch_size: int = 8
+    # split value 
+    split_val: float = 0.2

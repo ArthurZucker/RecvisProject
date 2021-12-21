@@ -1,5 +1,10 @@
+import os
+from typing import Optional
+
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
+from torchvision import transforms
+from torchvision.datasets import MNIST
 
 
 class BaseDataModule(LightningDataModule):

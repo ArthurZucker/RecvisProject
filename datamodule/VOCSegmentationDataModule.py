@@ -11,40 +11,44 @@ class VOCSegmentationDataModule(LightningDataModule):
         super().__init__()
         self.config = config
         self.batch_size = self.config.batch_size
-
+        self.root = os.path.join(self.config.asset_path,"VOC")
+        self.transform = transforms.Compose(
+            [
+                transforms.Resize((256,256)),
+                transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                
+            ]
+        )
     # When doing distributed training, Datamodules have two optional arguments for
     # granular control over download/prepare/splitting data:
 
     # OPTIONAL, called only on 1 GPU/machine
     def prepare_data(self):
-        VOCSegmentation(self.config.asset_path, train=True, download=True)
-        VOCSegmentation(self.config.asset_path, train=False, download=True)
+        
+        VOCSegmentation(root = self.root, image_set='trainval', download=False)
+        VOCSegmentation(root = self.root, image_set='val', download=False)
 
     # OPTIONAL, called for every GPU/machine (assigning state is OK)
     def setup(self, stage=None):
         # transforms
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            ]
-        )
         # split dataset
         if stage in (None, "fit"):
             init_dataset = VOCSegmentation(
-                self.config.asset_path, train=True, transform=transform
+                self.root, image_set='trainval', transform=self.transform
             )
             # Split between train and valid set (80/20)
-            lengths = [int(len(init_dataset)*self.config.split_val, int(len(init_dataset)*(1-self.config.split_val)))]            
+            val_length =int(len(init_dataset)*self.config.split_val)
+            lengths = [val_length, len(init_dataset)-val_length]            
             self.voc_train, self.voc_val = random_split(init_dataset, lengths)
         if stage == "test":
             self.voc_test = VOCSegmentation(
-                self.config.asset_path, train=False, transform=transform
+                self.root, image_set='val', transform=self.transform
             )
         if stage == "predict":
             # during prediction, the logginf is disabled
             self.voc_predict = VOCSegmentation(
-                self.config.asset_path, train=False, transform=transform
+                self.root, image_set='val', transform=self.transform
             )
 
     # return the dataloader for each split

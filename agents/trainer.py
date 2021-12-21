@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from utils.logger import init_logger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from utils.callbacks import LogPredictionsCallback
-
+from utils.agent_utils import get_net, get_datamodule
 
 class Base_Trainer:
     def __init__(self, config, run) -> None:
@@ -15,8 +15,9 @@ class Base_Trainer:
 
         self.logger = init_logger("Trainer", "DEBUG")
 
-        trainer = pl.Trainer(auto_lr_find=True)
-        trainer.tune(self.model, datamodule=self.config.datamodule)
+        trainer = pl.Trainer(auto_lr_find=True, accelerator = "auto")
+        self.datamodule = get_datamodule(config)
+        trainer.tune(self.model,datamodule=self.datamodule)
         checkpoint_callback = ModelCheckpoint(monitor="val_accuracy", mode="max")
 
         # ------------------------
@@ -31,11 +32,12 @@ class Base_Trainer:
                 LogPredictionsCallback(),
                 EarlyStopping(monitor="val_loss")
             ],  # logging of sample predictions
-            gpus=-1,  # use all available GPU's
+            gpus=1,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
             precision=16,  # train in half precision
             deterministic=True,
+            accelerator = "auto"
         )
 
-        trainer.fit(self.model, datamodule=self.config.datamodule)
+        trainer.fit(self.model, datamodule=self.datamodule)
 
