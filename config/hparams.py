@@ -46,3 +46,5 @@ class hparams:
     batch_size: int = 8
     # split value 
     split_val: float = 0.2
+    # validation frequency 
+    val_freq: int = 1
