@@ -1,10 +1,12 @@
 import torch.nn as nn
 from torchvision.models import resnet50
 
+# @TODO implement with lightning
+
 class Resnet50(nn.Module):
     def __init__(self, args) -> None:
         super().__init__()
-        self.config = args
+        self.config = args 
         self.net = resnet50(pretrained=True)
         num_ftrs = self.net.fc.in_features
         

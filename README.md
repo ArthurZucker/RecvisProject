@@ -62,3 +62,193 @@ https://github.com/facebookresearch/barlowtwins
 # Code to add : 
 
 - [ ] Add AMP level : `trainer = Trainer(amp_level='O2')`
+- [ ] Add SWA : `stochastic_weight_avg=True`
+
+```
+📦RecvisProject
+ ┣ 📂.vscode
+ ┃ ┗ 📜launch.json
+ ┣ 📂agents
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┣ 📜base.cpython-38.pyc
+ ┃ ┃ ┣ 📜base_contrastive.cpython-38.pyc
+ ┃ ┃ ┗ 📜trainer.cpython-38.pyc
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜base.py
+ ┃ ┣ 📜base_contrastive.py
+ ┃ ┗ 📜trainer.py
+ ┣ 📂assets
+ ┃ ┣ 📂VOC
+ ┃ ┃ ┣ 📂VOCdevkit
+ ┃ ┃ ┃ ┗ 📂VOC2012
+ ┃ ┃ ┃ ┃ ┣ 📂Annotations
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000027.xml
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000032.xml
+ ┃ ┃ ┃ ┃ ┣ 📂ImageSets
+ ┃ ┃ ┃ ┃ ┃ ┣ 📂Action
+ ┃ ┃ ┃ ┃ ┃ ┃ ┣ 📜jumping_train.txt
+ ┃ ┃ ┃ ┃ ┃ ┣ 📂Layout
+ ┃ ┃ ┃ ┃ ┃ ┃ ┣ 📜train.txt
+ ┃ ┃ ┃ ┃ ┃ ┃ ┣ 📜trainval.txt
+ ┃ ┃ ┃ ┃ ┃ ┃ ┗ 📜val.txt
+ ┃ ┃ ┃ ┃ ┃ ┣ 📂Main
+ ┃ ┃ ┃ ┃ ┃ ┃ ┣ 📜aeroplane_train.
+ ┃ ┃ ┃ ┃ ┃ ┗ 📂Segmentation
+ ┃ ┃ ┃ ┃ ┃ ┃ ┣ 📜train.txt
+ ┃ ┃ ┃ ┃ ┃ ┃ ┣ 📜trainval.txt
+ ┃ ┃ ┃ ┃ ┃ ┃ ┗ 📜val.txt
+ ┃ ┃ ┃ ┃ ┣ 📂JPEGImages
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000027.jpg
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000032.jpg
+ ┃ ┃ ┃ ┃ ┣ 📂SegmentationClass
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000032.png
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000033.png
+ ┃ ┃ ┃ ┃ ┗ 📂SegmentationObject
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000032.png
+ ┃ ┃ ┃ ┃ ┃ ┣ 📜2007_000033.png
+ ┃ ┃ ┗ 📜VOCtrainval_11-May-2012.tar
+ ┃ ┗ 📜.keep
+ ┣ 📂config
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┗ 📜hparams.cpython-38.pyc
+ ┃ ┗ 📜hparams.py
+ ┣ 📂datamodule
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜VOCSegmentationDataModule.cpython-38.pyc
+ ┃ ┃ ┣ 📜VOCsegmentationmodule.cpython-38.pyc
+ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┗ 📜base_data_module.cpython-38.pyc
+ ┃ ┣ 📜VOCSegmentationDataModule.py
+ ┃ ┣ 📜__init__.py
+ ┃ ┗ 📜base_data_module.py
+ ┣ 📂datasets
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜BirdsDataloader.cpython-38.pyc
+ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┣ 📜base_dataloader.cpython-38.pyc
+ ┃ ┃ ┗ 📜base_dataset.cpython-38.pyc
+ ┃ ┣ 📜BirdsDataloader.py
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜base_dataloader.py
+ ┃ ┗ 📜base_dataset.py
+ ┣ 📂graphs
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┗ 📜weights_initializer.cpython-38.pyc
+ ┃ ┣ 📂losses
+ ┃ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┃ ┣ 📜Angular.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜Subcenter_arcface.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┃ ┗ 📜custom_loss.cpython-38.pyc
+ ┃ ┃ ┣ 📜Angular.py
+ ┃ ┃ ┣ 📜Subcenter_arcface.py
+ ┃ ┃ ┣ 📜__init__.py
+ ┃ ┃ ┗ 📜custom_loss.py
+ ┃ ┣ 📂models
+ ┃ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┃ ┣ 📜Contrastive_resnet50.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜Contrastive_vit.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜base.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜mobileNet.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜resnet50.cpython-38.pyc
+ ┃ ┃ ┃ ┗ 📜vit.cpython-38.pyc
+ ┃ ┃ ┣ 📂custom_layers
+ ┃ ┃ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┃ ┃ ┗ 📜layer_norm.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜__init__.py
+ ┃ ┃ ┃ ┗ 📜layer_norm.py
+ ┃ ┃ ┣ 📜Contrastive_resnet50.py
+ ┃ ┃ ┣ 📜Contrastive_vit.py
+ ┃ ┃ ┣ 📜__init__.py
+ ┃ ┃ ┣ 📜base.py
+ ┃ ┃ ┣ 📜mobileNet.py
+ ┃ ┃ ┣ 📜resnet50.py
+ ┃ ┃ ┗ 📜vit.py
+ ┃ ┣ 📜.DS_Store
+ ┃ ┣ 📜__init__.py
+ ┃ ┗ 📜weights_initializer.py
+ ┣ 📂model
+ ┃ ┗ 📜base_voc.py
+ ┣ 📂models
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┣ 📜base.cpython-38.pyc
+ ┃ ┃ ┗ 📜base_voc.cpython-38.pyc
+ ┃ ┣ 📂custom_layers
+ ┃ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┃ ┣ 📜layer_norm.cpython-38.pyc
+ ┃ ┃ ┃ ┗ 📜unet_convs.cpython-38.pyc
+ ┃ ┃ ┣ 📜__init__.py
+ ┃ ┃ ┣ 📜layer_norm.py
+ ┃ ┃ ┗ 📜unet_convs.py
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜base.py
+ ┃ ┗ 📜base_voc.py
+ ┣ 📂scripts
+ ┃ ┗ 📜sweep.yml
+ ┣ 📂test-sem-seg
+ ┃ ┗ 📂jdv4pql6
+ ┃ ┃ ┗ 📂checkpoints
+ ┣ 📂utils
+ ┃ ┣ 📂__pycache__
+ ┃ ┃ ┣ 📜__init__.cpython-38.pyc
+ ┃ ┃ ┣ 📜agent_utils.cpython-38.pyc
+ ┃ ┃ ┣ 📜callbacks.cpython-38.pyc
+ ┃ ┃ ┣ 📜feature_visualization.cpython-38.pyc
+ ┃ ┃ ┣ 📜logger.cpython-38.pyc
+ ┃ ┃ ┣ 📜metrics.cpython-38.pyc
+ ┃ ┃ ┣ 📜misc.cpython-38.pyc
+ ┃ ┃ ┗ 📜transforms.cpython-38.pyc
+ ┃ ┣ 📜__init__.py
+ ┃ ┣ 📜agent_utils.py
+ ┃ ┣ 📜callbacks.py
+ ┃ ┣ 📜feature_visualization.py
+ ┃ ┣ 📜logger.py
+ ┃ ┣ 📜metrics.py
+ ┃ ┣ 📜misc.py
+ ┃ ┗ 📜transforms.py
+ ┣ 📂wandb
+ ┃ ┣ 📂latest-run
+ ┃ ┃ ┣ 📂files
+ ┃ ┃ ┃ ┣ 📜conda-environment.yaml
+ ┃ ┃ ┃ ┣ 📜config.yaml
+ ┃ ┃ ┃ ┣ 📜output.log
+ ┃ ┃ ┃ ┣ 📜requirements.txt
+ ┃ ┃ ┃ ┣ 📜wandb-metadata.json
+ ┃ ┃ ┃ ┗ 📜wandb-summary.json
+ ┃ ┃ ┣ 📂logs
+ ┃ ┃ ┃ ┣ 📜debug-internal.log
+ ┃ ┃ ┃ ┗ 📜debug.log
+ ┃ ┃ ┣ 📂tmp
+ ┃ ┃ ┃ ┗ 📂code
+ ┃ ┃ ┗ 📜run-1oueugp8.wandb
+ ┃ ┣ 📂run-20211220_180546-16kueqtx
+ ┃ ┃ ┣ 📂files
+ ┃ ┃ ┃ ┣ 📜conda-environment.yaml
+ ┃ ┃ ┃ ┣ 📜config.yaml
+ ┃ ┃ ┃ ┣ 📜output.log
+ ┃ ┃ ┃ ┣ 📜requirements.txt
+ ┃ ┃ ┃ ┣ 📜wandb-metadata.json
+ ┃ ┃ ┃ ┗ 📜wandb-summary.json
+ ┃ ┃ ┣ 📂logs
+ ┃ ┃ ┃ ┣ 📜debug-internal.log
+ ┃ ┃ ┃ ┗ 📜debug.log
+ ┃ ┃ ┣ 📂tmp
+ ┃ ┃ ┃ ┗ 📂code
+ ┃ ┃ ┗ 📜run-16kueqtx.wandb 
+ ┣ 📂weights
+ ┃ ┗ 📜.keep
+ ┣ 📜.git
+ ┣ 📜.gitignore
+ ┣ 📜LICENSE
+ ┣ 📜README.md
+ ┣ 📜__init__.py
+ ┣ 📜main.py
+ ┣ 📜requirements.txt
+ ┗ 📜run.sh
+ ```
