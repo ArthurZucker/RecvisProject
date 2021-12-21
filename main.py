@@ -23,6 +23,7 @@ def main():
     # initialize wandb instance
     run = wandb.init(config=vars(args.hparams), project=args.hparams.wandb_project,entity = args.hparams.wandb_entity, allow_val_change=True)
     config = wandb.config
+    return
     # Create the Agent and pass all the configuration to it then run it..
     agent_class = globals()[config.agent]
     agent = agent_class(config, run)
