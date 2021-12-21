@@ -1,7 +1,7 @@
 import torch.nn as nn
 from torchvision.models import resnet50
 
-# @TODO implement with lightning
+# TODO implement with lightning
 
 class Resnet50(nn.Module):
     def __init__(self, args) -> None:
