@@ -252,3 +252,4 @@ https://github.com/facebookresearch/barlowtwins
  ┣ 📜requirements.txt
  ┗ 📜run.sh
  ```
+ test
