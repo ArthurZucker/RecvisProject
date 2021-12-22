@@ -39,7 +39,7 @@ class hparams:
     # data module
     datamodule: str = "VOCSegmentationDataModule"
     # classes
-    n_classes: int = 21
+    n_classes: int = 22
     # number of channels
     n_channels: int = 3
     # use bilinear interpolation
@@ -60,3 +60,7 @@ class hparams:
     num_workers: int = 16
     # tune the model on first run
     tune: bool = False
+    # number or gpu
+    gpu: int = 1
+    # precision
+    precision: int = 16
