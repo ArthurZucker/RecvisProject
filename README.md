@@ -10,8 +10,9 @@ Self-supervised learning using transformers \cite{dosovitskiy2021image} has show
 
 # TO DO : 
 
-- [ ] Define metric and baseline to compare our architectures 
+- [ ] Define metrics and baseline to compare our architectures 
 - [ ] Download dataset and create dataloader 
+- [ ] Visualize effective receptive field
 - [ ] Create Transformer network
 - [ ] Create BarlowTwins agent 
 - [ ] Implement feature map visualization 
@@ -30,9 +31,9 @@ Our goal is to design a new semantic segmentation head which uses the attention 
 We will use the following evaluations  :
 - Barlow twins with resnet 50 + semantic segmentation head without attention maps 
 - Barlow twins with SwinViT + semantic segmentation head, whithout using attention maps
--  Barlow twins with SwinViT + semantic segmentation head, whith attention maps, fusion 1
--  Barlow twins with SwinViT + semantic segmentation head, whith attention maps, fusion 2
--  DINO weights + semantic segmentation head, whith attention maps, fusion 2
+- Barlow twins with SwinViT + semantic segmentation head, whith attention maps, fusion 1
+- Barlow twins with SwinViT + semantic segmentation head, whith attention maps, fusion 2
+- DINO weights + semantic segmentation head, whith attention maps, fusion 2
 
 We have to find various ways of combining the different attention maps and heads and use them in the semantic segmentation head. 
 

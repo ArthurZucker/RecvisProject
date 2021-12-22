@@ -30,10 +30,11 @@ PASCAL_VOC_classes = {
     18: "sofa",
     19: "train",
     20: "tv",
-    21: "void",
+    # 21: "void",
 }
 
 class LogPredictionsCallback(Callback):
+
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
@@ -44,12 +45,31 @@ class LogPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0:
-            n = 20
+            self.log_images("validation", batch, 5, outputs)
+
+    def on_train_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the training batch ends."""
+
+        # `outputs` comes from `LightningModule.validation_step`
+        # which corresponds to our model predictions in this case
+
+        # Let's log 20 sample image predictions from first batch
+        if batch_idx == 0:
+            self.log_images("train", batch, 5, outputs)
+
+    def log_images(self, name, batch, n, outputs):
+
             x, y = batch
             images = x[:n].cpu()
             ground_truth = np.array(y[:n].cpu())
-            predictions = np.array(outputs[:n].cpu())
 
+            if name == "train":
+                outputs = outputs["preds"] # preds
+
+            predictions = np.array(outputs[:n].cpu())
+            
             samples = []
 
             mean = np.array([0.485, 0.456, 0.406]) # TODO this is not beautiful
@@ -78,20 +98,23 @@ class LogPredictionsCallback(Callback):
                                 "mask_data": true_mask,
                                 "class_labels": PASCAL_VOC_classes,
                             },
-                        },
+                        }, 
                     )
                 )
-            wandb.log({"predictions":samples})
-            # trainer.logger.log_image(
-            # key="sample_images",
-            # images=samples,
-            # )
-
-        # TODO add sample input image visualization
-
-
+            wandb.log({name:samples})
 
 class LogFeatureVisualizationCallback(Callback):
-    pass
     # TODO add feature vizualization for training and validation data
     # should probably use hooks to keep the model structure
+    # classe image = classe predominante dans l'image + prendre features encoder
+    pass
+
+class LogAttentionVisualizationCallback(Callback):
+    # TODO add attention vizualization for training and validation data
+    # should probably use hooks to keep the model structure
+    # classe image = classe predominante dans l'image + prendre features encoder
+    # We shall use the activation map in order to visualize the effective receptive fields
+    # those can be obtained by projecting the activation maps from upper layers
+    # and resizing with a deconvolution or with interpolation ?
+    # the original paper uses an average over 1000 images, this can also be considered.
+    pass

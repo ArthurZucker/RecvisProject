@@ -11,7 +11,7 @@ class toLongTensor(object):
         
     def __call__(self,tensor):
         temp = (tensor[0]*255).long()
-        temp[temp == 255] = 21
+        temp[temp == 255] = 0
         return temp
     
     def __repr__(self):

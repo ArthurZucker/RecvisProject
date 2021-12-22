@@ -58,10 +58,7 @@ class VOCSegmentationDataModule(LightningDataModule):
             self.voc_predict = VOCSegmentation(
                 self.root, image_set='val', transform=self.transform, target_transform=self.target_transform
             )
-    # TODO num_workers
-    # return the dataloader for each split
-    # TODO overwrite get item to cast input masks to torch.LongTensor!!!!!
-    
+
     def train_dataloader(self):
         voc_train = DataLoader(self.voc_train, batch_size=self.batch_size, num_workers=self.config.num_workers)
         return voc_train

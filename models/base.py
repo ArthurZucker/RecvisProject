@@ -24,32 +24,15 @@ class BASE_LitModule(LightningModule):
         # save hyper-parameters to self.hparams (auto-logged by W&B)
         # self.save_hyperparameters()
 
-    # def forward(self, x):
-    #     '''method used for inference input -> output'''
-
-    #     batch_size, channels, width, height = x.size()
-
-    #     # (b, 1, 28, 28) -> (b, 1*28*28)
-    #     x = x.view(batch_size, -1)
-
-    #     # let's do 3 x (linear + relu)
-    #     x = self.layer_1(x)
-    #     x = F.relu(x)
-    #     x = self.layer_2(x)
-    #     x = F.relu(x)
-    #     x = self.layer_3(x)
-
-    #     return x
-
     def training_step(self, batch, batch_idx):
         '''needs to return a loss from a single batch'''
-        _, loss, acc = self._get_preds_loss_accuracy(batch)
+        preds, loss, acc = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
         self.log('train_loss', loss)
         self.log('train_accuracy', acc)
 
-        return loss
+        return {"loss": loss, "preds": preds}
 
     def validation_step(self, batch, batch_idx):
         '''used for logging metrics'''
