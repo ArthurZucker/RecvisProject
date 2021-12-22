@@ -57,11 +57,11 @@ class LogPredictionsCallback(Callback):
             std = [0.229, 0.224, 0.225]
             UnNormalizer = UnNormalize(mean, std)
             for i in range(len(batch)):
-                bg_image = UnNormalizer(images[i]).numpy().astype(np.uint8)
+                bg_image = np.clip(images[i],0,1).numpy()
                 bg_image = np.transpose(bg_image, (1, 2, 0))
                 # run the model on that image
-                prediction_mask = (predictions[i]*255).astype(np.uint8)
-                true_mask = (ground_truth[i]*255).astype(np.uint8)
+                prediction_mask = predictions[i]
+                true_mask = ground_truth[i]
 
                 samples.append(
                     wandb.Image(
