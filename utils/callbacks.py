@@ -60,7 +60,7 @@ class LogPredictionsCallback(Callback):
                 bg_image = np.clip(images[i],0,1).numpy()
                 bg_image = np.transpose(bg_image, (1, 2, 0))
                 # run the model on that image
-                prediction_mask = predictions[i]
+                prediction_mask = predictions[i] #FIXME masks are not correct
                 true_mask = ground_truth[i]
 
                 samples.append(

@@ -23,10 +23,12 @@ class Base_Trainer:
             trainer = pl.Trainer(
                 logger=self.wb_run, gpus=1, auto_scale_batch_size= "power", accelerator="auto"
             )
+            trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
             trainer = pl.Trainer(
                 logger=self.wb_run, gpus=1, auto_lr_find=True, accelerator="auto"
             )
+            trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
         
         checkpoint_callback = ModelCheckpoint(monitor="val_accuracy", mode="max")
