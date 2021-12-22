@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 from torchvision.datasets import VOCSegmentation
 
+from utils.transforms import toLongTensor
 
 class VOCSegmentationDataModule(LightningDataModule):
     def __init__(self, config):
@@ -24,6 +25,7 @@ class VOCSegmentationDataModule(LightningDataModule):
             [
                 transforms.Resize((256,256)),
                 transforms.ToTensor(),
+                toLongTensor(),
             ]
         )
     # When doing distributed training, Datamodules have two optional arguments for
@@ -45,7 +47,7 @@ class VOCSegmentationDataModule(LightningDataModule):
             )
             # Split between train and valid set (80/20)
             val_length =int(len(init_dataset)*self.config.split_val)
-            lengths = [val_length, len(init_dataset)-val_length]            
+            lengths = [len(init_dataset)-val_length,val_length]            
             self.voc_train, self.voc_val = random_split(init_dataset, lengths)
         if stage == "test":
             self.voc_test = VOCSegmentation(
@@ -61,17 +63,17 @@ class VOCSegmentationDataModule(LightningDataModule):
     # TODO overwrite get item to cast input masks to torch.LongTensor!!!!!
     
     def train_dataloader(self):
-        voc_train = DataLoader(self.voc_train, batch_size=self.batch_size)
+        voc_train = DataLoader(self.voc_train, batch_size=self.batch_size, num_workers=self.config.num_workers)
         return voc_train
 
     def val_dataloader(self):
-        voc_val = DataLoader(self.voc_val, batch_size=self.batch_size)
+        voc_val = DataLoader(self.voc_val, batch_size=self.batch_size, num_workers=self.config.num_workers)
         return voc_val
 
     def test_dataloader(self):
-        voc_test = DataLoader(self.voc_test, batch_size=self.batch_size)
+        voc_test = DataLoader(self.voc_test, batch_size=self.batch_size, num_workers=self.config.num_workers)
         return voc_test
 
     def predict_dataloader(self):
-        voc_predict = DataLoader(self.voc_predict, batch_size=self.batch_size)
+        voc_predict = DataLoader(self.voc_predict, batch_size=self.batch_size, num_workers=self.config.num_workers)
         return voc_predict

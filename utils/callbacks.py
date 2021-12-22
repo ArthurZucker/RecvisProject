@@ -1,7 +1,36 @@
 import wandb
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.loggers import WandbLogger
+import numpy as np
+import torch
+import PIL
 
+from utils.transforms import UnNormalize
+
+PASCAL_VOC_classes = {
+    0: "background",
+    1: "airplane",
+    2: "bicycle",
+    3: "bird",
+    4: "boat",
+    5: "bottle",
+    6: "bus",
+    7: "car",
+    8: "cat",
+    9: "chair",
+    10: "cow",
+    11: "table",
+    12: "dog",
+    13: "horse",
+    14: "motorbike",
+    15: "person",
+    16: "potted_plant",
+    17: "sheep",
+    18: "sofa",
+    19: "train",
+    20: "tv",
+    21: "void",
+}
 
 class LogPredictionsCallback(Callback):
     def on_validation_batch_end(
@@ -16,24 +45,50 @@ class LogPredictionsCallback(Callback):
         if batch_idx == 0:
             n = 20
             x, y = batch
-            images = [img for img in x[:n]]
-            captions = [
-                f"Ground Truth: {y_i} - Prediction: {y_pred}"
-                for y_i, y_pred in zip(y[:n], outputs[:n])
-            ]
-            # Option 1: log images with `WandbLogger.log_image`
-            trainer.logger.log_image(key="sample_images", images=images, caption=captions)
-            # Option 2: log predictions as a Table
-            columns = ["image", "ground truth", "prediction"]
-            data = [
-                [wandb.Image(x_i), y_i, y_pred]
-                for x_i, y_i, y_pred in list(zip(x[:n], y[:n], outputs[:n]))
-            ]
-            trainer.logger.log_table(key="sample_table", columns=columns, data=data)
+            images = x[:n].cpu()
+            ground_truth = np.array(y[:n].cpu())
+            predictions = np.array(outputs[:n].cpu())
+            # captions = [
+            #     f"Ground Truth: {y_i} - Prediction: {y_pred}"
+            #     for y_i, y_pred in zip(y[:n], outputs[:n])
+            # ]n
+            samples = []
+            mean = [0.485, 0.456, 0.406] # TODO this is not beautiful
+            std = [0.229, 0.224, 0.225]
+            UnNormalizer = UnNormalize(mean, std)
+            for i in range(len(batch)):
+                bg_image = UnNormalizer(images[i]).numpy().astype(np.uint8)
+                bg_image = np.transpose(bg_image, (1, 2, 0))
+                # run the model on that image
+                prediction_mask = (predictions[i]*255).astype(np.uint8)
+                true_mask = (ground_truth[i]*255).astype(np.uint8)
 
-        # TODO add sample input image visualization 
+                samples.append(
+                    wandb.Image(
+                        bg_image,
+                        masks={
+                            "prediction": {
+                                "mask_data": prediction_mask,
+                                "class_labels": PASCAL_VOC_classes,
+                            },
+                            "ground truth": {
+                                "mask_data": true_mask,
+                                "class_labels": PASCAL_VOC_classes,
+                            },
+                        },
+                    )
+                )
+            wandb.log({"predictions":samples})
+            # trainer.logger.log_image(
+            # key="sample_images",
+            # samples=samples,
+            # )
 
-class LogFeatureVisualizationCallback(Callback):      
-    pass 
+        # TODO add sample input image visualization
+
+
+
+class LogFeatureVisualizationCallback(Callback):
+    pass
     # TODO add feature vizualization for training and validation data
-    # should probably use hooks to keep the model structure 
+    # should probably use hooks to keep the model structure

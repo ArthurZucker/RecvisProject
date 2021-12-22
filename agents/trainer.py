@@ -14,14 +14,21 @@ class Base_Trainer:
         self.model = get_net(config)
         print(self.model)
         self.wb_run.watch(self.model)
-
-        self.logger = init_logger("Trainer", "DEBUG")
-
-        trainer = pl.Trainer(
-            logger=self.wb_run, gpus=1, auto_scale_batch_size= "power", auto_lr_find=True, accelerator="auto"
-        )
         self.datamodule = get_datamodule(config)
-        trainer.tune(self.model, datamodule=self.datamodule)
+        
+        self.logger = init_logger("Trainer", "DEBUG")
+        
+    def run(self):
+        if self.config.tune:
+            trainer = pl.Trainer(
+                logger=self.wb_run, gpus=1, auto_scale_batch_size= "power", accelerator="auto"
+            )
+            trainer.tune(self.model, datamodule=self.datamodule)
+            trainer = pl.Trainer(
+                logger=self.wb_run, gpus=1, auto_lr_find=True, accelerator="auto"
+            )
+            trainer.tune(self.model, datamodule=self.datamodule)
+        
         checkpoint_callback = ModelCheckpoint(monitor="val_accuracy", mode="max")
 
         # TODO feature hook for feature fizualization, for every 
@@ -44,11 +51,11 @@ class Base_Trainer:
             gpus=1,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
             precision=16,  # train in half precision
-            deterministic=True,
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
             accumulate_grad_batches = self.config.accumulate_size,
+            log_every_n_steps = 1
         )
-
+        trainer.logger = self.wb_run
         trainer.fit(self.model, datamodule=self.datamodule)

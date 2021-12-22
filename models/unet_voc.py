@@ -6,9 +6,9 @@ from models.base import BASE_LitModule
 from models.custom_layers.unet_convs import *
 
 
-class Base_Voc(BASE_LitModule):
+class Unet_Voc(BASE_LitModule):
     def __init__(self, config, bilinear=True):
-        super(Base_Voc, self).__init__(config)
+        super(Unet_Voc, self).__init__(config)
         self.n_channels = config.n_channels
         self.n_classes = config.n_classes
         self.bilinear = config.bilinear

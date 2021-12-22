@@ -31,11 +31,11 @@ class hparams:
     # loss to train the model
     loss: str = "CrossEntropy"
     # learning rate
-    lr: float = 0.03
+    lr: float = 0.02089296130854041
     # agent to use for training
     agent: str = "Base_Trainer"
     # architecture to use
-    arch: str = "base_voc"
+    arch: str = "unet_voc"
     # data module
     datamodule: str = "VOCSegmentationDataModule"
     # classes
@@ -45,7 +45,7 @@ class hparams:
     # use bilinear interpolation
     bilinear: bool = True
     # batch size for training
-    batch_size: int = 8
+    batch_size: int = 16
     # split value
     split_val: float = 0.2
     # validation frequency
@@ -53,4 +53,10 @@ class hparams:
     # developpment mode, only run 1 batch of train val and test
     dev_run: bool = True
     # gradient accumulation batch sier
-    accumulation_size: int = 64
+    accumulate_size: int = 64
+    # save directory
+    save_dir: str = osp.join(os.getcwd(), "wandb")
+    # number of workers for dataloaders
+    num_workers: int = 16
+    # tune the model on first run
+    tune: bool = False

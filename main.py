@@ -13,6 +13,7 @@ from pytorch_lightning.loggers import WandbLogger
 from agents import *
 from config.hparams import hparams
 import wandb
+import torch
 # from apex import amp
 parser = ArgumentParser()
 # automatically add arguments for all the fields of the classes in hparams:
@@ -22,16 +23,16 @@ args = parser.parse_args()
 
 def main():
     # initialize wandb instance
-    run = WandbLogger(config=vars(args.hparams), project=args.hparams.wandb_project, entity = args.hparams.wandb_entity, allow_val_change=True)
-    config = run.experiment.config
+    wandb_run = WandbLogger(config=vars(args.hparams), project=args.hparams.wandb_project, entity = args.hparams.wandb_entity, allow_val_change=True, save_dir=args.hparams.save_dir)
+    config = wandb_run.experiment.config
     seed_everything(config.seed_everything)
 
     # Create the Agent and pass all the configuration to it then run it..
     agent_class = globals()[config.agent]
-    agent = agent_class(config, run)
+    agent = agent_class(config, wandb_run)
     # run the model
     agent.run()
-    agent.finalize()
+    # agent.finalize()
 
 
 if __name__ == "__main__":

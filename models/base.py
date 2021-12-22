@@ -5,6 +5,7 @@ from torch.nn import Linear, CrossEntropyLoss, functional as F
 from torch.optim import Adam
 import torchmetrics
 from pytorch_lightning import LightningModule
+from kornia.losses import DiceLoss
 
 class BASE_LitModule(LightningModule):
 
@@ -12,7 +13,7 @@ class BASE_LitModule(LightningModule):
         '''method used to define our model parameters'''
         super().__init__()
         # loss
-        self.loss = CrossEntropyLoss()
+        self.loss = DiceLoss()
 
         # optimizer parameters
         self.lr = config.lr
