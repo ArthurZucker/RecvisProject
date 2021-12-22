@@ -6,6 +6,7 @@ import torch
 import PIL
 
 from utils.transforms import UnNormalize
+import matplotlib.pyplot as plt
 
 PASCAL_VOC_classes = {
     0: "background",
@@ -48,19 +49,21 @@ class LogPredictionsCallback(Callback):
             images = x[:n].cpu()
             ground_truth = np.array(y[:n].cpu())
             predictions = np.array(outputs[:n].cpu())
-            # captions = [
-            #     f"Ground Truth: {y_i} - Prediction: {y_pred}"
-            #     for y_i, y_pred in zip(y[:n], outputs[:n])
-            # ]n
+
             samples = []
-            mean = [0.485, 0.456, 0.406] # TODO this is not beautiful
-            std = [0.229, 0.224, 0.225]
-            UnNormalizer = UnNormalize(mean, std)
+
+            mean = np.array([0.485, 0.456, 0.406]) # TODO this is not beautiful
+            std = np.array([0.229, 0.224, 0.225])
+
             for i in range(len(batch)):
-                bg_image = np.clip(images[i],0,1).numpy()
-                bg_image = np.transpose(bg_image, (1, 2, 0))
-                # run the model on that image
-                prediction_mask = predictions[i] #FIXME masks are not correct
+
+                bg_image = images[i].numpy().transpose((1, 2, 0))
+                mean = np.array([0.485, 0.456, 0.406])
+                std = np.array([0.229, 0.224, 0.225])
+                bg_image = std * bg_image + mean
+                bg_image = np.clip(bg_image, 0, 1)
+
+                prediction_mask = predictions[i]
                 true_mask = ground_truth[i]
 
                 samples.append(
@@ -81,7 +84,7 @@ class LogPredictionsCallback(Callback):
             wandb.log({"predictions":samples})
             # trainer.logger.log_image(
             # key="sample_images",
-            # samples=samples,
+            # images=samples,
             # )
 
         # TODO add sample input image visualization

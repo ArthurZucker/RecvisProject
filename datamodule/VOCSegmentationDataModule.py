@@ -1,12 +1,13 @@
 import os
 
 import torch
+from PIL.Image import NEAREST
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, random_split
 from torchvision import transforms
 from torchvision.datasets import VOCSegmentation
-
 from utils.transforms import toLongTensor
+
 
 class VOCSegmentationDataModule(LightningDataModule):
     def __init__(self, config):
@@ -23,17 +24,16 @@ class VOCSegmentationDataModule(LightningDataModule):
         )
         self.target_transform = transforms.Compose(
             [
-                transforms.Resize((256,256)),
+                transforms.Resize((256,256), interpolation = NEAREST),
                 transforms.ToTensor(),
-                toLongTensor(),
-            ]
+                toLongTensor()
+            ]   
         )
     # When doing distributed training, Datamodules have two optional arguments for
     # granular control over download/prepare/splitting data:
 
     # OPTIONAL, called only on 1 GPU/machine
     def prepare_data(self):
-        
         VOCSegmentation(root = self.root, image_set='trainval', download=False)
         VOCSegmentation(root = self.root, image_set='val', download=False)
 

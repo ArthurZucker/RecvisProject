@@ -1,6 +1,6 @@
-from torch import nn
 import importlib
-from torch import optim
+
+from torch import nn, optim
 from torch.nn import MarginRankingLoss
 
 """
@@ -31,7 +31,7 @@ def get_net(args):
     net = get_model(args)
     num_params = sum([param.nelement() for param in net.parameters()])
     print('Model params = {:2.1f}M'.format(num_params / 1000000))
-    net = net.cuda()
+   #  net = net.cuda()
     return net
 
 def get_model(args):

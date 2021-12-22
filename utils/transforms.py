@@ -1,11 +1,8 @@
-import imageio
-import imgaug as ia
 import matplotlib.pyplot as plt
 import numpy as np
 import PIL
 import torch
 import torch.nn as nn
-from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 
 
 class toLongTensor(object):
@@ -13,7 +10,9 @@ class toLongTensor(object):
         super().__init__()
         
     def __call__(self,tensor):
-        return tensor[0].long()
+        temp = (tensor[0]*255).long()
+        temp[temp == 255] = 21
+        return temp
     
     def __repr__(self):
         return self.__class__.__name__ + '()'
@@ -37,3 +36,4 @@ class UnNormalize(object):
     
     def __repr__(self):
         return self.__class__.__name__ + '()'
+

@@ -21,12 +21,12 @@ class Base_Trainer:
     def run(self):
         if self.config.tune:
             trainer = pl.Trainer(
-                logger=self.wb_run, gpus=1, auto_scale_batch_size= "power", accelerator="auto"
+                logger=self.wb_run, gpus=self.config.gpu, auto_scale_batch_size= "power", accelerator="auto"
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
             trainer = pl.Trainer(
-                logger=self.wb_run, gpus=1, auto_lr_find=True, accelerator="auto"
+                logger=self.wb_run, gpus=self.config.gpu, auto_lr_find=True, accelerator="auto"
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
@@ -50,9 +50,9 @@ class Base_Trainer:
                 LogPredictionsCallback(),
                 EarlyStopping(monitor="val_loss"),
             ],  # logging of sample predictions
-            gpus=1,  # use all available GPU's
+            gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
-            precision=16,  # train in half precision
+            precision=self.config.precision,  # train in half precision
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
