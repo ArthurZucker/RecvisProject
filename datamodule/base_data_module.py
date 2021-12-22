@@ -17,35 +17,41 @@ class BaseDataModule(LightningDataModule):
 
     # OPTIONAL, called only on 1 GPU/machine
     def prepare_data(self):
-        MNIST(os.getcwd(), train=True, download=True)
-        MNIST(os.getcwd(), train=False, download=True)
+        # MNIST(os.getcwd(), train=True, download=True)
+        # MNIST(os.getcwd(), train=False, download=True)
+        pass
 
     # OPTIONAL, called for every GPU/machine (assigning state is OK)
     def setup(self, stage: Optional[str] = None):
-        # transforms
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-        # split dataset
-        if stage in (None, "fit"):
-            mnist_train = MNIST(os.getcwd(), train=True, transform=transform)
-            self.mnist_train, self.mnist_val = random_split(mnist_train, [55000, 5000])
-        if stage == "test":
-            self.mnist_test = MNIST(os.getcwd(), train=False, transform=transform)
-        if stage == "predict":
-            self.mnist_predict = MNIST(os.getcwd(), train=False, transform=transform)
+        # # transforms
+        # transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        # # split dataset
+        # if stage in (None, "fit"):
+        #     mnist_train = MNIST(os.getcwd(), train=True, transform=transform)
+        #     self.mnist_train, self.mnist_val = random_split(mnist_train, [55000, 5000])
+        # if stage == "test":
+        #     self.mnist_test = MNIST(os.getcwd(), train=False, transform=transform)
+        # if stage == "predict":
+        #     self.mnist_predict = MNIST(os.getcwd(), train=False, transform=transform)
+        pass
 
     # return the dataloader for each split
     def train_dataloader(self):
-        mnist_train = DataLoader(self.mnist_train, batch_size=self.batch_size)
-        return mnist_train
+        # mnist_train = DataLoader(self.mnist_train, batch_size=self.batch_size)
+        # return mnist_train
+        pass
 
     def val_dataloader(self):
-        mnist_val = DataLoader(self.mnist_val, batch_size=self.batch_size)
-        return mnist_val
+        # mnist_val = DataLoader(self.mnist_val, batch_size=self.batch_size)
+        # return mnist_val
+        pass
 
     def test_dataloader(self):
-        mnist_test = DataLoader(self.mnist_test, batch_size=self.batch_size)
-        return mnist_test
+        # mnist_test = DataLoader(self.mnist_test, batch_size=self.batch_size)
+        # return mnist_test
+        pass
 
     def predict_dataloader(self):
-        mnist_predict = DataLoader(self.mnist_predict, batch_size=self.batch_size)
-        return mnist_predict
+        # mnist_predict = DataLoader(self.mnist_predict, batch_size=self.batch_size)
+        # return mnist_predict
+        pass
