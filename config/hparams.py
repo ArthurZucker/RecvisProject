@@ -66,15 +66,21 @@ class hparams:
     precision: int = 32
     # metrics
     metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
-        num_classes=n_classes, average=None, mdmc_average='global'
+        num_classes=n_classes, average="weighted", mdmc_average='global'
     ),
         Recall=dict(
-            num_classes=n_classes, average=None, mdmc_average='global'
+            num_classes=n_classes, average="weighted", mdmc_average='global'
     ),
         Precision=dict(
-            num_classes=n_classes, average=None, mdmc_average='global'
+            num_classes=n_classes, average="weighted", mdmc_average='global'
+    ),
+        AveragePrecision=dict(
+            num_classes=n_classes, average="weighted", 
     ),
         IoU=dict(
             num_classes=n_classes,
     ),
         ConfusionMatrix=dict()))
+    # optimizer
+    optimizer: Dict[str, Dict[str, str]] = dict_field(dict(torch_optim_SGD=
+                                                        dict()))

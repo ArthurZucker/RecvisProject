@@ -1,12 +1,6 @@
-import os
-
-import torch
-from torch.nn import Linear, CrossEntropyLoss, functional as F
-from torch.optim import Adam
 from pytorch_lightning import LightningModule
 from kornia.losses import DiceLoss
-
-from utils.metrics_module import MetricsModule
+from utils.agent_utils import import_class
 
 class BASE_LitModule(LightningModule):
 
@@ -21,49 +15,48 @@ class BASE_LitModule(LightningModule):
         # optimizer parameters
         self.lr = config.lr
 
-        # metrics
-        self.metrics_module = MetricsModule(self.config.metrics)
-
         # save hyper-parameters to self.hparams (auto-logged by W&B)
         # self.save_hyperparameters()
 
     def training_step(self, batch, batch_idx):
         '''needs to return a loss from a single batch'''
-        preds, loss = self._get_preds_loss_accuracy(batch)
+        loss, logits = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
         self.log('train/loss', loss)
-        self.metrics_module.log_metrics("train/", self)
-        return {"loss": loss, "preds": preds}
+
+        return {"loss": loss, "logits": logits}
 
     def validation_step(self, batch, batch_idx):
         '''used for logging metrics'''
-        preds, loss = self._get_preds_loss_accuracy(batch)
+        loss, logits = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
         self.log('val/loss', loss)
-        self.metrics_module.log_metrics("val/", self)
 
         # Let's return preds to use it in a custom callback
-        return preds
+        return {"logits": logits}
 
     def test_step(self, batch, batch_idx):
         '''used for logging metrics'''
-        _, loss = self._get_preds_loss_accuracy(batch)
+        preds, loss, logits = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
         self.log('test/loss', loss)
-        self.metrics_module.log_metrics("test/", self)
-    
+        
+        return {"logits": logits}
+
     def configure_optimizers(self):
         '''defines model optimizer'''
-        return Adam(self.parameters(), lr=self.lr)
-    
+        name, params = next(iter(self.config.optimizer.items()))
+        name = name.replace('_', '.')
+        optimizer_cls = import_class(name)
+        optimizer = optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.lr, **params)
+        return optimizer
+
     def _get_preds_loss_accuracy(self, batch):
         '''convenience function since train/valid/test steps are similar'''
         x, y = batch
         logits = self(x)
-        preds = torch.argmax(logits, dim=1)
         loss = self.loss(logits, y)
-        self.metrics_module.compute_metrics(preds, y)
-        return preds, loss
+        return loss, logits.detach()

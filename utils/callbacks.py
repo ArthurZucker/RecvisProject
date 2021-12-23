@@ -1,37 +1,11 @@
 import wandb
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.loggers import WandbLogger
 import numpy as np
 import torch
-import PIL
 
-from utils.transforms import UnNormalize
-import matplotlib.pyplot as plt
+from utils.constant import PASCAL_VOC_classes
+from utils.metrics_module import MetricsModule
 
-PASCAL_VOC_classes = {
-    0: "background",
-    1: "airplane",
-    2: "bicycle",
-    3: "bird",
-    4: "boat",
-    5: "bottle",
-    6: "bus",
-    7: "car",
-    8: "cat",
-    9: "chair",
-    10: "cow",
-    11: "table",
-    12: "dog",
-    13: "horse",
-    14: "motorbike",
-    15: "person",
-    16: "potted_plant",
-    17: "sheep",
-    18: "sofa",
-    19: "train",
-    20: "tv",
-    # 21: "void",
-}
 
 class LogPredictionsCallback(Callback):
 
@@ -61,53 +35,88 @@ class LogPredictionsCallback(Callback):
 
     def log_images(self, name, batch, n, outputs):
 
-            x, y = batch
-            images = x[:n].cpu()
-            ground_truth = np.array(y[:n].cpu())
+        x, y = batch
+        images = x[:n].cpu()
+        ground_truth = np.array(y[:n].cpu())
 
-            if name == "train":
-                outputs = outputs["preds"] # preds
+        logits = outputs["logits"]  # preds
+        preds = torch.argmax(logits, dim=1)
 
-            predictions = np.array(outputs[:n].cpu())
-            
-            samples = []
+        predictions = np.array(preds[:n].cpu())
 
-            mean = np.array([0.485, 0.456, 0.406]) # TODO this is not beautiful
+        samples = []
+
+        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
+        std = np.array([0.229, 0.224, 0.225])
+
+        for i in range(len(batch)):
+
+            bg_image = images[i].numpy().transpose((1, 2, 0))
+            mean = np.array([0.485, 0.456, 0.406])
             std = np.array([0.229, 0.224, 0.225])
+            bg_image = std * bg_image + mean
+            bg_image = np.clip(bg_image, 0, 1)
 
-            for i in range(len(batch)):
+            prediction_mask = predictions[i]
+            true_mask = ground_truth[i]
 
-                bg_image = images[i].numpy().transpose((1, 2, 0))
-                mean = np.array([0.485, 0.456, 0.406])
-                std = np.array([0.229, 0.224, 0.225])
-                bg_image = std * bg_image + mean
-                bg_image = np.clip(bg_image, 0, 1)
-
-                prediction_mask = predictions[i]
-                true_mask = ground_truth[i]
-
-                samples.append(
-                    wandb.Image(
-                        bg_image,
-                        masks={
-                            "prediction": {
-                                "mask_data": prediction_mask,
-                                "class_labels": PASCAL_VOC_classes,
-                            },
-                            "ground truth": {
-                                "mask_data": true_mask,
-                                "class_labels": PASCAL_VOC_classes,
-                            },
-                        }, 
-                    )
+            samples.append(
+                wandb.Image(
+                    bg_image,
+                    masks={
+                        "prediction": {
+                            "mask_data": prediction_mask,
+                            "class_labels": PASCAL_VOC_classes,
+                        },
+                        "ground truth": {
+                            "mask_data": true_mask,
+                            "class_labels": PASCAL_VOC_classes,
+                        },
+                    },
                 )
-            wandb.log({name:samples})
+            )
+        wandb.log({name: samples})
+
+
+class LogMetricsCallback(Callback):
+
+    def __init__(self, config):
+        self.metrics_module_train = MetricsModule("train", config.metrics, config.n_classes)
+        self.metrics_module_validation = MetricsModule("val", config.metrics)
+
+    def on_train_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the train batch ends."""
+
+        x, y = batch
+        self.metrics_module_train.update_metrics(outputs["logits"], y)
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        """Called when the train epoch ends."""
+
+        self.metrics_module_train.log_metrics("train/", trainer.logger)
+
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the validation batch ends."""
+
+        x, y = batch
+        self.metrics_module_validation.update_metrics(outputs["logits"], y)
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        """Called when the validation epoch ends."""
+
+        self.metrics_module_validation.log_metrics("val/", trainer.logger)
+
 
 class LogFeatureVisualizationCallback(Callback):
     # TODO add feature vizualization for training and validation data
     # should probably use hooks to keep the model structure
     # classe image = classe predominante dans l'image + prendre features encoder
     pass
+
 
 class LogAttentionVisualizationCallback(Callback):
     # TODO add attention vizualization for training and validation data
