@@ -126,3 +126,16 @@ def get_act_func(act_type):
         
  if act_type=="linear":
     return nn.LeakyReLU(1) # initializzed like this, but not used in forward!
+
+def import_class(name, instantiate = None):
+
+   namesplit = name.split(".")
+   module = importlib.import_module(".".join(namesplit[:-1])) 
+   imported_class = getattr(module, namesplit[-1])
+
+   if imported_class:
+      if instantiate is not None:
+            return imported_class(**instantiate)
+      else:
+            return imported_class
+   raise Exception ("Class {} can be imported".format(import_class))

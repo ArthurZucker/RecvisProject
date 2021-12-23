@@ -9,9 +9,9 @@ class toLongTensor(object):
     def __init__(self) -> None:
         super().__init__()
         
-    def __call__(self,tensor):
+    def __call__(self, tensor):
         temp = (tensor[0]*255).long()
-        temp[temp == 255] = 0
+        temp[temp == 255] = 21
         return temp
     
     def __repr__(self):

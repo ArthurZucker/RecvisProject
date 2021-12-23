@@ -9,9 +9,9 @@ from models.custom_layers.unet_convs import *
 class Unet_Voc(BASE_LitModule):
     def __init__(self, config, bilinear=True):
         super(Unet_Voc, self).__init__(config)
-        self.n_channels = config.n_channels
-        self.n_classes = config.n_classes
-        self.bilinear = config.bilinear
+        self.n_channels = self.config.n_channels
+        self.n_classes = self.config.n_classes
+        self.bilinear = self.config.bilinear
 
         self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)
@@ -24,16 +24,6 @@ class Unet_Voc(BASE_LitModule):
         self.up3 = Up(256, 128 // factor, bilinear)
         self.up4 = Up(128, 64, bilinear)
         self.outc = OutConv(64, self.n_classes)
-
-        # loss
-        # self.loss = self.config.loss
-
-        # metrics
-        self.accuracy = torchmetrics.Accuracy()
-
-        # save hyper-parameters to self.hparams (auto-logged by W&B)
-        # requires the function to have hyper parameters __init__(self,...)
-        # self.save_hyperparameters()
 
     def forward(self, x):
         x1 = self.inc(x)

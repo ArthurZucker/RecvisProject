@@ -1,10 +1,10 @@
+import os
+import os.path as osp
 from dataclasses import dataclass
 from posixpath import split
-from typing import List
-import numpy as np
-from simple_parsing.helpers import list_field
+from typing import List, Dict
 
-import os, os.path as osp
+from simple_parsing.helpers import dict_field, list_field
 
 """Dataclass allows to have arguments and easily use wandb's weep module.
 
@@ -63,4 +63,18 @@ class hparams:
     # number or gpu
     gpu: int = 1
     # precision
-    precision: int = 16
+    precision: int = 32
+    # metrics
+    metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
+        num_classes=n_classes, average=None, mdmc_average='global'
+    ),
+        Recall=dict(
+            num_classes=n_classes, average=None, mdmc_average='global'
+    ),
+        Precision=dict(
+            num_classes=n_classes, average=None, mdmc_average='global'
+    ),
+        IoU=dict(
+            num_classes=n_classes,
+    ),
+        ConfusionMatrix=dict()))
