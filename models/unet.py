@@ -1,14 +1,10 @@
-import torchmetrics
-from torch.nn import functional as F
-
-
 from models.base import BASE_LitModule
 from models.custom_layers.unet_convs import *
 
 
-class Unet_Voc(BASE_LitModule):
+class Unet(BASE_LitModule):
     def __init__(self, config, bilinear=True):
-        super(Unet_Voc, self).__init__(config)
+        super(Unet, self).__init__(config)
         self.n_channels = self.config.n_channels
         self.n_classes = self.config.n_classes
         self.bilinear = self.config.bilinear

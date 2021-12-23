@@ -2,13 +2,16 @@ from pytorch_lightning import LightningModule
 from kornia.losses import DiceLoss
 from utils.agent_utils import import_class
 
-class BASE_LitModule(LightningModule):
+# TODO implement DINO
+
+
+class DINO(LightningModule):
 
     def __init__(self, config):
         '''method used to define our model parameters'''
         super().__init__()
         self.config = config
-        
+
         # loss
         self.loss = DiceLoss()
 
@@ -40,7 +43,7 @@ class BASE_LitModule(LightningModule):
 
         # Log loss and metric
         self.log('test/loss', loss)
-        
+
         return {"logits": logits}
 
     def configure_optimizers(self):
@@ -48,7 +51,8 @@ class BASE_LitModule(LightningModule):
         name, params = next(iter(self.config.optimizer.items()))
         name = name.replace('_', '.')
         optimizer_cls = import_class(name)
-        optimizer = optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.lr, **params)
+        optimizer = optimizer_cls(
+            filter(lambda p: p.requires_grad, self.parameters()), lr=self.lr, **params)
         return optimizer
 
     def _get_preds_loss_accuracy(self, batch):

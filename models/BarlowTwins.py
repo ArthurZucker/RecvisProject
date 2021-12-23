@@ -2,7 +2,9 @@ from pytorch_lightning import LightningModule
 from kornia.losses import DiceLoss
 from utils.agent_utils import import_class
 
-class BASE_LitModule(LightningModule):
+# TODO implement BarlowTwins
+
+class BarlowTwins(LightningModule):
 
     def __init__(self, config):
         '''method used to define our model parameters'''

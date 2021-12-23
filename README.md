@@ -15,6 +15,8 @@ Self-supervised learning using transformers \cite{dosovitskiy2021image} has show
 - [ ] Visualize effective receptive field
 - [ ] Create Transformer network
 - [ ] Create BarlowTwins agent 
+- [ ] BoTnet
+- [ ] SwinTransformer
 - [ ] Implement feature map visualization 
 
 ## Defining baseline : 

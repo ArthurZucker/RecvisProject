@@ -8,12 +8,6 @@ import wandb
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import RocCurveDisplay
 
-from torchmetrics import IoU
-
-# FIXME iou = IoU(num_classes=2)
-# FIXME iou(pred, target)
-# TODO https://torchmetrics.readthedocs.io/en/stable/references/modules.html#base-class MODULE METRICS
-# FIXME IOU ACCURACY 
 
 class IOUMetric:
     """

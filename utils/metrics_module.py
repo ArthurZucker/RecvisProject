@@ -3,6 +3,9 @@ from utils.constant import PASCAL_VOC_classes
 import wandb
 import numpy as np
 import torch
+"""
+https://torchmetrics.readthedocs.io/en/stable/references/modules.html#base-class MODULE METRICS
+"""
 
 class MetricsModule():
 
@@ -67,8 +70,6 @@ class MetricsModule():
                             for idx, val in enumerate(metric)]
                     table = wandb.Table(columns=["label", "value"], data=data)
                     wandb.log({name + k: table})
-                    # wandb.log(
-                    #     {name + k: wandb.plot.bar(table, "label", "value")})
                 else:
                     logger.log_metrics({name + k: metric})
 
