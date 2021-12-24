@@ -35,7 +35,7 @@ class hparams:
     # agent to use for training
     agent: str = "Base_Trainer"
     # architecture to use
-    arch: str = "unet_voc"
+    arch: str = "botnet50"
     # data module
     datamodule: str = "VOCSegmentationDataModule"
     # classes
@@ -45,7 +45,7 @@ class hparams:
     # use bilinear interpolation
     bilinear: bool = True
     # batch size for training
-    batch_size: int = 16
+    batch_size: int = 2
     # split value
     split_val: float = 0.2
     # validation frequency
@@ -57,11 +57,11 @@ class hparams:
     # save directory
     save_dir: str = osp.join(os.getcwd(), "wandb")
     # number of workers for dataloaders
-    num_workers: int = 16
+    num_workers: int = 1
     # tune the model on first run
     tune: bool = False
     # number or gpu
-    gpu: int = 1
+    gpu: int = 0
     # precision
     precision: int = 32
     # metrics
