@@ -192,7 +192,7 @@ class LogERFVisualizationCallback(Callback):
         # FIXME input can be either gradient or list of gradients
         return self.hooks[name] # returns the output of the feature map
 
-
+        
 class LogAttentionVisualizationCallback(Callback):
     # TODO add attention vizualization for training and validation data
     # should probably use hooks to keep the model structure
