@@ -179,7 +179,8 @@ class LogERFVisualizationCallback(Callback):
                             0
                         ]
                         self.gradient[name].append(
-                            torch.mean(gradient_wrt_ipt.detach(), axis=(0, 1))
+                            # average over the batches but sum over the channels 
+                            torch.mean(torch.sum(gradient_wrt_ipt.detach(), axis= 1),axis=0)
                             .cpu()
                             .numpy()
                         )
@@ -194,6 +195,7 @@ class LogERFVisualizationCallback(Callback):
                 heatmaps = []
                 for name in self.gradient:
                     plt.ioff()
+                    # average the gradients over the batches but sum it over the channels
                     heatmap = np.squeeze(
                         np.mean(np.abs(np.array(self.gradient[name])), axis=0)
                     )
