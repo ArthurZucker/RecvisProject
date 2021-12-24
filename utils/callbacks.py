@@ -190,7 +190,7 @@ class LogERFVisualizationCallback(Callback):
                         # print(f"Tried to compute gradient error : {e}")
                         pass
 
-            if batch_idx == self.config.batch_size:
+            if batch_idx == self.config.batch_size and trainer.optimizer.global_step == 0:
                 heatmaps = []
                 for name in self.gradient:
                     plt.ioff()
