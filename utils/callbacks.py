@@ -195,7 +195,7 @@ class LogERFVisualizationCallback(Callback):
                 for name in self.gradient:
                     plt.ioff()
 
-                    heatmap = np.squeeze(np.mean(np.array(self.gradient[name]), axis=0))
+                    heatmap = np.squeeze(np.mean(np.abs(np.array(self.gradient[name]), axis=0)))
                     ax = sns.heatmap(heatmap, cmap="viridis")
                     plt.legend([], [], frameon=False)
 
