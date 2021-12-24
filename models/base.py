@@ -2,7 +2,7 @@ from kornia.losses import DiceLoss
 from pytorch_lightning import LightningModule
 from utils.agent_utils import import_class
 from utils.hooks import get_activation
-
+import torch
 
 class BASE_LitModule(LightningModule):
 
@@ -15,7 +15,11 @@ class BASE_LitModule(LightningModule):
         # loss
         name, params = next(iter(self.config.loss.items()))
         name = name.replace('_', '.')
+        if "segmentation.models" in name:
+            name = name.replace("segmentation.models", "segmentation_models")
         loss_cls = import_class(name)
+        if "weight" in params:
+            params["weight"] = torch.tensor(params["weight"])
         self.loss = loss_cls(**params)
 
         # optimizer parameters
