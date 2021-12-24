@@ -11,6 +11,7 @@ class Unet(BASE_LitModule):
         super(Unet, self).__init__(config)
         self.n_channels = self.config.n_channels
         self.n_classes = self.config.n_classes
+
         self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)
         self.down2 = Down(128, 256)
@@ -21,7 +22,10 @@ class Unet(BASE_LitModule):
         self.up2 = Up(512, 256 // factor, bilinear)
         self.up3 = Up(256, 128 // factor, bilinear)
         self.up4 = Up(128, 64, bilinear)
-        self.outc = OutConv(64, self.n_classes)
+        self.fc = OutConv(64, self.n_classes)
+
+        checkpoint = 'https://github.com/milesial/Pytorch-UNet/releases/download/v2.0/unet_carvana_scale0.5_epoch1.pth'
+        self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True), strict=False)
 
     def forward(self, x):
         
@@ -34,5 +38,5 @@ class Unet(BASE_LitModule):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
-        logits = self.outc(x)
+        logits = self.fc(x)
         return logits
