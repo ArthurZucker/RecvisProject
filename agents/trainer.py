@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils.agent_utils import get_datamodule, get_net
-from utils.callbacks import LogPredictionsCallback
+from utils.callbacks import LogERFVisualizationCallback, LogPredictionsCallback
 from utils.logger import init_logger
 
 
@@ -15,7 +15,6 @@ class Base_Trainer:
         print(self.model)
         self.wb_run.watch(self.model)
         self.datamodule = get_datamodule(config)
-        
         self.logger = init_logger("Trainer", "DEBUG")
 
     def run(self):
@@ -56,7 +55,7 @@ class Base_Trainer:
                 LogPredictionsCallback(),
                 LogERFVisualizationCallback(self.config),
                 EarlyStopping(monitor="val_loss"),
-                RichProgressBar()
+                RichProgressBar(),
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
@@ -64,8 +63,9 @@ class Base_Trainer:
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
-            accumulate_grad_batches = self.config.accumulate_size,
-            log_every_n_steps = 1
+            accumulate_grad_batches=self.config.accumulate_size,
+            log_every_n_steps=1,
+            # detect_anomaly = True,
         )
         trainer.logger = self.wb_run
         trainer.fit(self.model, datamodule=self.datamodule)

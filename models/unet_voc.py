@@ -4,11 +4,13 @@ from torch.nn import functional as F
 
 from models.base import BASE_LitModule
 from models.custom_layers.unet_convs import *
+from utils.hooks import get_activation
 
 
 class Unet_Voc(BASE_LitModule):
     def __init__(self, config, bilinear=True):
         super(Unet_Voc, self).__init__(config)
+        self.config = config
         self.n_channels = config.n_channels
         self.n_classes = config.n_classes
         self.bilinear = config.bilinear
@@ -35,7 +37,9 @@ class Unet_Voc(BASE_LitModule):
         # requires the function to have hyper parameters __init__(self,...)
         # self.save_hyperparameters()
 
+
     def forward(self, x):
+        
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
