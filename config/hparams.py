@@ -35,7 +35,7 @@ class hparams:
     # agent to use for training
     agent: str = "Base_Trainer"
     # architecture to use
-    arch: str = "botnet50"
+    arch: str = "unet"
     # data module
     datamodule: str = "VOCSegmentationDataModule"
     # classes
@@ -51,7 +51,7 @@ class hparams:
     # validation frequency
     val_freq: int = 1
     # developpment mode, only run 1 batch of train val and test
-    dev_run: bool = True
+    dev_run: bool = False
     # gradient accumulation batch sier
     accumulate_size: int = 64
     # save directory
@@ -63,7 +63,11 @@ class hparams:
     # number or gpu
     gpu: int = 0
     # precision
-    precision: int = 32
+    precision: int = 16
+    # number of effective receptive fields to log
+    nb_erf_tolog: int = 10
+    # index of the layers to use for the receptive field visualization
+    layers: List[int] = list_field(64,80,95)
     # metrics
     metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
         num_classes=n_classes, average="weighted", mdmc_average='global'
@@ -74,13 +78,14 @@ class hparams:
         Precision=dict(
             num_classes=n_classes, average="weighted", mdmc_average='global'
     ),
-        AveragePrecision=dict(
-            num_classes=n_classes, average="weighted", 
-    ),
+    #     AveragePrecision=dict(
+    #         num_classes=n_classes, average="weighted", 
+    # ),
         IoU=dict(
             num_classes=n_classes,
-    ),
-        ConfusionMatrix=dict()))
+    )))
+        # ConfusionMatrix=dict()))
+
     # optimizer
     optimizer: Dict[str, Dict[str, str]] = dict_field(dict(torch_optim_SGD=
                                                         dict()))

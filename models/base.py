@@ -1,6 +1,8 @@
-from pytorch_lightning import LightningModule
 from kornia.losses import DiceLoss
+from pytorch_lightning import LightningModule
 from utils.agent_utils import import_class
+from utils.hooks import get_activation
+
 
 class BASE_LitModule(LightningModule):
 
@@ -54,6 +56,21 @@ class BASE_LitModule(LightningModule):
     def _get_preds_loss_accuracy(self, batch):
         '''convenience function since train/valid/test steps are similar'''
         x, y = batch
+        x.requires_grad_(True)
         logits = self(x)
         loss = self.loss(logits, y)
         return loss, logits.detach()
+    
+    def _register_layer_hooks(self):
+        self.hooks = []
+        layers = self.config.layers #TODO only use those layers not every layer
+        named_layers = dict(self.named_modules())
+        self.features = {idx:[] for idx, i in enumerate(named_layers.keys()) if idx in layers}
+        for i,k in enumerate(named_layers):
+            if i in layers :
+                self.hooks.append(named_layers[k].register_forward_hook(get_activation(i,self.features)))
+                # named_layers[k].retain_grad()
+                
+    def backward(self, loss, optimizer, optimizer_idx,) -> None:
+        loss.backward(retain_graph = True)
+        

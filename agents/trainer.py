@@ -1,8 +1,8 @@
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils.agent_utils import get_datamodule, get_net
-from utils.callbacks import LogPredictionsCallback, LogMetricsCallback
+from utils.callbacks import LogERFVisualizationCallback, LogPredictionsCallback, LogMetricsCallback
 from utils.logger import init_logger
 
 
@@ -15,27 +15,32 @@ class Base_Trainer:
         print(self.model)
         self.wb_run.watch(self.model)
         self.datamodule = get_datamodule(config)
-        
         self.logger = init_logger("Trainer", "DEBUG")
-        
+
     def run(self):
         if self.config.tune:
             trainer = pl.Trainer(
-                logger=self.wb_run, gpus=self.config.gpu, auto_scale_batch_size= "power", accelerator="auto"
+                logger=self.wb_run,
+                gpus=self.config.gpu,
+                auto_scale_batch_size="power",
+                accelerator="auto",
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
             trainer = pl.Trainer(
-                logger=self.wb_run, gpus=self.config.gpu, auto_lr_find=True, accelerator="auto"
+                logger=self.wb_run,
+                gpus=self.config.gpu,
+                auto_lr_find=True,
+                accelerator="auto",
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
         
-        checkpoint_callback = ModelCheckpoint(monitor="val/iou", mode="max")
+        checkpoint_callback = ModelCheckpoint(monitor="val/loss", mode="max")
 
-        # TODO feature hook for feature fizualization, for every 
-        # should be implemented as a callback? 
-        # self.activation = np.array([])        
+        # TODO feature hook for feature fizualization, for every
+        # should be implemented as a callback?
+        # self.activation = np.array([])
         # self.feature_hook = self.model.net.fc.register_forward_hook(self.getActivation(f'{self.model.net.fc}'))
 
         # ------------------------
@@ -48,8 +53,10 @@ class Base_Trainer:
             callbacks=[
                 checkpoint_callback,  # our model checkpoint callback
                 LogPredictionsCallback(),
+                LogERFVisualizationCallback(self.config),
+                RichProgressBar(),
                 LogMetricsCallback(self.config),
-                EarlyStopping(monitor="val/iou"),
+                EarlyStopping(monitor="val/loss", patience=4),
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
@@ -57,11 +64,10 @@ class Base_Trainer:
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
-            accumulate_grad_batches = self.config.accumulate_size,
-            log_every_n_steps = 1,
-            val_check_interval = 1, # for debug
-            limit_val_batches = 1,
-            limit_train_batches = 1,
+            accumulate_grad_batches=self.config.accumulate_size,
+            log_every_n_steps=1,
+            # limit_train_batches=10
+            # detect_anomaly = True,
         )
         trainer.logger = self.wb_run
         trainer.fit(self.model, datamodule=self.datamodule)
