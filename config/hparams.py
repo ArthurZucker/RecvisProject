@@ -65,7 +65,7 @@ class hparams:
     # precision
     precision: int = 16
     # effective receptive fields log frequency
-    erf_freq: int = 2
+    erf_freq: int = 20
     # index of the layers to use for the receptive field visualization
     layers: List[int] = list_field(64,80,95)
     # metrics

@@ -214,7 +214,6 @@ class LogERFVisualizationCallback(Callback):
                     pl_module.rq_grad = False
 
     def input_grad(self, name):
-        # FIXME input can be either gradient or list of gradients
         return self.hooks[name]  # returns the output of the feature map
 
     
