@@ -63,11 +63,11 @@ class hparams:
     # number or gpu
     gpu: int = 1
     # precision
-    precision: int = 32
+    precision: int = 16
     # number of effective receptive fields to log
     nb_erf_tolog: int = 10
     # index of the layers to use for the receptive field visualization
-    layers: List[int] = list_field(6,16,32,80,96)
+    layers: List[int] = list_field(64,80,95)
     # metrics
     metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
         num_classes=n_classes, average="weighted", mdmc_average='global'
@@ -78,13 +78,14 @@ class hparams:
         Precision=dict(
             num_classes=n_classes, average="weighted", mdmc_average='global'
     ),
-        AveragePrecision=dict(
-            num_classes=n_classes, average="weighted", 
-    ),
+    #     AveragePrecision=dict(
+    #         num_classes=n_classes, average="weighted", 
+    # ),
         IoU=dict(
             num_classes=n_classes,
-    ),
-        ConfusionMatrix=dict()))
+    )))
+        # ConfusionMatrix=dict()))
+
     # optimizer
     optimizer: Dict[str, Dict[str, str]] = dict_field(dict(torch_optim_SGD=
                                                         dict()))

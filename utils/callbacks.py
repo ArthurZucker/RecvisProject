@@ -1,17 +1,14 @@
-from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
-import PIL
+import seaborn as sns
 import torch
 import wandb
 from pytorch_lightning.callbacks import Callback
-import numpy as np
-import torch
-import seaborn as sns
+from torch.autograd import grad
+
 from utils.constant import PASCAL_VOC_classes
 from utils.metrics_module import MetricsModule
-
 
 
 class LogPredictionsCallback(Callback):
@@ -85,36 +82,47 @@ class LogPredictionsCallback(Callback):
 
 
 class LogMetricsCallback(Callback):
-
     def __init__(self, config):
-        self.metrics_module_train = MetricsModule("train", config.metrics, config.n_classes)
-        self.metrics_module_validation = MetricsModule("val", config.metrics)
+        self.config = config
+
+    def on_fit_start(
+        self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
+    ) -> None:
+        device = pl_module.device
+
+        self.metrics_module_train = MetricsModule(
+            "train", self.config.metrics, device, self.config.n_classes
+        )
+
+        self.metrics_module_validation = MetricsModule(
+            "val", self.config.metrics, device
+        )
 
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the train batch ends."""
 
-        x, y = batch
+        _, y = batch
         self.metrics_module_train.update_metrics(outputs["logits"], y)
 
     def on_train_epoch_end(self, trainer, pl_module):
         """Called when the train epoch ends."""
 
-        self.metrics_module_train.log_metrics("train/", trainer.logger)
+        self.metrics_module_train.log_metrics("train/", pl_module)
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the validation batch ends."""
 
-        x, y = batch
+        _, y = batch
         self.metrics_module_validation.update_metrics(outputs["logits"], y)
 
     def on_validation_epoch_end(self, trainer, pl_module):
         """Called when the validation epoch ends."""
 
-        self.metrics_module_validation.log_metrics("val/", trainer.logger)
+        self.metrics_module_validation.log_metrics("val/", pl_module)
 
 
 class LogERFVisualizationCallback(Callback):
@@ -151,15 +159,18 @@ class LogERFVisualizationCallback(Callback):
     def on_train_end(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
-        pl_module._register_layer_hooks()
-        for hooks in pl_module.hooks:
-            hooks.remove()
-        self.gradient = {i: [] for i in self.layers}
+        if pl_module.current_epoch == 0:
+            for name in self.layers:
+                self.hooks[name].detach()
+            for hooks in pl_module.hooks:
+                hooks.remove()
+            self.gradient = {i: [] for i in self.layers}
 
     def on_train_start(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
-        pl_module._register_layer_hooks()
+        if pl_module.current_epoch == 0:
+            pl_module._register_layer_hooks()
 
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
@@ -168,7 +179,7 @@ class LogERFVisualizationCallback(Callback):
         # here, compute the gradient of the various ouputs with respect
         # to the input feature map, average it over the validation batches
         # until we have the number of images we required
-        if not trainer.sanity_checking:
+        if not trainer.sanity_checking and pl_module.current_epoch == 0:
             self.hooks = pl_module.features
             x, _ = batch
             for name in self.layers:
@@ -190,15 +201,14 @@ class LogERFVisualizationCallback(Callback):
                         # print(f"Tried to compute gradient error : {e}")
                         pass
 
-            if batch_idx == self.config.batch_size and trainer.optimizer.global_step == 0:
+            if batch_idx == trainer.limit_train_batches-1:
                 heatmaps = []
                 for name in self.gradient:
                     plt.ioff()
-
-                    heatmap = np.squeeze(np.mean(np.abs(np.array(self.gradient[name]), axis=0)))
-                    ax = sns.heatmap(heatmap, cmap="viridis")
-                    plt.legend([], [], frameon=False)
-
+                    heatmap = np.squeeze(
+                        np.mean(np.abs(np.array(self.gradient[name])), axis=0)
+                    )
+                    ax = sns.heatmap(heatmap, cmap="viridis",cbar=False)
                     plt.title(
                         f"Layer {[ k for k,v in trainer.model.named_modules()][name]}"
                     )
@@ -207,11 +217,18 @@ class LogERFVisualizationCallback(Callback):
                     plt.close()
                 wandb.log({f"heatmaps": heatmaps})
                 self.gradient = {i: [] for i in self.layers}
+                
+                if pl_module.current_epoch == 0:
+                    for name in self.layers:
+                        del self.hooks[name][0]
+                    for hooks in pl_module.hooks:
+                        hooks.remove()
+                    self.gradient = {i: [] for i in self.layers}
+                
 
     def input_grad(self, name):
         # FIXME input can be either gradient or list of gradients
         return self.hooks[name]  # returns the output of the feature map
-
 
 
 class LogAttentionVisualizationCallback(Callback):

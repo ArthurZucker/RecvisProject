@@ -9,23 +9,24 @@ https://torchmetrics.readthedocs.io/en/stable/references/modules.html#base-class
 
 class MetricsModule():
 
-    def __init__(self, set_name, config_metrics, n_classes=None) -> None:
+    def __init__(self, set_name, config_metrics, device, n_classes=None) -> None:
         """
         metrics : list of name metrics e.g ["Accuracy", "IoU"]
         set_name: val/train/test
         """
+        self.device = device
         dict_metrics = {}
         if set_name != "train":
             for name, params in config_metrics.items():
                 if name != "ConfusionMatrix":
-                    instance = import_class("torchmetrics." + name)(**params)
-                    dict_metrics[name.lower()] = instance
-                else:
+                    instance = import_class("torchmetrics." + name)(compute_on_step=False, **params)
+                    dict_metrics[name.lower()] = instance.to(device)
+                else :
                     dict_metrics["confusionmatrix"] = (
                         np.zeros(1), np.zeros(1))
         else:
             dict_metrics["iou"] = import_class(
-                "torchmetrics.IoU")(num_classes=n_classes)
+                "torchmetrics.IoU")(compute_on_step=False, num_classes=n_classes).to(device)
 
         self.dict_metrics = dict_metrics
 
@@ -47,7 +48,7 @@ class MetricsModule():
                 # metric on current batch
                 m(preds, y)  # update metrics (torchmetrics method)
 
-    def log_metrics(self, name, logger):
+    def log_metrics(self, name, pl_module):
 
         for k, m in self.dict_metrics.items():
 
@@ -65,13 +66,15 @@ class MetricsModule():
             else:
                 # metric on all batches using custom accumulation
                 metric = m.compute()
+
                 if metric.numel() != 1:
                     data = [[PASCAL_VOC_classes[idx], val]
                             for idx, val in enumerate(metric)]
                     table = wandb.Table(columns=["label", "value"], data=data)
                     wandb.log({name + k: table})
                 else:
-                    logger.log_metrics({name + k: metric})
+                    pl_module.log(name + k, metric)
 
                 # Reseting internal state such that metric ready for new data
                 m.reset()
+                m.to(self.device)

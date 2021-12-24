@@ -36,7 +36,7 @@ class Base_Trainer:
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
         
-        checkpoint_callback = ModelCheckpoint(monitor="val/iou", mode="max")
+        checkpoint_callback = ModelCheckpoint(monitor="val/loss", mode="max")
 
         # TODO feature hook for feature fizualization, for every
         # should be implemented as a callback?
@@ -56,7 +56,7 @@ class Base_Trainer:
                 LogERFVisualizationCallback(self.config),
                 RichProgressBar(),
                 LogMetricsCallback(self.config),
-                EarlyStopping(monitor="val/iou"),
+                EarlyStopping(monitor="val/loss"),
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
@@ -66,6 +66,7 @@ class Base_Trainer:
             fast_dev_run=self.config.dev_run,
             accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
+            limit_train_batches=10
             # detect_anomaly = True,
         )
         trainer.logger = self.wb_run

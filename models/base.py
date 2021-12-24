@@ -65,7 +65,7 @@ class BASE_LitModule(LightningModule):
         self.hooks = []
         layers = self.config.layers #TODO only use those layers not every layer
         named_layers = dict(self.named_modules())
-        self.features = {idx:[] for idx,i in enumerate(named_layers.keys()) if idx in layers}
+        self.features = {idx:[] for idx, i in enumerate(named_layers.keys()) if idx in layers}
         for i,k in enumerate(named_layers):
             if i in layers :
                 self.hooks.append(named_layers[k].register_forward_hook(get_activation(i,self.features)))
