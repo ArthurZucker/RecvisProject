@@ -1,5 +1,5 @@
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils.agent_utils import get_datamodule, get_net
 from utils.callbacks import LogPredictionsCallback
@@ -49,6 +49,7 @@ class Base_Trainer:
                 checkpoint_callback,  # our model checkpoint callback
                 LogPredictionsCallback(),
                 EarlyStopping(monitor="val_loss"),
+                RichProgressBar()
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
