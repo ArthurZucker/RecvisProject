@@ -35,7 +35,7 @@ class hparams:
     # agent to use for training
     agent: str = "Base_Trainer"
     # architecture to use
-    arch: str = "unet_voc"
+    arch: str = "unet"
     # data module
     datamodule: str = "VOCSegmentationDataModule"
     # classes
