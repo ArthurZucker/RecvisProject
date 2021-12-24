@@ -220,7 +220,7 @@ class LogERFVisualizationCallback(Callback):
                 
                 if pl_module.current_epoch == 0:
                     for name in self.layers:
-                        del self.hooks[name][0]
+                        del self.hooks[name]
                     for hooks in pl_module.hooks:
                         hooks.remove()
                     self.gradient = {i: [] for i in self.layers}

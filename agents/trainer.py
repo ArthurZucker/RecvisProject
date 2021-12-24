@@ -56,7 +56,7 @@ class Base_Trainer:
                 LogERFVisualizationCallback(self.config),
                 RichProgressBar(),
                 LogMetricsCallback(self.config),
-                EarlyStopping(monitor="val/loss"),
+                EarlyStopping(monitor="val/loss", patience=4),
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
@@ -66,7 +66,7 @@ class Base_Trainer:
             fast_dev_run=self.config.dev_run,
             accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
-            limit_train_batches=10
+            # limit_train_batches=10
             # detect_anomaly = True,
         )
         trainer.logger = self.wb_run
