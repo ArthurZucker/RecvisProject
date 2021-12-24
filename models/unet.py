@@ -1,20 +1,15 @@
-import torchmetrics
-from torch.nn import functional as F
-
-
 from models.base import BASE_LitModule
 from models.custom_layers.unet_convs import *
 from utils.hooks import get_activation
 
 
-class Unet_Voc(BASE_LitModule):
+class Unet(BASE_LitModule):
     def __init__(self, config, bilinear=True):
-        super(Unet_Voc, self).__init__(config)
+        super(Unet, self).__init__(config)
+        self.n_channels = self.config.n_channels
+        self.n_classes = self.config.n_classes
+        self.bilinear = self.config.bilinear
         self.config = config
-        self.n_channels = config.n_channels
-        self.n_classes = config.n_classes
-        self.bilinear = config.bilinear
-
         self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)
         self.down2 = Down(128, 256)
@@ -26,17 +21,6 @@ class Unet_Voc(BASE_LitModule):
         self.up3 = Up(256, 128 // factor, bilinear)
         self.up4 = Up(128, 64, bilinear)
         self.outc = OutConv(64, self.n_classes)
-
-        # loss
-        # self.loss = self.config.loss
-
-        # metrics
-        self.accuracy = torchmetrics.Accuracy()
-
-        # save hyper-parameters to self.hparams (auto-logged by W&B)
-        # requires the function to have hyper parameters __init__(self,...)
-        # self.save_hyperparameters()
-
 
     def forward(self, x):
         

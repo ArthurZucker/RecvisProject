@@ -1,10 +1,10 @@
+import os
+import os.path as osp
 from dataclasses import dataclass
 from posixpath import split
-from typing import List
-import numpy as np
-from simple_parsing.helpers import list_field
+from typing import List, Dict
 
-import os, os.path as osp
+from simple_parsing.helpers import dict_field, list_field
 
 """Dataclass allows to have arguments and easily use wandb's weep module.
 
@@ -63,8 +63,28 @@ class hparams:
     # number or gpu
     gpu: int = 1
     # precision
-    precision: int = 16
+    precision: int = 32
     # number of effective receptive fields to log
     nb_erf_tolog: int = 10
     # index of the layers to use for the receptive field visualization
     layers: List[int] = list_field(6,16,32,80,96)
+    # metrics
+    metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
+        num_classes=n_classes, average="weighted", mdmc_average='global'
+    ),
+        Recall=dict(
+            num_classes=n_classes, average="weighted", mdmc_average='global'
+    ),
+        Precision=dict(
+            num_classes=n_classes, average="weighted", mdmc_average='global'
+    ),
+        AveragePrecision=dict(
+            num_classes=n_classes, average="weighted", 
+    ),
+        IoU=dict(
+            num_classes=n_classes,
+    ),
+        ConfusionMatrix=dict()))
+    # optimizer
+    optimizer: Dict[str, Dict[str, str]] = dict_field(dict(torch_optim_SGD=
+                                                        dict()))

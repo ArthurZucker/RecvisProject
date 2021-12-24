@@ -6,37 +6,12 @@ import PIL
 import torch
 import wandb
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.loggers import WandbLogger
-from torch.autograd import grad
-
-from utils.transforms import UnNormalize
-
+import numpy as np
+import torch
 import seaborn as sns
+from utils.constant import PASCAL_VOC_classes
+from utils.metrics_module import MetricsModule
 
-PASCAL_VOC_classes = {
-    0: "background",
-    1: "airplane",
-    2: "bicycle",
-    3: "bird",
-    4: "boat",
-    5: "bottle",
-    6: "bus",
-    7: "car",
-    8: "cat",
-    9: "chair",
-    10: "cow",
-    11: "table",
-    12: "dog",
-    13: "horse",
-    14: "motorbike",
-    15: "person",
-    16: "potted_plant",
-    17: "sheep",
-    18: "sofa",
-    19: "train",
-    20: "tv",
-    # 21: "void",
-}
 
 
 class LogPredictionsCallback(Callback):
@@ -70,10 +45,10 @@ class LogPredictionsCallback(Callback):
         images = x[:n].cpu()
         ground_truth = np.array(y[:n].cpu())
 
-        if name == "train":
-            outputs = outputs["preds"]  # preds
+        logits = outputs["logits"]  # preds
+        preds = torch.argmax(logits, dim=1)
 
-        predictions = np.array(outputs[:n].cpu())
+        predictions = np.array(preds[:n].cpu())
 
         samples = []
 
@@ -107,6 +82,39 @@ class LogPredictionsCallback(Callback):
                 )
             )
         wandb.log({name: samples})
+
+
+class LogMetricsCallback(Callback):
+
+    def __init__(self, config):
+        self.metrics_module_train = MetricsModule("train", config.metrics, config.n_classes)
+        self.metrics_module_validation = MetricsModule("val", config.metrics)
+
+    def on_train_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the train batch ends."""
+
+        x, y = batch
+        self.metrics_module_train.update_metrics(outputs["logits"], y)
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        """Called when the train epoch ends."""
+
+        self.metrics_module_train.log_metrics("train/", trainer.logger)
+
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the validation batch ends."""
+
+        x, y = batch
+        self.metrics_module_validation.update_metrics(outputs["logits"], y)
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        """Called when the validation epoch ends."""
+
+        self.metrics_module_validation.log_metrics("val/", trainer.logger)
 
 
 class LogERFVisualizationCallback(Callback):
@@ -203,6 +211,7 @@ class LogERFVisualizationCallback(Callback):
     def input_grad(self, name):
         # FIXME input can be either gradient or list of gradients
         return self.hooks[name]  # returns the output of the feature map
+
 
 
 class LogAttentionVisualizationCallback(Callback):
