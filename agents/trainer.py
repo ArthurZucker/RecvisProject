@@ -17,25 +17,31 @@ class Base_Trainer:
         self.datamodule = get_datamodule(config)
         
         self.logger = init_logger("Trainer", "DEBUG")
-        
+
     def run(self):
         if self.config.tune:
             trainer = pl.Trainer(
-                logger=self.wb_run, gpus=self.config.gpu, auto_scale_batch_size= "power", accelerator="auto"
+                logger=self.wb_run,
+                gpus=self.config.gpu,
+                auto_scale_batch_size="power",
+                accelerator="auto",
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
             trainer = pl.Trainer(
-                logger=self.wb_run, gpus=self.config.gpu, auto_lr_find=True, accelerator="auto"
+                logger=self.wb_run,
+                gpus=self.config.gpu,
+                auto_lr_find=True,
+                accelerator="auto",
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
-        
+
         checkpoint_callback = ModelCheckpoint(monitor="val_accuracy", mode="max")
 
-        # TODO feature hook for feature fizualization, for every 
-        # should be implemented as a callback? 
-        # self.activation = np.array([])        
+        # TODO feature hook for feature fizualization, for every
+        # should be implemented as a callback?
+        # self.activation = np.array([])
         # self.feature_hook = self.model.net.fc.register_forward_hook(self.getActivation(f'{self.model.net.fc}'))
 
         # ------------------------
