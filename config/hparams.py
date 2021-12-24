@@ -28,8 +28,11 @@ class hparams:
     max_epochs: int = 40
     # path to download pascal voc
     asset_path: str = osp.join(os.getcwd(), "assets")
-    # # loss to train the model
-    # loss: str = "CrossEntropy"
+    # ignore class 
+    ignore_index: int = 21
+    # loss to train the model
+    loss: Dict[str, Dict[str, str]] = dict_field(dict(torch_nn_CrossEntropyLoss=
+                                                        dict(ignore_index=ignore_index)))
     # learning rate
     lr: float = 0.02089296130854041
     # agent to use for training
@@ -45,7 +48,7 @@ class hparams:
     # use bilinear interpolation
     bilinear: bool = True
     # batch size for training
-    batch_size: int = 16
+    batch_size: int = 2
     # split value
     split_val: float = 0.2
     # validation frequency
@@ -57,11 +60,11 @@ class hparams:
     # save directory
     save_dir: str = osp.join(os.getcwd(), "wandb")
     # number of workers for dataloaders
-    num_workers: int = 16
+    num_workers: int = 1
     # tune the model on first run
     tune: bool = False
     # number or gpu
-    gpu: int = 1
+    gpu: int = 0
     # precision
     precision: int = 16
     # effective receptive fields log frequency
@@ -70,19 +73,19 @@ class hparams:
     layers: List[int] = list_field(64,80,95)
     # metrics
     metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
-        num_classes=n_classes, average="weighted", mdmc_average='global'
+        num_classes=n_classes, average="weighted", mdmc_average='global', ignore_index=ignore_index
     ),
         Recall=dict(
-            num_classes=n_classes, average="weighted", mdmc_average='global'
+            num_classes=n_classes, average="weighted", mdmc_average='global', ignore_index=ignore_index
     ),
         Precision=dict(
-            num_classes=n_classes, average="weighted", mdmc_average='global'
+            num_classes=n_classes, average="weighted", mdmc_average='global', ignore_index=ignore_index
     ),
     #     AveragePrecision=dict(
-    #         num_classes=n_classes, average="weighted", 
+    #         num_classes=n_classes, average="weighted", ignore_index=ignore_index
     # ),
         IoU=dict(
-            num_classes=n_classes,
+            num_classes=n_classes, ignore_index=ignore_index
     )))
         # ConfusionMatrix=dict()))
 
