@@ -12,7 +12,10 @@ class BASE_LitModule(LightningModule):
         self.config = config
         
         # loss
-        self.loss = DiceLoss()
+        name, params = next(iter(self.config.loss.items()))
+        name = name.replace('_', '.')
+        loss_cls = import_class(name)
+        self.loss = loss_cls(**params)
 
         # optimizer parameters
         self.lr = config.lr
@@ -71,6 +74,6 @@ class BASE_LitModule(LightningModule):
                 self.hooks.append(named_layers[k].register_forward_hook(get_activation(i,self.features)))
                 # named_layers[k].retain_grad()
                 
-    def backward(self, loss, optimizer, optimizer_idx,) -> None:
+    def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(retain_graph = True)
         

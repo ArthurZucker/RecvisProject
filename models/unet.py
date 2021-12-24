@@ -8,7 +8,7 @@ class Unet(BASE_LitModule):
         super(Unet, self).__init__(config)
         self.n_channels = self.config.n_channels
         self.n_classes = self.config.n_classes
-        self.bilinear = self.config.bilinear
+
         self.config = config
         self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)

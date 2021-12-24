@@ -28,8 +28,11 @@ class hparams:
     max_epochs: int = 40
     # path to download pascal voc
     asset_path: str = osp.join(os.getcwd(), "assets")
+    # ignore class 
+    ignore_index: int = 21
     # loss to train the model
-    loss: str = "CrossEntropy"
+    loss: Dict[str, Dict[str, str]] = dict_field(dict(torch_nn_CrossEntropyLoss=
+                                                        dict(ignore_index=ignore_index)))
     # learning rate
     lr: float = 0.02089296130854041
     # agent to use for training
@@ -70,19 +73,19 @@ class hparams:
     layers: List[int] = list_field(64,80,95)
     # metrics
     metrics: Dict[str, Dict[str, str]] = dict_field(dict(Accuracy=dict(
-        num_classes=n_classes, average="weighted", mdmc_average='global'
+        num_classes=n_classes, average="weighted", mdmc_average='global', ignore_index=ignore_index
     ),
         Recall=dict(
-            num_classes=n_classes, average="weighted", mdmc_average='global'
+            num_classes=n_classes, average="weighted", mdmc_average='global', ignore_index=ignore_index
     ),
         Precision=dict(
-            num_classes=n_classes, average="weighted", mdmc_average='global'
+            num_classes=n_classes, average="weighted", mdmc_average='global', ignore_index=ignore_index
     ),
     #     AveragePrecision=dict(
-    #         num_classes=n_classes, average="weighted", 
+    #         num_classes=n_classes, average="weighted", ignore_index=ignore_index
     # ),
         IoU=dict(
-            num_classes=n_classes,
+            num_classes=n_classes, ignore_index=ignore_index
     )))
         # ConfusionMatrix=dict()))
 
