@@ -54,6 +54,7 @@ class Base_Trainer:
             callbacks=[
                 checkpoint_callback,  # our model checkpoint callback
                 LogPredictionsCallback(),
+                LogERFVisualizationCallback(self.config),
                 EarlyStopping(monitor="val_loss"),
                 RichProgressBar()
             ],  # logging of sample predictions
