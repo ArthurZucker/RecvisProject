@@ -54,7 +54,7 @@ class Base_Trainer:
                 LogERFVisualizationCallback(self.config),
                 RichProgressBar(),
                 LogMetricsCallback(self.config),
-                EarlyStopping(monitor="val/loss", patience=4),
+                EarlyStopping(monitor="val/loss", patience=3),
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
