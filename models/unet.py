@@ -2,6 +2,9 @@ from models.base import BASE_LitModule
 from models.custom_layers.unet_convs import *
 from utils.hooks import get_activation
 
+"""
+https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
+"""
 
 class Unet(BASE_LitModule):
     def __init__(self, config, bilinear=True):
@@ -9,7 +12,6 @@ class Unet(BASE_LitModule):
         self.n_channels = self.config.n_channels
         self.n_classes = self.config.n_classes
         self.bilinear = self.config.bilinear
-        self.config = config
         self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)
         self.down2 = Down(128, 256)

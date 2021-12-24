@@ -12,11 +12,11 @@ class Base_Trainer:
         self.config = config
         self.wb_run = run
         self.model = get_net(config)
-        print(self.model)
+        # print(self.model)
         self.wb_run.watch(self.model)
         self.datamodule = get_datamodule(config)
         self.logger = init_logger("Trainer", "DEBUG")
-
+    
     def run(self):
         if self.config.tune:
             trainer = pl.Trainer(
@@ -36,8 +36,6 @@ class Base_Trainer:
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
         
-        checkpoint_callback = ModelCheckpoint(monitor="val/loss", mode="max")
-
         # TODO feature hook for feature fizualization, for every
         # should be implemented as a callback?
         # self.activation = np.array([])
@@ -51,7 +49,7 @@ class Base_Trainer:
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
             callbacks=[
-                checkpoint_callback,  # our model checkpoint callback
+                ModelCheckpoint(monitor="val/loss", mode="min"),  # our model checkpoint callback
                 LogPredictionsCallback(),
                 LogERFVisualizationCallback(self.config),
                 RichProgressBar(),

@@ -150,26 +150,14 @@ class LogERFVisualizationCallback(Callback):
         super().__init__()
         self.config = config
         self.layers = config.layers
-        self.nb_erf_tolog = config.nb_erf_tolog
         self.gradient = {i: [] for i in self.layers}
 
     # from different stages of the network)
     # Our implementation should be network independant
+    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx) -> None:
 
-    def on_train_end(
-        self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
-    ) -> None:
-        if pl_module.current_epoch == 0:
-            for name in self.layers:
-                self.hooks[name].detach()
-            for hooks in pl_module.hooks:
-                hooks.remove()
-            self.gradient = {i: [] for i in self.layers}
-
-    def on_train_start(
-        self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
-    ) -> None:
-        if pl_module.current_epoch == 0:
+        pl_module.rq_grad = True
+        if (pl_module.current_epoch%self.config.erf_freq == 0 and batch_idx == 0):
             pl_module._register_layer_hooks()
 
     def on_train_batch_end(
@@ -179,7 +167,7 @@ class LogERFVisualizationCallback(Callback):
         # here, compute the gradient of the various ouputs with respect
         # to the input feature map, average it over the validation batches
         # until we have the number of images we required
-        if not trainer.sanity_checking and pl_module.current_epoch == 0:
+        if not trainer.sanity_checking and pl_module.current_epoch%self.config.erf_freq == 0:
             self.hooks = pl_module.features
             x, _ = batch
             for name in self.layers:
@@ -195,13 +183,14 @@ class LogERFVisualizationCallback(Callback):
                             .cpu()
                             .numpy()
                         )
-                        self.hooks[name] = []  # reset the hooks for the batch
+                        del self.hooks[name]
+                        self.hooks[name] = []# reset the hooks for the batch
                     except Exception as e:
                         # the gradient can't be computed because of batchnorm, jsut ignore
                         # print(f"Tried to compute gradient error : {e}")
                         pass
 
-            if batch_idx == trainer.limit_train_batches-1:
+            if batch_idx == [trainer.limit_train_batches-1, self.config.batch_size][trainer.limit_train_batches>0]:
                 heatmaps = []
                 for name in self.gradient:
                     plt.ioff()
@@ -218,18 +207,17 @@ class LogERFVisualizationCallback(Callback):
                 wandb.log({f"heatmaps": heatmaps})
                 self.gradient = {i: [] for i in self.layers}
                 
-                if pl_module.current_epoch == 0:
-                    for name in self.layers:
-                        del self.hooks[name]
+                if pl_module.current_epoch %self.config.erf_freq == 0:
                     for hooks in pl_module.hooks:
                         hooks.remove()
                     self.gradient = {i: [] for i in self.layers}
-                
+                    pl_module.rq_grad = False
 
     def input_grad(self, name):
         # FIXME input can be either gradient or list of gradients
         return self.hooks[name]  # returns the output of the feature map
 
+    
 
 class LogAttentionVisualizationCallback(Callback):
     # TODO add attention vizualization for training and validation data

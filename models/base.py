@@ -10,7 +10,8 @@ class BASE_LitModule(LightningModule):
         '''method used to define our model parameters'''
         super().__init__()
         self.config = config
-        
+        self.rq_grad = False
+
         # loss
         self.loss = DiceLoss()
 
@@ -56,7 +57,7 @@ class BASE_LitModule(LightningModule):
     def _get_preds_loss_accuracy(self, batch):
         '''convenience function since train/valid/test steps are similar'''
         x, y = batch
-        x.requires_grad_(True)
+        x.requires_grad_(self.rq_grad)
         logits = self(x)
         loss = self.loss(logits, y)
         return loss, logits.detach()

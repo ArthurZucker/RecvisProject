@@ -3,7 +3,7 @@ import os.path as osp
 from dataclasses import dataclass
 from posixpath import split
 from typing import List, Dict
-
+import numpy as np
 from simple_parsing.helpers import dict_field, list_field
 
 """Dataclass allows to have arguments and easily use wandb's weep module.
@@ -23,13 +23,13 @@ class hparams:
     # projectname
     wandb_project: str = "test-sem-seg"
     # seed
-    seed_everything: float = 40
+    seed_everything: float = np.random.randint(10000)
     # maximum number of epochs
     max_epochs: int = 40
     # path to download pascal voc
     asset_path: str = osp.join(os.getcwd(), "assets")
-    # loss to train the model
-    loss: str = "CrossEntropy"
+    # # loss to train the model
+    # loss: str = "CrossEntropy"
     # learning rate
     lr: float = 0.02089296130854041
     # agent to use for training
@@ -52,8 +52,8 @@ class hparams:
     val_freq: int = 1
     # developpment mode, only run 1 batch of train val and test
     dev_run: bool = False
-    # gradient accumulation batch sier
-    accumulate_size: int = 64
+    # gradient accumulation batch size
+    accumulate_size: int = 32
     # save directory
     save_dir: str = osp.join(os.getcwd(), "wandb")
     # number of workers for dataloaders
@@ -64,8 +64,8 @@ class hparams:
     gpu: int = 1
     # precision
     precision: int = 16
-    # number of effective receptive fields to log
-    nb_erf_tolog: int = 10
+    # effective receptive fields log frequency
+    erf_freq: int = 2
     # index of the layers to use for the receptive field visualization
     layers: List[int] = list_field(64,80,95)
     # metrics
