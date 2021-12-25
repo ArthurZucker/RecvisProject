@@ -59,6 +59,19 @@ class BASE_LitModule(LightningModule):
         name = name.replace('_', '.')
         optimizer_cls = import_class(name)
         optimizer = optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.lr, **params)
+        
+        if self.config.get("scheduler"):
+            name, params = next(iter(self.config.scheduler.items()))
+            name = name.replace('_', '.')
+            if "lr.scheduler" in name:
+                name = name.replace("lr.scheduler", "lr_scheduler")
+            if "pl.bolts" in name:
+                name = name.replace("pl.bolts", "pl_bolts")
+            scheduler_cls = import_class(name)
+            scheduler = scheduler_cls(optimizer, **params)
+            lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
+            return ([optimizer], [lr_scheduler])
+
         return optimizer
 
     def _get_preds_loss_accuracy(self, batch):

@@ -25,7 +25,7 @@ def main():
     # initialize wandb instance
     wandb_run = WandbLogger(config=vars(args.hparams), project=args.hparams.wandb_project, entity = args.hparams.wandb_entity, allow_val_change=True, save_dir=args.hparams.save_dir)
     config = wandb_run.experiment.config
-    seed_everything(config.seed_everything)
+    # seed_everything(config.seed_everything)
 
     # Create the Agent and pass all the configuration to it then run it..
     agent_class = globals()[config.agent]

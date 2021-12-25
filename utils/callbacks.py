@@ -52,7 +52,7 @@ class LogPredictionsCallback(Callback):
         mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
         std = np.array([0.229, 0.224, 0.225])
 
-        for i in range(len(batch)):
+        for i in range(n):
 
             bg_image = images[i].detach().numpy().transpose((1, 2, 0))
             mean = np.array([0.485, 0.456, 0.406])
@@ -155,8 +155,6 @@ class LogERFVisualizationCallback(Callback):
     # from different stages of the network)
     # Our implementation should be network independant
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx) -> None:
-
-        pl_module.rq_grad = True
         if (pl_module.current_epoch%self.config.erf_freq == 0 and batch_idx == 0):
             pl_module._register_layer_hooks()
 
@@ -199,6 +197,7 @@ class LogERFVisualizationCallback(Callback):
                     heatmap = np.squeeze(
                         np.mean(np.abs(np.array(self.gradient[name])), axis=0)
                     )
+                    heatmap = heatmap - np.min(heatmap)/np.max(heatmap)-np.min(heatmap)
                     ax = sns.heatmap(heatmap, cmap="viridis",cbar=False)
                     plt.title(
                         f"Layer {[ k for k,v in trainer.model.named_modules()][name]}"
