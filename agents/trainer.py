@@ -1,12 +1,12 @@
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar
+from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar, LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils.agent_utils import get_datamodule, get_net
 from utils.callbacks import LogERFVisualizationCallback, LogPredictionsCallback, LogMetricsCallback
 from utils.logger import init_logger
 
-
-class Base_Trainer:
+# FIXME j'ai fais plein de test différents loss, pretrain pas pretrain, Unet deep labv3 ça entraine mal, void = background
+class BaseTrainer:
     def __init__(self, config, run) -> None:
         super().__init__()
         self.config = config
@@ -22,19 +22,21 @@ class Base_Trainer:
             trainer = pl.Trainer(
                 logger=self.wb_run,
                 gpus=self.config.gpu,
-                auto_scale_batch_size="power",
-                accelerator="auto",
-            )
-            trainer.logger = self.wb_run
-            trainer.tune(self.model, datamodule=self.datamodule)
-            trainer = pl.Trainer(
-                logger=self.wb_run,
-                gpus=self.config.gpu,
                 auto_lr_find=True,
                 accelerator="auto",
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
+            
+            # trainer = pl.Trainer(
+            #     logger=self.wb_run,
+            #     gpus=self.config.gpu,
+            #     auto_scale_batch_size="power",
+            #     accelerator="auto",
+            # )
+            # trainer.logger = self.wb_run
+            # trainer.tune(self.model, datamodule=self.datamodule)
+            
         
         # TODO feature hook for feature fizualization, for every
         # should be implemented as a callback?
@@ -51,10 +53,11 @@ class Base_Trainer:
             callbacks=[
                 ModelCheckpoint(monitor="val/loss", mode="min"),  # our model checkpoint callback
                 LogPredictionsCallback(),
-                LogERFVisualizationCallback(self.config),
+                # LogERFVisualizationCallback(self.config),
                 RichProgressBar(),
                 LogMetricsCallback(self.config),
                 EarlyStopping(monitor="val/loss", patience=3),
+                LearningRateMonitor()
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
