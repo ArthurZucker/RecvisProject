@@ -52,7 +52,7 @@ class LogPredictionsCallback(Callback):
         mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
         std = np.array([0.229, 0.224, 0.225])
 
-        for i in range(n):
+        for i in range(images.shape[0]):
 
             bg_image = images[i].numpy().transpose((1, 2, 0))
             bg_image = std * bg_image + mean
