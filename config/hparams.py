@@ -88,7 +88,9 @@ class Hparams:
     # number of workers for dataloaders
     num_workers: int = 16
     # tune the model on first run
-    tune: bool = False
+    tune_lr: bool = False
+    # tune the model on first run
+    tune_batch_size: bool = False
     # number or gpu
     gpu: int = 1
     # precision
@@ -96,9 +98,7 @@ class Hparams:
     # effective receptive fields log frequency
     erf_freq: int = 20
     # index of the layers to use for the receptive field visualization
-    layers: List[int] = list_field(
-        64, 128, 150
-    )  # 182 is lqst TODO takle a repartition ex quartiles 25%, 50% etx
+    layers: int = 5 #  TODO number of layers to plot a repartition ex quartiles 25%, 50% etx
     # metrics
     metrics: Dict[
         str, Dict[str, str]
@@ -128,6 +128,11 @@ class Hparams:
                 mdmc_average="global",
                 # ignore_index=ignore_index,
             ),
+            ConfusionMatrix=dict(
+                num_classes=n_classes,
+                normalize='true'
+                # ignore_index=ignore_index,
+            ),
             #     AveragePrecision=dict(
             #         num_classes=n_classes, average="weighted", ignore_index=ignore_index
             # ),
@@ -137,7 +142,6 @@ class Hparams:
             ),
         )
     )
-    # ConfusionMatrix=dict()))
 
     # optimizer
     optimizer: Dict[str, Dict[str, str]] = dict_field(

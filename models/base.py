@@ -83,7 +83,7 @@ class BASE_LitModule(LightningModule):
         return optimizer
     
     def backward(self, loss, optimizer, optimizer_idx) -> None:
-        loss.backward(retain_graph = True) #TODO only if the model is computing the erfs....
+        loss.backward(retain_graph = self.rq_grad) #TODO only if the model is computing the erfs....
 
     def _get_preds_loss_accuracy(self, batch):
         '''convenience function since train/valid/test steps are similar'''
@@ -95,12 +95,14 @@ class BASE_LitModule(LightningModule):
     
     def _register_layer_hooks(self):
         self.hooks = []
-        layers = self.config.layers #TODO only use those layers not every layer
-        named_layers = dict(self.named_modules())
-        self.features = {idx:[] for idx, i in enumerate(named_layers.keys()) if idx in layers}
-        for i,k in enumerate(named_layers):
-            if i in layers :
-                self.hooks.append(named_layers[k].register_forward_hook(get_activation(i,self.features)))
-                # named_layers[k].retain_grad()
-                
+        nb_erf = self.config.layers #TODO only use those layers not every layer
+        named_layers = list(dict(self.named_modules())["net"].named_modules())[2:]
+        layer_span = ((len(named_layers))//nb_erf) # span to take each layers
+        selected_layers = named_layers[::layer_span][:nb_erf-1]+[named_layers[-1]]
+        self.erf_layers_names = list(dict(selected_layers).keys())
+        if nb_erf >= 2:
+            self.features = {idx:[] for idx in range(len(selected_layers))} # trick to always take first and last layers FIXME later
+        for i,(name, module) in enumerate(selected_layers):
+            #self.hooks.append(dict(dict_layers)[name].register_forward_hook(get_activation(i, self.features)))
+            self.hooks.append(module.register_forward_hook(get_activation(i, self.features)))
         
