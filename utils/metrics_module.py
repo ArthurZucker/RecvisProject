@@ -18,12 +18,8 @@ class MetricsModule():
         dict_metrics = {}
         if set_name != "train":
             for name, params in config_metrics.items():
-                if name != "ConfusionMatrix":
-                    instance = import_class("torchmetrics." + name)(compute_on_step=False, **params)
-                    dict_metrics[name.lower()] = instance.to(device)
-                else :
-                    dict_metrics["confusionmatrix"] = (
-                        np.zeros(1), np.zeros(1))
+                instance = import_class("torchmetrics." + name)(compute_on_step=False, **params)
+                dict_metrics[name.lower()] = instance.to(device)
         else:
             dict_metrics["iou"] = import_class(
                 "torchmetrics.IoU")(compute_on_step=False, num_classes=n_classes).to(device)
@@ -40,33 +36,21 @@ class MetricsModule():
             else:
                 preds = x
 
-            if k == "confusionmatrix":
-                self.dict_metrics[k] = (np.concatenate(
-                    (m[0], preds.numpy().flatten())),
-                    np.concatenate((m[1], y.numpy().flatten())))
-            else:
-                # metric on current batch
-                m(preds, y)  # update metrics (torchmetrics method)
+            # metric on current batch
+            m(preds, y)  # update metrics (torchmetrics method)
 
     def log_metrics(self, name, pl_module):
 
         for k, m in self.dict_metrics.items():
 
-            if k == "confusionmatrix":
+            # metric on all batches using custom accumulation
+            metric = m.compute()
+
+            if k =="confusionmatrix":
                 class_names = [v for k, v in PASCAL_VOC_classes.items()]
-                preds = np.delete(m[0], 0)
-                labels = np.delete(m[1], 0)
-                cm = wandb.plot.confusion_matrix(probs=None,
-                                                y_true=labels, preds=preds,
-                                                class_names=class_names)
-                wandb.log({name + k: cm})
-
-                self.dict_metrics["confusionmatrix"] = (
-                    np.zeros(1), np.zeros(1))  # reset
+                class_names.remove("void")
+                wandb.log({name + "confusionmatrix" : wandb.plots.HeatMap(class_names, class_names, metric.cpu(), show_text=True)})
             else:
-                # metric on all batches using custom accumulation
-                metric = m.compute()
-
                 if metric.numel() != 1:
                     data = [[PASCAL_VOC_classes[idx], val]
                             for idx, val in enumerate(metric)]
@@ -75,6 +59,6 @@ class MetricsModule():
                 else:
                     pl_module.log(name + k, metric)
 
-                # Reseting internal state such that metric ready for new data
-                m.reset()
-                m.to(self.device)
+            # Reseting internal state such that metric ready for new data
+            m.reset()
+            m.to(self.device)
