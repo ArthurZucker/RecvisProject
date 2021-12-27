@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from agents import *
 from config.hparams import Parameters
-
+import wandb
 
 def main():
     # from apex import amp
@@ -25,7 +25,8 @@ def main():
     )
     config = wandb_run.experiment.config
     # seed_everything(config.seed_everything)
-
+    wandb.define_metric("val/loss", summary="min")
+    wandb.define_metric("val/iou", summary="min")
     # Create the Agent and pass all the configuration to it then run it..
     agent_class = globals()[config.agent]
     agent = agent_class(config, wandb_run)

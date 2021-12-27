@@ -25,10 +25,11 @@ class BarlowTwins(LightningModule):
         # get backbone model and adapt it to the task
         self.in_features = 0
         self.encoder = get_net(
-            config.encoder
+            config, config.encoder
         )  # TODO add encoder name to the hparams, use getnet() to get the encoder
         self.in_features = list(self.encoder.children())[-1].in_features
-        list(self.encoder.named_children())[-1][1] = nn.Identity()
+        name_classif = list(self.encoder.named_children())[-1][0]
+        self.encoder._modules[name_classif] = nn.Identity()
 
         # Make Projector (3-layers),
         self.proj_channels = config.bt_proj_channels
@@ -66,14 +67,6 @@ class BarlowTwins(LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
-        """used for logging metrics"""
-        loss = self._get_loss(batch)
-
-        # Log loss and metric
-        self.log("val/loss", loss)
-
-        return loss
 
     def configure_optimizers(self):
         """defines model optimizer"""

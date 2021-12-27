@@ -28,11 +28,7 @@ class BarlowTwinsVOCSegmentationDataModule(LightningDataModule):
         # split dataset
         if stage in (None, "fit"):
             self.voc_train = BarlowTwinsDataset(
-                self.root, image_set="trainval"
-            )
-            self.voc_val = BarlowTwinsDataset(
-                self.root,
-                image_set="val",
+                self.root, image_set="trainval",img_size=self.config.input_size
             )
 
     def train_dataloader(self):

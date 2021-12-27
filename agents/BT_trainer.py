@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar, LearningRateMonitor
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from utils.agent_utils import get_datamodule, get_net
-from utils.callbacks import LogERFVisualizationCallback, LogPredictionsCallback, LogMetricsCallback
+from utils.callbacks import LogERFVisualizationCallback, LogBarlowPredictionsCallback
 from utils.logger import init_logger
 from agents.BaseTrainer import BaseTrainer
 
@@ -25,7 +25,8 @@ class BT_trainer(BaseTrainer):
                 ModelCheckpoint(monitor="val/loss", mode="min", verbose=True),  # our model checkpoint callback
                 RichProgressBar(),
                 EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
-                LearningRateMonitor()
+                LearningRateMonitor(),
+                LogBarlowPredictionsCallback()
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs

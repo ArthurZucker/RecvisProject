@@ -118,10 +118,10 @@ class BarlowTwinsTransform(object):
     def __call__(self, image):
         
         base_transform = A.Compose(
-            A.Resize(height=self.img_size, width=self.img_size),
+            [A.Resize(height=self.img_size[0], width=self.img_size[1]),
             A.RandomResizedCrop(
-                height=self.img_size,
-                width=self.img_size,
+                height=self.img_size[0],
+                width =self.img_size[1],
                 scale=(0.08, 1.0),
                 interpolation=cv2.INTER_CUBIC,
                 p=1.0,
@@ -133,10 +133,10 @@ class BarlowTwinsTransform(object):
                 val_shift_limit=0,
                 p=0.8,
             ),
-            A.ToGray(p=0.2),
+            A.ToGray(p=0.2),]
         )
         transform1 = A.Compose(
-            A.Solarize(p=0.0),
+            [A.Solarize(p=0.0),
             A.GaussianBlur(sigma_limit=[0.1, 0.2], p=1),
             A.HorizontalFlip(p=0.5),
             A.Normalize(
@@ -144,10 +144,11 @@ class BarlowTwinsTransform(object):
                 std=[0.229, 0.224, 0.225],
             ),
             ToTensorV2(),
+            ]
         )
 
         transform2 = A.Compose(
-            A.Solarize(p=0.2),
+            [A.Solarize(p=0.2),
             A.GaussianBlur(sigma_limit=[0.1, 0.2], p=0.1),
             A.HorizontalFlip(p=0.5),
             A.Normalize(
@@ -155,6 +156,7 @@ class BarlowTwinsTransform(object):
                 std=[0.229, 0.224, 0.225],
             ),
             ToTensorV2(),
+            ]
         )
 
         base_aug_image1 = base_transform(image=image)["image"]

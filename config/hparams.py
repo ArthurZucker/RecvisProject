@@ -162,6 +162,8 @@ class Hparams:
     limit_val_batches: int = 1.0
     # numbeer of projection channels 
     bt_proj_channels: int = 8000
+    # lambda barlow twins
+    lmbda: int = 1
 
 @dataclass
 class DatasetParams:
@@ -235,7 +237,7 @@ class Parameters:
         # since we will use different models, backbones and datamodules
 
         # Set render number of channels
-        if self.hparams.arch == "barlow":
+        if self.hparams.arch == "BarlowTwins":
             self.hparams.limit_val_batches = 0  # TODO later we might need to do something
             self.hparams.lr = 0.005
             self.hparams.bt_proj_channels = 8000
