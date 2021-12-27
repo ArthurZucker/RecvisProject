@@ -149,13 +149,19 @@ class LogERFVisualizationCallback(Callback):
         self.config = config
         self.layers = config.layers
         self.eps = 1e-7
-        self.gradient = {i: self.eps for i in self.layers}
+        self.gradient = {i: self.eps for i in range(self.layers)}
 
     # from different stages of the network)
     # Our implementation should be network independant
-    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx) -> None:
-        if (pl_module.current_epoch%self.config.erf_freq == 0 and batch_idx == 0):
+    # def on_train_batch_start(self, trainer, pl_module, batch, batch_idx) -> None:
+    #     if (pl_module.current_epoch%self.config.erf_freq == 0 and batch_idx == 0):
+    #         pl_module._register_layer_hooks()
+    #         pl_module.rq_grad = True
+
+    def on_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        if (pl_module.current_epoch) % self.config.erf_freq == 0:
             pl_module._register_layer_hooks()
+            pl_module.rq_grad = True
 
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
@@ -164,60 +170,59 @@ class LogERFVisualizationCallback(Callback):
         # here, compute the gradient of the various ouputs with respect
         # to the input feature map, average it over the validation batches
         # until we have the number of images we required
-        if not trainer.sanity_checking and pl_module.current_epoch%self.config.erf_freq == 0:
+        if not trainer.sanity_checking and pl_module.current_epoch % self.config.erf_freq == 0: # exclude last batch were batch norm is appliedss FIXME
             self.hooks = pl_module.features
             x, _ = batch
-            for name in self.layers:
+            for name in range(self.layers):
                 # for each layer, compute the mean
-                gradient_wrt_ipt = self.input_grad(name)
+                gradient_wrt_ipt = self.hooks[name]
                 if gradient_wrt_ipt != []:
                     try:
                         gradient_wrt_ipt = grad(gradient_wrt_ipt, x, retain_graph=True)[
                             0
                         ].detach()
-
-                        self.gradient[name] += (np.squeeze(np.abs(torch.mean(torch.sum(gradient_wrt_ipt, axis= 1),axis=0).cpu()).numpy())-self.gradient[name])/(batch_idx+1)
+                        # TODO check whether the abs should be done before the mean or after
+                        self.gradient[name] += (np.squeeze(torch.mean(torch.sum(torch.abs(gradient_wrt_ipt), axis= 1),axis=0).cpu().numpy())-self.gradient[name])/(batch_idx+1)
                             # average over the batches but sum over the channels 
 
-                        
                         del self.hooks[name]
                         self.hooks[name] = []# reset the hooks for the batch
                     except Exception as e:
                         # the gradient can't be computed because of batchnorm, jsut ignore
-                        print(f"Tried to compute gradient error : {e}")
-                        del gradient_wrt_ipt
+                        print(f"Tried to compute gradient error : {e}, cleaning up")
                         del self.hooks[name]
                         self.hooks[name] = []# reset the hooks for the batch
 
-            if batch_idx == [trainer.limit_train_batches-1, self.config.batch_size][trainer.limit_train_batches>0]:
+            if batch_idx % self.config.batch_size == 0:                
                 heatmaps = []
                 for name in self.gradient:
-                    plt.ioff()
-                    # average the gradients over the batches but sum it over the channels
                     heatmap = self.gradient[name]
-                    if heatmap != []: #FIXE ME
+                    # average the gradients over the batches but sum it over the channels                    
+                    if heatmap.size != 0: #FIXE ME
+                        plt.ioff()
+                        heatmap = heatmap/(batch_idx+1)*self.config.batch_size 
                         heatmap = heatmap - np.min(heatmap)/np.max(heatmap)-np.min(heatmap)
-                        ax = sns.heatmap(heatmap, cmap="viridis",cbar=False)
+                        ax = sns.heatmap(heatmap, cmap="rainbow",cbar=False)
                         plt.title(
-                            f"Layer {[ k for k,v in trainer.model.named_modules()][name]}"
+                            f"Layer {trainer.model.erf_layers_names[name]}"
                         )
                         ax.set_axis_off()
                         heatmaps.append(wandb.Image(plt))
                         plt.close()
-                if heatmaps != [] : 
+
+                if len(heatmaps) != 0 : 
                     wandb.log({f"heatmaps": heatmaps})
-                self.gradient = {i: [] for i in self.layers}
                 
-                if pl_module.current_epoch %self.config.erf_freq == 0:
-                    for hooks in pl_module.hooks:
-                        hooks.remove()
-                    self.gradient = {i: self.eps for i in self.layers}
-                    pl_module.rq_grad = False
+                
+    def on_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
 
-    def input_grad(self, name):
-        return self.hooks[name]  # returns the output of the feature map
+        if (pl_module.current_epoch) % self.config.erf_freq == 0:
+            
+            self.gradient = {i: self.eps for i in range(self.layers)} #in case we wanna log on other epochs
+            for hooks in pl_module.hooks:
+                hooks.remove()
+            pl_module.rq_grad = False
 
-    
 
 class LogAttentionVisualizationCallback(Callback):
     # TODO add attention vizualization for training and validation data
