@@ -26,10 +26,9 @@ class Unet(BASE_LitModule):
 
         checkpoint = 'https://github.com/milesial/Pytorch-UNet/releases/download/v2.0/unet_carvana_scale0.5_epoch1.pth'
         self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True), strict=False)
-        # FIXME loss d'entrainement pareil avec ou sans pretrain
 
     def forward(self, x):
-        
+        x.requires_grad_(True)
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)

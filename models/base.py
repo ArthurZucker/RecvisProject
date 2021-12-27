@@ -53,6 +53,14 @@ class BASE_LitModule(LightningModule):
         
         return {"logits": logits}
 
+    def predict_step(self, batch, batch_idx):
+        x = batch
+        
+        logits = self(x)
+        preds = torch.argmax(logits.detach(), dim=1)
+        
+        return preds
+
     def configure_optimizers(self):
         '''defines model optimizer'''
         name, params = next(iter(self.config.optimizer.items()))
@@ -69,10 +77,13 @@ class BASE_LitModule(LightningModule):
                 name = name.replace("pl.bolts", "pl_bolts")
             scheduler_cls = import_class(name)
             scheduler = scheduler_cls(optimizer, **params)
-            lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
+            lr_scheduler = {"scheduler": scheduler, "monitor": "train/iou"}
             return ([optimizer], [lr_scheduler])
 
         return optimizer
+    
+    def backward(self, loss, optimizer, optimizer_idx) -> None:
+        loss.backward(retain_graph = True) #TODO only if the model is computing the erfs....
 
     def _get_preds_loss_accuracy(self, batch):
         '''convenience function since train/valid/test steps are similar'''
@@ -92,6 +103,4 @@ class BASE_LitModule(LightningModule):
                 self.hooks.append(named_layers[k].register_forward_hook(get_activation(i,self.features)))
                 # named_layers[k].retain_grad()
                 
-    def backward(self, loss, optimizer, optimizer_idx) -> None:
-        loss.backward(retain_graph = True)
         

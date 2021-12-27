@@ -150,7 +150,7 @@ class LogERFVisualizationCallback(Callback):
         super().__init__()
         self.config = config
         self.layers = config.layers
-        self.gradient = {i: [] for i in self.layers}
+        self.gradient = {i: 0 for i in self.layers}
 
     # from different stages of the network)
     # Our implementation should be network independant
@@ -175,43 +175,44 @@ class LogERFVisualizationCallback(Callback):
                     try:
                         gradient_wrt_ipt = grad(gradient_wrt_ipt, x, retain_graph=True)[
                             0
-                        ]
-                        self.gradient[name].append(
+                        ].detach()
+
+                        self.gradient[name] += (np.squeeze(np.abs(torch.mean(torch.sum(gradient_wrt_ipt, axis= 1),axis=0).cpu()).numpy())-self.gradient[name])/(batch_idx+1)
                             # average over the batches but sum over the channels 
-                            torch.mean(torch.sum(gradient_wrt_ipt.detach(), axis= 1),axis=0)
-                            .cpu()
-                            .numpy()
-                        )
+
+                        
                         del self.hooks[name]
                         self.hooks[name] = []# reset the hooks for the batch
                     except Exception as e:
                         # the gradient can't be computed because of batchnorm, jsut ignore
-                        # print(f"Tried to compute gradient error : {e}")
-                        pass
+                        print(f"Tried to compute gradient error : {e}")
+                        del gradient_wrt_ipt
+                        del self.hooks[name]
+                        self.hooks[name] = []# reset the hooks for the batch
 
             if batch_idx == [trainer.limit_train_batches-1, self.config.batch_size][trainer.limit_train_batches>0]:
                 heatmaps = []
                 for name in self.gradient:
                     plt.ioff()
                     # average the gradients over the batches but sum it over the channels
-                    heatmap = np.squeeze(
-                        np.mean(np.abs(np.array(self.gradient[name])), axis=0)
-                    )
-                    heatmap = heatmap - np.min(heatmap)/np.max(heatmap)-np.min(heatmap)
-                    ax = sns.heatmap(heatmap, cmap="viridis",cbar=False)
-                    plt.title(
-                        f"Layer {[ k for k,v in trainer.model.named_modules()][name]}"
-                    )
-                    ax.set_axis_off()
-                    heatmaps.append(wandb.Image(plt))
-                    plt.close()
-                wandb.log({f"heatmaps": heatmaps})
+                    heatmap = self.gradient[name]
+                    if heatmap != []:
+                        heatmap = heatmap - np.min(heatmap)/np.max(heatmap)-np.min(heatmap)
+                        ax = sns.heatmap(heatmap, cmap="viridis",cbar=False)
+                        plt.title(
+                            f"Layer {[ k for k,v in trainer.model.named_modules()][name]}"
+                        )
+                        ax.set_axis_off()
+                        heatmaps.append(wandb.Image(plt))
+                        plt.close()
+                if heatmaps != [] : 
+                    wandb.log({f"heatmaps": heatmaps})
                 self.gradient = {i: [] for i in self.layers}
                 
                 if pl_module.current_epoch %self.config.erf_freq == 0:
                     for hooks in pl_module.hooks:
                         hooks.remove()
-                    self.gradient = {i: [] for i in self.layers}
+                    self.gradient = {i: 0 for i in self.layers}
                     pl_module.rq_grad = False
 
     def input_grad(self, name):

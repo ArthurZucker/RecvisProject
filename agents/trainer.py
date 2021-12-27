@@ -51,12 +51,12 @@ class BaseTrainer:
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
             callbacks=[
-                ModelCheckpoint(monitor="val/loss", mode="min"),  # our model checkpoint callback
+                ModelCheckpoint(monitor="val/loss", mode="min", verbose=True),  # our model checkpoint callback
                 LogPredictionsCallback(),
-                # LogERFVisualizationCallback(self.config),
+                LogERFVisualizationCallback(self.config),
                 RichProgressBar(),
                 LogMetricsCallback(self.config),
-                EarlyStopping(monitor="val/loss", patience=3),
+                EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
                 LearningRateMonitor()
             ],  # logging of sample predictions
             gpus=self.config.gpu,  # use all available GPU's

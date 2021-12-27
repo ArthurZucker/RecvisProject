@@ -52,6 +52,7 @@ class transform_SS(object):
 
     def __call__(self, image, mask):
 
+        
         # Random crop
         coeff_rd_crop = np.random.uniform(0.6, 0.8)
         i, j, h, w = transforms.RandomCrop.get_params(
@@ -86,7 +87,8 @@ class transform_SS(object):
         image = TF.to_tensor(image)
         mask = TF.to_tensor(mask)
 
-        image = TF.normalize(image, mean=self.mean, std=self.std)
+        
+        image = TF.normalize(image, mean=self.mean, std=self.std) # resizing will modify the mean and std should be place later? 
 
         mask = toLongTensor()(mask)
 
