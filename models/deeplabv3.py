@@ -13,6 +13,5 @@ class Deeplabv3(BASE_LitModule):
         self.net = deeplabv3_resnet101(pretrained=True, num_classes=21)
                 
     def forward(self, x):
-        x.requires_grad_(True)
         dic = self.net(x)
         return dic['out']
