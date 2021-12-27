@@ -62,7 +62,7 @@ class Hparams:
     # resize coefficients for H and w
     input_size: tuple = (256, 256)
     # learning rate
-    lr: float = 1e-10
+    lr: float = 0.0005
     # agent to use for training
     agent: str = "BaseTrainer"
     # architecture to use
@@ -82,7 +82,7 @@ class Hparams:
     # developpment mode, only run 1 batch of train val and test
     dev_run: bool = False
     # gradient accumulation batch size
-    accumulate_size: int = 64
+    accumulate_size: int = 32
     # save directory
     save_dir: str = osp.join(os.getcwd(), "wandb")
     # number of workers for dataloaders

@@ -54,7 +54,7 @@ class LogPredictionsCallback(Callback):
 
         for i in range(images.shape[0]):
 
-            bg_image = images[i].numpy().transpose((1, 2, 0))
+            bg_image = images[i].detach().numpy().transpose((1, 2, 0))
             bg_image = std * bg_image + mean
             bg_image = np.clip(bg_image, 0, 1)
 
@@ -148,7 +148,8 @@ class LogERFVisualizationCallback(Callback):
         super().__init__()
         self.config = config
         self.layers = config.layers
-        self.gradient = {i: 0 for i in self.layers}
+        self.eps = 1e-7
+        self.gradient = {i: self.eps for i in self.layers}
 
     # from different stages of the network)
     # Our implementation should be network independant
@@ -194,7 +195,7 @@ class LogERFVisualizationCallback(Callback):
                     plt.ioff()
                     # average the gradients over the batches but sum it over the channels
                     heatmap = self.gradient[name]
-                    if heatmap != []:
+                    if heatmap != []: #FIXE ME
                         heatmap = heatmap - np.min(heatmap)/np.max(heatmap)-np.min(heatmap)
                         ax = sns.heatmap(heatmap, cmap="viridis",cbar=False)
                         plt.title(
@@ -210,7 +211,7 @@ class LogERFVisualizationCallback(Callback):
                 if pl_module.current_epoch %self.config.erf_freq == 0:
                     for hooks in pl_module.hooks:
                         hooks.remove()
-                    self.gradient = {i: 0 for i in self.layers}
+                    self.gradient = {i: self.eps for i in self.layers}
                     pl_module.rq_grad = False
 
     def input_grad(self, name):
