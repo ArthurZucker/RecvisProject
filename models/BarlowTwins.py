@@ -1,61 +1,89 @@
-from pytorch_lightning import LightningModule
-from kornia.losses import DiceLoss
-from utils.agent_utils import import_class
+import os
 
-# TODO implement BarlowTwins
+import torch
+import torch.nn as nn
+import torchmetrics  # TODO use later
+from pytorch_lightning import LightningModule
+from torch.nn import functional as F
+from torch.optim import Adam
+
+from models.losses.barlow_twins.bt_loss import BarlowTwinsLoss
+from utils.agent_utils import get_net
+
 
 class BarlowTwins(LightningModule):
-
     def __init__(self, config):
-        '''method used to define our model parameters'''
+        """method used to define our model parameters"""
         super().__init__()
-        self.config = config
-        
-        # loss
-        self.loss = DiceLoss()
-
+        self.loss = BarlowTwinsLoss
         # optimizer parameters
         self.lr = config.lr
 
+        # Loss parameter
+        self.lmbda = config.lmbda
+
+        # get backbone model and adapt it to the task
+        self.in_features = 0
+        self.encoder = get_net(
+            config.encoder
+        )  # TODO add encoder name to the hparams, use getnet() to get the encoder
+        self.in_features = list(self.encoder.children())[-1].in_features
+        list(self.encoder.named_children())[-1][1] = nn.Identity()
+
+        # Make Projector (3-layers),
+        self.proj_channels = config.bt_proj_channels
+        proj_layers = []
+
+        # TODO make it more properly, in custom_layer write a get proj
+        for i in range(3):
+            if i == 0:
+                proj_layers.append(
+                    nn.Linear(self.in_features, self.proj_channels, bias=False)
+                )
+            else:
+                proj_layers.append(
+                    nn.Linear(self.proj_channels, self.proj_channels, bias=False)
+                )
+            if i < 2:
+                proj_layers.append(nn.BatchNorm1d(self.proj_channels))
+                proj_layers.append(nn.ReLU(inplace=True))
+
+        self.proj = nn.Sequential(*proj_layers)
+
+    def forward(self, x1, x2):
+        # Feeding the data through the encoder and projector
+        z1 = self.proj(self.encoder(x1))
+        z2 = self.proj(self.encoder(x2))
+
+        return z1, z2
+
     def training_step(self, batch, batch_idx):
-        '''needs to return a loss from a single batch'''
-        loss, logits = self._get_preds_loss_accuracy(batch)
+        """needs to return a loss from a single batch"""
+        loss = self._get_loss(batch)
 
         # Log loss and metric
-        self.log('train/loss', loss)
+        self.log("train/loss", loss)
 
-        return {"loss": loss, "logits": logits}
+        return loss
 
     def validation_step(self, batch, batch_idx):
-        '''used for logging metrics'''
-        loss, logits = self._get_preds_loss_accuracy(batch)
+        """used for logging metrics"""
+        loss = self._get_loss(batch)
 
         # Log loss and metric
-        self.log('val/loss', loss)
+        self.log("val/loss", loss)
 
-        # Let's return preds to use it in a custom callback
-        return {"logits": logits}
-
-    def test_step(self, batch, batch_idx):
-        '''used for logging metrics'''
-        preds, loss, logits = self._get_preds_loss_accuracy(batch)
-
-        # Log loss and metric
-        self.log('test/loss', loss)
-        
-        return {"logits": logits}
+        return loss
 
     def configure_optimizers(self):
-        '''defines model optimizer'''
-        name, params = next(iter(self.config.optimizer.items()))
-        name = name.replace('_', '.')
-        optimizer_cls = import_class(name)
-        optimizer = optimizer_cls(filter(lambda p: p.requires_grad, self.parameters()), lr=self.lr, **params)
-        return optimizer
+        """defines model optimizer"""
+        return Adam(self.parameters(), lr=self.lr)
 
-    def _get_preds_loss_accuracy(self, batch):
-        '''convenience function since train/valid/test steps are similar'''
-        x, y = batch
-        logits = self(x)
-        loss = self.loss(logits, y)
-        return loss, logits.detach()
+    def _get_loss(self, batch):
+        """convenience function since train/valid/test steps are similar"""
+        x1, x2 = batch
+        z1, z2 = self(x1, x2)
+
+        loss = self.loss(z1, z2, self.lmbda)
+
+        return loss

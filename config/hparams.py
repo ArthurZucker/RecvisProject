@@ -64,11 +64,13 @@ class Hparams:
     # learning rate
     lr: float = 0.0005
     # agent to use for training
-    agent: str = "BaseTrainer"
+    agent: str = "BT_trainer"
     # architecture to use
-    arch: str = "deeplabv3"
+    arch: str = "BarlowTwins"
+    # encoder for barlow
+    encoder: str = "resnet50"
     # data module
-    datamodule: str = "VOCSegmentationDataModule"
+    datamodule: str = "BarlowTwinsVOCSegmentationDataModule"
     # classes
     n_classes: int = 21
     # number of channels
@@ -156,7 +158,10 @@ class Hparams:
             )
         )
     )
-
+    # set to 0 to remove validation
+    limit_val_batches: int = 1.0
+    # numbeer of projection channels 
+    bt_proj_channels: int = 8000
 
 @dataclass
 class DatasetParams:
@@ -176,6 +181,8 @@ class NetworkParams:
     encoder_type: str = choice(
         "resnet50", "swinT", "swinS", "resnet", default="resnet50"
     )  # One of: mlp, cnn, dcgan, resnet # try resnet :)
+
+# TODO config for each task (choice barlow or segmentation) ti be able to run them
 
 
 @dataclass
@@ -229,8 +236,10 @@ class Parameters:
 
         # Set render number of channels
         if self.hparams.arch == "barlow":
-            pass  # TODO later we might need to do something
-
+            self.hparams.limit_val_batches = 0  # TODO later we might need to do something
+            self.hparams.lr = 0.005
+            self.hparams.bt_proj_channels = 8000
+            
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
