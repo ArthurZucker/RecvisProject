@@ -22,9 +22,9 @@ class BT_trainer(BaseTrainer):
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
             callbacks=[
-                ModelCheckpoint(monitor="train/loss", mode="min", verbose=True),  # our model checkpoint callback
+                ModelCheckpoint(monitor="val/loss", mode="min", verbose=True),  # our model checkpoint callback
                 RichProgressBar(),
-                EarlyStopping(monitor="val/loss", patience=10, mode="min", verbose=True),
+                #EarlyStopping(monitor="train/loss", patience=10, mode="min", verbose=True),
                 LearningRateMonitor(),
                 LogBarlowPredictionsCallback()
             ],  # logging of sample predictions

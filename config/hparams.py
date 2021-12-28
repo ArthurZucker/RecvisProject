@@ -84,7 +84,7 @@ class Hparams:
     # developpment mode, only run 1 batch of train val and test
     dev_run: bool = False
     # gradient accumulation batch size
-    accumulate_size: int = 256
+    accumulate_size: int = 512
     # save directory
     save_dir: str = osp.join(os.getcwd(), "wandb")
     # number of workers for dataloaders
