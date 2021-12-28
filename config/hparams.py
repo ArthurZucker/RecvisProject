@@ -161,7 +161,7 @@ class Hparams:
     # set to 0 to remove validation
     limit_val_batches: int = 1.0
     # numbeer of projection channels 
-    bt_proj_channels: int = 8000
+    bt_proj_channels: int = 2048
     # lambda barlow twins
     lmbda: int = 1
 
