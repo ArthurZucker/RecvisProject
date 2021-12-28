@@ -62,7 +62,7 @@ class Hparams:
     # resize coefficients for H and w
     input_size: tuple = (256, 256)
     # learning rate
-    lr: float = 0.0005
+    lr: float = 0.08
     # agent to use for training
     agent: str = "BT_trainer"
     # architecture to use
@@ -76,7 +76,7 @@ class Hparams:
     # number of channels
     n_channels: int = 3
     # batch size for training
-    batch_size: int = 8
+    batch_size: int = 16
     # split value
     split_val: float = 0.2
     # validation frequency
@@ -84,7 +84,7 @@ class Hparams:
     # developpment mode, only run 1 batch of train val and test
     dev_run: bool = False
     # gradient accumulation batch size
-    accumulate_size: int = 32
+    accumulate_size: int = 256
     # save directory
     save_dir: str = osp.join(os.getcwd(), "wandb")
     # number of workers for dataloaders
@@ -164,6 +164,8 @@ class Hparams:
     bt_proj_channels: int = 2048
     # lambda barlow twins
     lmbda: int = 1
+    # log images during val and tarin frequency (in epochs) : 
+    log_pred_freq : int = 10
 
 @dataclass
 class DatasetParams:
@@ -239,8 +241,8 @@ class Parameters:
         # Set render number of channels
         if self.hparams.arch == "BarlowTwins":
             self.hparams.limit_val_batches = 0  # TODO later we might need to do something
-            self.hparams.lr = 0.005
-            self.hparams.bt_proj_channels = 8000
+            self.hparams.lr = 0.04
+            self.hparams.bt_proj_channels = 2048
             
         # Set random seed
         if self.hparams.seed_everything is None:

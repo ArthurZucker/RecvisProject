@@ -15,6 +15,7 @@ class BarlowTwins(LightningModule):
     def __init__(self, config):
         """method used to define our model parameters"""
         super().__init__()
+        self.log_pred_freq = config.log_pred_freq
         self.loss = BarlowTwinsLoss
         # optimizer parameters
         self.lr = config.lr

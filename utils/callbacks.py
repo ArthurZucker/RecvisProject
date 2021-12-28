@@ -248,7 +248,7 @@ class LogBarlowPredictionsCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0:
+        if batch_idx == 0 and pl_module.current_epoch % pl_module.log_pred_freq == 0:
             self.log_images("train", batch, 5, outputs)
 
     def on_validation_batch_end(
@@ -260,7 +260,7 @@ class LogBarlowPredictionsCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0:
+        if batch_idx == 0 and pl_module.current_epoch % pl_module.log_pred_freq == 0:
             self.log_images("val", batch, 5, outputs)
 
     def log_images(self, name, batch, n, outputs):
