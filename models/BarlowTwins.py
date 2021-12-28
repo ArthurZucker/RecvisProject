@@ -67,6 +67,11 @@ class BarlowTwins(LightningModule):
 
         return loss
 
+    def validation_step(self, batch, batch_idx) :
+        loss = self._get_loss(batch)
+        # Log loss and metric
+        self.log("val/loss", loss)
+        return loss
 
     def configure_optimizers(self):
         """defines model optimizer"""

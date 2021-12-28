@@ -262,7 +262,7 @@ class LogBarlowPredictionsCallback(Callback):
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0:
             self.log_images("val", batch, 5, outputs)
-            
+
     def log_images(self, name, batch, n, outputs):
 
         x1, x2 = batch
@@ -289,6 +289,6 @@ class LogBarlowPredictionsCallback(Callback):
             samples2.append(wandb.Image(bg2))
             
         wandb.log({f"{name}/x1": samples1})
-        wandb.log({f"{name}/x2":samples2}) #TODO merge graphs   
+        wandb.log({f"{name}/x2": samples2}) #TODO merge graphs   
 
     
