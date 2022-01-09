@@ -10,7 +10,7 @@ class BaseTrainer:
         self.model = get_net(
             config.hparams.arch, config.network_param, config.optim_param
         )
-        self.wb_run.watch(self.model)
+        self.wb_run.watch(self.model,log_graph=False)
         self.datamodule = get_datamodule(
             config.hparams.datamodule, config.data_param,config.hparams.dataset
         )

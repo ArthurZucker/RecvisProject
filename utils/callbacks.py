@@ -12,8 +12,11 @@ from utils.constant import PASCAL_VOC_classes
 from utils.hooks import get_attention, get_activation
 from utils.metrics_module import MetricsModule
 
-
-class LogBarlowImagesCallback(Callback):
+class LogTransformedImages(Callback):
+    def __init__(self,log_img_freq) -> None:
+        super().__init__()
+        self.log_img_freq = log_img_freq
+    
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
@@ -23,7 +26,7 @@ class LogBarlowImagesCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
             self.log_images("validation", batch, 5, outputs)
 
     def on_train_batch_end(
@@ -35,7 +38,58 @@ class LogBarlowImagesCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
+            self.log_images("train", batch, 5, outputs)
+
+    def log_images(self, name, batch, n, outputs):
+
+        x, y = batch
+        images = x[:n].cpu()
+        ground_truth = np.array(y[:n].cpu())
+
+        samples = []
+
+        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
+        std = np.array([0.229, 0.224, 0.225])
+
+        for i in range(images.shape[0]):
+
+            bg_image = images[i].detach().numpy().transpose((1, 2, 0))
+            bg_image = std * bg_image + mean
+            bg_image = np.clip(bg_image, 0, 1)
+
+            samples.append(wandb.Image(bg_image,))
+            
+        wandb.log({name: samples})
+        
+
+class LogSegmentationCallback(Callback):
+    def __init__(self,log_img_freq) -> None:
+        super().__init__()
+        self.log_img_freq = log_img_freq
+        
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the validation batch ends."""
+
+        # `outputs` comes from `LightningModule.validation_step`
+        # which corresponds to our model predictions in this case
+
+        # Let's log 20 sample image predictions from first batch
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
+            self.log_images("validation", batch, 5, outputs)
+
+    def on_train_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
+    ):
+        """Called when the training batch ends."""
+
+        # `outputs` comes from `LightningModule.validation_step`
+        # which corresponds to our model predictions in this case
+
+        # Let's log 20 sample image predictions from first batch
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
             self.log_images("train", batch, 5, outputs)
 
     def log_images(self, name, batch, n, outputs):
@@ -82,16 +136,16 @@ class LogBarlowImagesCallback(Callback):
 
 
 class LogDinoImagesCallback(Callback):
-    def __init__(self, log_pred_freq) -> None:
+    def __init__(self, log_img_freq) -> None:
         super().__init__()
-        self.log_pred_freq = log_pred_freq
+        self.log_img_freq = log_img_freq
 
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_pred_freq == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
             self.loss = pl_module.loss
             self.log_images("train", batch, outputs)
 
@@ -101,7 +155,7 @@ class LogDinoImagesCallback(Callback):
         """Called when the training batch ends."""
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_pred_freq == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
             self.loss = pl_module.loss
             self.log_images("val", batch, outputs)
 
@@ -147,11 +201,11 @@ class LogMetricsCallback(Callback):
         device = pl_module.device
 
         self.metrics_module_train = MetricsModule(
-            "train", self.config.metrics, device, self.config.n_classes
+            "train", self.config, device
         )
 
         self.metrics_module_validation = MetricsModule(
-            "val", self.config.metrics, device
+            "val", self.config, device
         )
 
     def on_train_batch_end(
@@ -251,7 +305,7 @@ class LogERFVisualizationCallback(Callback):
     # It is defined as the partial derivative of the center pixel of the output map
     # with respect to the input map (we can set the input as an input image and take the various output maps
 
-    def __init__(self, config) -> None:
+    def __init__(self, nb_erf,erf_freq,b_size) -> None:
         """Initialize the callback with the layers
         to use to compute the effective receptive fields
         FOr now TODO define the format (most probably ints for the stage or the index of the layer)
@@ -260,11 +314,11 @@ class LogERFVisualizationCallback(Callback):
             layers ([type]): [description]
         """
         super().__init__()
-        self.config = config
-        self.layers = config.layers
+        self.erf_freq = erf_freq
+        self.nb_erf = nb_erf
         self.eps = 1e-7
         self.gradient = {i: self.eps for i in range(self.layers)}
-
+        self.batch_size = b_size
     # from different stages of the network)
     # Our implementation should be network independant
     # def on_train_batch_start(self, trainer, pl_module, batch, batch_idx) -> None:
@@ -275,7 +329,7 @@ class LogERFVisualizationCallback(Callback):
     def on_epoch_start(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
-        if (pl_module.current_epoch) % self.config.erf_freq == 0:
+        if (pl_module.current_epoch) % self.erf_freq == 0:
             self._register_layer_hooks()
             pl_module.rq_grad = True
 
@@ -288,7 +342,7 @@ class LogERFVisualizationCallback(Callback):
         # until we have the number of images we required
         if (
             not trainer.sanity_checking
-            and pl_module.current_epoch % self.config.erf_freq == 0
+            and pl_module.current_epoch % self.erf_freq == 0
         ):  # exclude last batch were batch norm is appliedss FIXME
             x, _ = batch
             for name in range(self.layers):
@@ -321,21 +375,21 @@ class LogERFVisualizationCallback(Callback):
                         del self.features[name]
                         self.features[name] = []  # reset the hooks for the batch
 
-            if batch_idx % self.config.batch_size == 0:
+            if batch_idx % self.batch_size == 0:
                 heatmaps = []
                 for name in self.gradient:
                     heatmap = self.gradient[name]
                     # average the gradients over the batches but sum it over the channels
                     if heatmap.size != 0:  # FIXE ME
                         plt.ioff()
-                        heatmap = heatmap / (batch_idx + 1) * self.config.batch_size
+                        heatmap = heatmap / (batch_idx + 1) * self.batch_size
                         heatmap = (
                             heatmap
                             - np.min(heatmap) / np.max(heatmap)
                             - np.min(heatmap)
                         )
                         ax = sns.heatmap(heatmap, cmap="rainbow", cbar=False)
-                        plt.title(f"Layer {trainer.model.erf_layers_names[name]}")
+                        plt.title(f"Layer {self.erf_layers_names[name]}")
                         ax.set_axis_off()
                         heatmaps.append(wandb.Image(plt))
                         plt.close()
@@ -347,7 +401,7 @@ class LogERFVisualizationCallback(Callback):
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
 
-        if (pl_module.current_epoch) % self.config.erf_freq == 0:
+        if (pl_module.current_epoch) % self.erf_freq == 0:
 
             self.gradient = {
                 i: self.eps for i in range(self.layers)
@@ -597,7 +651,7 @@ class LogAttentionMapsCallback(Callback):
         named_layers = dict(pl_module.named_modules())
         attend_layers = []
         for name in named_layers:
-            if ".attend" in name and "student" in name:
+            if ".attn.drop" in name:
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(

@@ -4,7 +4,7 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 import datasets 
 
-class BarlowTwinsDataModule(LightningDataModule):
+class BarlowTwins(LightningDataModule):
     """Data Module for barlowtwins training
 
     Args:
@@ -12,15 +12,15 @@ class BarlowTwinsDataModule(LightningDataModule):
     """
     def __init__(self, config,dataset_name = "BarlowTwinsDataset"):
         super().__init__()
-        self.dataset    = getattr(datasets.BarlowTwins,dataset_name)
+        self.dataset    = getattr(datasets,dataset_name)
         self.config     = config
         self.batch_size = self.config.batch_size
-        self.root = os.path.join(self.config.asset_path, "CIFAR10")
+        self.root = os.path.join(self.config.asset_path, "VOC")
 
-    def prepare_data(self):
-    #use to download
-        self.dataset(root = self.root, img_size=self.config.input_size,train = True, download=True)
-        self.dataset(root = self.root, img_size=self.config.input_size,train = False, download=True)
+    # def prepare_data(self):
+    # #use to download
+    #     self.dataset(root = self.root, img_size=self.config.input_size,image_set = "Train")
+    #     self.dataset(root = self.root, img_size=self.config.input_size,image_set = "Val")
 
     # OPTIONAL, called for every GPU/machine (assigning state is OK)
     def setup(self, stage=None):
@@ -28,10 +28,10 @@ class BarlowTwinsDataModule(LightningDataModule):
         # split dataset
         if stage in (None, "fit"):
             self.cifar_train = self.dataset(
-                self.root, img_size=self.config.input_size,train = True
+                self.root, img_size=self.config.input_size,image_set = "train"
             )
             self.cifar_val = self.dataset(
-                self.root, img_size=self.config.input_size,train = False
+                self.root, img_size=self.config.input_size,image_set = "val"
             )
 
     def train_dataloader(self):

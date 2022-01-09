@@ -16,16 +16,16 @@ class Hparams:
     """Hyperparameters of for the run"""
 
     
-    wandb_project : str  = "recvis"         # name of the project
+    wandb_entity  : str  = "recvis"         # name of the project
     test          : bool = True             # test code before running
-    wandb_entity  : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
+    wandb_project : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
     save_dir      : str  = osp.join(os.getcwd(), "wandb")   # directory to save wandb outputs
 
 
-    agent       : str           = "BT_trainer"      # trainer agent to use for training
+    agent       : str           = "trainer"         # trainer agent to use for training
     arch        : str           = "BarlowTwins"     # architecture to use
-    datamodule  : str           = "DinoDataModule"  # lighting datamodule
-    dataset     : Optional[str] = "CIFAR10"         # dataset, use <Dataset>Eval for FT
+    datamodule  : str           = "BarlowTwins"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "BarlowTwinsDataset"         # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
@@ -105,7 +105,7 @@ class MetricsParams:
     average     : str       = "weighted"
     mdmc_average: str       = "global"
     ignore_index: int       = 21
-    names       : List[str] = list_field("Accuracy","Recall","Precision","F1","IoU") # name of the metrics which will be used
+    metrics     : List[str] = list_field("Accuracy","Recall","Precision","F1","IoU") # name of the metrics which will be used
 
     
 
@@ -117,12 +117,14 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    lmbda                 : float        = 5e-3
-    bt_proj_channels      : int          = 2048      # number of channels to use for projection
-    encoder               : str          = choice("resnet50", "swinS", default="resnet50") # encoder for barlow
-    pretrained_encoder    : bool         = False     # use a pretrained model
-    use_backbone_features : bool         = True      # only use backbone features for FT
-    weight_checkpoint     : Optional[str]= osp.join(os.getcwd(),) # model checkpoint used in classification fine tuning
+    backbone              : str           = "vit"
+    nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
+    lmbda                 : float         = 5e-3
+    bt_proj_dim           : int           = 2048      # number of channels to use for projection
+    pretrained_encoder    : bool          = False     # use a pretrained model
+    use_backbone_features : bool          = True      # only use backbone features for FT
+    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),) # model checkpoint used in classification fine tuning
+    backbone_parameters       : Optional[str]     = None
     
     
 
@@ -158,46 +160,52 @@ class DinoConfig:
                 )
         )
     weight_checkpoint  : Optional[str] = osp.join(os.getcwd(),)
-    backbone_parameters: Optional[str] = None
-
-    if backbone == "vit":
-        backbone_parameters: Dict[str, Any]    = dict_field(
-                dict(
-                    image_size  = 32,
-                    patch_size  = 4,
-                    num_classes = 0,
-                    dim         = 192,
-                    depth       = 4,
-                    heads       = 6,
-                    mlp_dim     = 1024,
-                    dropout     = 0.1,
-                    emb_dropout = 0.1,
-                )
-        )
 
 
 
 @dataclass
 class Parameters:
     """base options."""
-    hparams    : Hparams         = Hparams()
-    optim_param: OptimizerParams = OptimizerParams()
-
+    hparams       : Hparams         = Hparams()
+    optim_param   : OptimizerParams = OptimizerParams()
+    data_param    : DatasetParams   = DatasetParams()
+    callback_param: CallBackParams  = CallBackParams()
+    metric_param  : MetricsParams   = MetricsParams()
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-
+        
+        
         # Set render number of channels
         if "BarlowTwins" in self.hparams.arch:
             self.network_param: BarlowConfig = BarlowConfig()
         elif "Dino" in self.hparams.arch:
             self.network_param: DinoConfig = DinoConfig()
+        
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
+            
+            
+            
+        if self.network_param.backbone == "vit":
+            self.network_param.backbone_parameters = dict(
+                        name                   = "B_16", # we don't use pretrained models
+                        pretrained             = False,
+                        patches                = 16,
+                        dim                    = 768,
+                        ff_dim                 = 3072,
+                        num_heads              = 6,
+                        num_layers             = 4,
+                        image_size             = self.data_param.input_size,
+                        num_classes            = None, # self.data_param.num_classes otherwise? 
+                    )
+            
+                
+        
 
-        self.data_param: DatasetParams = DatasetParams()
+        
         print("Random Seed: ", self.hparams.seed_everything)
         random.seed(self.hparams.seed_everything)
         torch.manual_seed(self.hparams.seed_everything)

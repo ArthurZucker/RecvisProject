@@ -1,33 +1,35 @@
 import pytorch_lightning as pl
+import wandb
 from pytorch_lightning.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
     ModelCheckpoint,
     RichProgressBar,
-    LearningRateMonitor,
-    EarlyStopping,
 )
 from utils.callbacks import (
     LogAttentionMapsCallback,
     LogBarlowCCMatrixCallback,
-    LogBarlowImagesCallback,
     LogDinoImagesCallback,
     LogERFVisualizationCallback,
     LogMetricsCallback,
+    LogSegmentationCallback,
+    LogTransformedImages,
 )
+
 from agents.BaseTrainer import BaseTrainer
-import wandb
 
 
 class trainer(BaseTrainer):
-    def __init__(self, config, CallBackParams, MetricsParams, run):
+    def __init__(self, config, run):
         super().__init__(config, run)
-        self.MetricsParams = MetricsParams
-        self.CallBackParams = CallBackParams
+        self.metric_param = config.metric_param
+        self.callback_param = config.callback_param
 
     def run(self):
         super().run()
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
-            callbacks=self.get_callbacks(self.CallBackParams, self.MetricsParams),
+            callbacks=self.get_callbacks(),
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
             precision=self.config.precision,  # train in half precision
@@ -43,28 +45,37 @@ class trainer(BaseTrainer):
 
     def get_callbacks(self):
 
-        callbacks = [RichProgressBar(), LearningRateMonitor()]
+        callbacks = [
+            RichProgressBar(),
+            LearningRateMonitor(),
+            LogTransformedImages(self.callback_param.log_pred_freq),
+        ]
 
         if "Barlo" in self.config.arch:
             callbacks += [
-                LogBarlowImagesCallback(self.config.log_pred_freq),
-                LogBarlowCCMatrixCallback(self.config.log_ccM_freq),
+                LogBarlowCCMatrixCallback(self.callback_param.log_ccM_freq),
             ]
 
         elif self.config.arch == "Dino" or self.config.arch == "DinoTwins":
-            callbacks += [LogDinoImagesCallback(self.config.log_pred_freq)]
+            callbacks += [LogDinoImagesCallback(self.callback_param.log_pred_freq)]
 
         if self.encoder == "vit":
             callbacks += [
                 LogAttentionMapsCallback(
-                    self.config.attention_threshold, self.config.nb_attention
+                    self.callback_param.attention_threshold,
+                    self.callback_param.nb_attention,
                 )
             ]
 
         if "Seg" in self.config.datamodule:
             callbacks += [
-                LogMetricsCallback(),
-                LogERFVisualizationCallback(self.config.log_erf_freq),
+                LogMetricsCallback(self.metric_param),
+                LogSegmentationCallback(self.callback_param.log_pred_freq),
+                LogERFVisualizationCallback(
+                    self.callback_param.nb_erf,
+                    self.callback_param.log_erf_freq,
+                    self.config.data_param.batch_size,
+                ),
                 EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
             ]
             monitor = "val/iou"
@@ -72,7 +83,7 @@ class trainer(BaseTrainer):
         else:
             monitor = "val/loss"
             mode = "min"
-        self.run.define_metric(monitor, summary=mode)
+        wandb.define_metric(monitor, summary=mode)
         if "Dino" in self.config.arch:
             save_top_k = -1
             every_n_epochs = 20
@@ -80,7 +91,7 @@ class trainer(BaseTrainer):
             save_top_k = 5
             every_n_epochs = 1
 
-        if self.config.testing:  # don't need to save if we are just testing
+        if self.config.test:  # don't need to save if we are just testing
             save_top_k = 0
 
         callbacks += [
