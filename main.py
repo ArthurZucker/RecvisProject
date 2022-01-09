@@ -9,7 +9,7 @@ from __future__ import absolute_import, division
 from pytorch_lightning.loggers import WandbLogger
 
 from agents import *
-from config.hparams import Parameters
+from config.hparams2 import Parameters
 import wandb
 
 def main():
