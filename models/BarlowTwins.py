@@ -1,56 +1,43 @@
-import os
-
-import torch
 import torch.nn as nn
-import torchmetrics  # TODO use later
+from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
 from torch.nn import functional as F
-from torch.optim import Adam
-
-from models.losses.barlow_twins.bt_loss import BarlowTwinsLoss
+import torch
 from utils.agent_utils import get_net
+
+from models.losses.barlow_twins import CrossCorrelationMatrixLoss
 
 
 class BarlowTwins(LightningModule):
-    def __init__(self, config):
-        """method used to define our model parameters"""
+    """General class for self supervised learning using BarlowTwins method
+    The encoder used as backbone can be defined in the hparams file
+    """
+    def __init__(self, network_param,optim_param = None):
+        """method used to define our model parameters
+        Args: BarlowConfig : config = network parameters to use. 
+        """
         super().__init__()
-        self.log_pred_freq = config.log_pred_freq
-        self.loss = BarlowTwinsLoss
-        # optimizer parameters
-        self.lr = config.lr
-
-        # Loss parameter
-        self.lmbda = config.lmbda
-
+        self.loss = CrossCorrelationMatrixLoss(network_param.lmbda)
+        self.optim_param = optim_param
+        self.proj_dim = network_param.bt_proj_dim
         # get backbone model and adapt it to the task
-        self.in_features = 0
-        self.encoder = get_net(
-            config, config.encoder
-        )  # TODO add encoder name to the hparams, use getnet() to get the encoder
-        self.in_features = list(self.encoder.children())[-1].in_features
+        self.encoder = get_net(network_param.encoder,network_param) 
+        self.in_features = list(self.encoder.modules())[-1].in_features
         name_classif = list(self.encoder.named_children())[-1][0]
         self.encoder._modules[name_classif] = nn.Identity()
+        self.head = self.get_head()
+        
+    
+    def get_head(self):
+        # first layer
+        proj_layers = [nn.Linear(self.in_features, self.proj_dim, bias=False), nn.GELU()]
+        for i in range(self.nb_proj_layers):
+            proj_layers.append(nn.BatchNorm1d(self.proj_dim))
+            proj_layers.append(nn.ReLU(inplace=True))
+            proj_layers.append(nn.Linear(self.proj_dim, self.proj_dim, bias=False))
+            
+        return nn.Sequential(*proj_layers)
 
-        # Make Projector (3-layers),
-        self.proj_channels = config.bt_proj_channels
-        proj_layers = []
-
-        # TODO make it more properly, in custom_layer write a get proj
-        for i in range(3):
-            if i == 0:
-                proj_layers.append(
-                    nn.Linear(self.in_features, self.proj_channels, bias=False)
-                )
-            else:
-                proj_layers.append(
-                    nn.Linear(self.proj_channels, self.proj_channels, bias=False)
-                )
-            if i < 2:
-                proj_layers.append(nn.BatchNorm1d(self.proj_channels))
-                proj_layers.append(nn.ReLU(inplace=True))
-
-        self.proj = nn.Sequential(*proj_layers)
 
     def forward(self, x1, x2):
         # Feeding the data through the encoder and projector
@@ -62,27 +49,32 @@ class BarlowTwins(LightningModule):
     def training_step(self, batch, batch_idx):
         """needs to return a loss from a single batch"""
         loss = self._get_loss(batch)
-
-        # Log loss and metric
         self.log("train/loss", loss)
 
         return loss
 
-    def validation_step(self, batch, batch_idx) :
+    def validation_step(self, batch, batch_idx):
+        """used for logging metrics"""
         loss = self._get_loss(batch)
-        # Log loss and metric
         self.log("val/loss", loss)
+
         return loss
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        return Adam(self.parameters(), lr=self.lr)
+        optimizer = getattr(torch.optim,self.optim_param.optimizer)
+        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr)
+        # scheduler = LinearWarmupCosineAnnealingLR(
+        #     optimizer, warmup_epochs=5, max_epochs=40
+        # )
+        return optimizer #[[optimizer], [scheduler]]
+
 
     def _get_loss(self, batch):
         """convenience function since train/valid/test steps are similar"""
         x1, x2 = batch
         z1, z2 = self(x1, x2)
-
-        loss = self.loss(z1, z2, self.lmbda)
+        loss = self.loss(z1, z2)
 
         return loss
+

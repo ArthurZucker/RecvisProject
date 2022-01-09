@@ -28,15 +28,6 @@ class Hparams:
     dataset     : Optional[str] = "CIFAR10"         # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
-    
-
-
-    log_pred_freq      : int   = 10     # log_pred_freq
-    log_ccM_freq       : int   = 1      # log cc_M matrix frequency
-    log_dino_freq      : int   = 1      # log output frrequency for dino
-    attention_threshold: float = 0.8    # Logging attention threshold for head fusion
-    nb_attention       : int   = 5      # nb of images for which the attention will be visualised
-
         
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
@@ -96,6 +87,17 @@ class OptimizerParams:
         )
     )
 
+@dataclass
+class CallBackParams:
+    """Parameters to use for the logging callbacks
+    """
+    log_erf_freq       : int   = 10     # effective receptive fields
+    log_att_freq       : int   = 10     # attention maps
+    log_pred_freq      : int   = 10     # log_pred_freq
+    log_ccM_freq       : int   = 1      # log cc_M matrix frequency
+    log_dino_freq      : int   = 1      # log output frrequency for dino
+    attention_threshold: float = 0.5    # Logging attention threshold for head fusion
+    nb_attention       : int   = 5      # nb of images for which the attention will be visualised
 
 @dataclass
 class MetricsParams:

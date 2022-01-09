@@ -4,25 +4,28 @@ from torch import nn, optim
 from torch.nn import MarginRankingLoss
 
 
-def get_net(args, name=None):
+
+def get_net(arch,network_param, optimizer_param = None):
     """
     Get Network Architecture based on arguments provided
     """
-    name = name if name is not None else args.arch
-    module = "models." + name
-    mod = importlib.import_module(module)
-    net = getattr(mod, name)
-    return net(args)
+    # FIXME this iss fucking strange the import needs to be done twice to work
+    mod = importlib.import_module(f"models.{arch}")
+    net = getattr(mod,arch)
+    if optimizer_param is not None:
+        return net(network_param,optimizer_param)
+    else : 
+        return net(network_param)
 
 
-def get_datamodule(args):
+def get_datamodule(datamodule,data_param,dataset = None):
     """
     Fetch Network Function Pointer
     """
-    module = "datamodule." + args.datamodule
+    module = "datamodules." + datamodule
     mod = importlib.import_module(module)
-    net = getattr(mod, (args.datamodule))
-    return net(args)
+    net = getattr(mod, datamodule)
+    return net(data_param,dataset)
 
 
 

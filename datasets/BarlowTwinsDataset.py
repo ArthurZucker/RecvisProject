@@ -4,7 +4,7 @@ import torch
 
 #torch dataset library
 from torch.utils.data import Dataset
-from utils.transforms import BarlowTwinsTransform
+from utils.transforms import BarlowTwinsTransform, SegTransform
 from torchvision.datasets import VOCSegmentation
 from PIL import Image
 
@@ -21,3 +21,16 @@ class BarlowTwinsDataset(VOCSegmentation):
             aug_image1, aug_image2 = self.transform(image = image)
         return aug_image1, aug_image2    
     
+class BarlowTwinsDatasetSeg(VOCSegmentation):
+    def __init__(self, root, img_size, image_set="trainval"):
+        super().__init__(root=root, image_set=image_set)
+        self.transform = SegTransform(img_size)
+
+    def __getitem__(self, idx):
+        image = Image.open(self.images[idx]).convert("RGB")
+        target = Image.open(self.masks[idx])
+
+        if self.transforms is not None:
+            image, target = self.transforms(image, target)
+
+        return image, target

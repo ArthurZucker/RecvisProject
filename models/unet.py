@@ -1,12 +1,11 @@
-from models.base import BASE_LitModule
 from models.custom_layers.unet_convs import *
 from utils.hooks import get_activation
-
+import torch.nn as nn
 """
 https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
 """
 
-class Unet(BASE_LitModule):
+class Unet(nn.Module):
     def __init__(self, config, bilinear=True):
         super(Unet, self).__init__(config)
         self.n_channels = self.config.n_channels
@@ -28,7 +27,6 @@ class Unet(BASE_LitModule):
         self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True), strict=False)
 
     def forward(self, x):
-        x.requires_grad_(True)
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)

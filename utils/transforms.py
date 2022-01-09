@@ -46,7 +46,7 @@ class UnNormalize(object):
         return self.__class__.__name__ + "()"
 
 
-class transform_SS(object):
+class SegTransform(object):
     def __init__(self, input_size, r_hflip, r_vflip, mean, std) -> None:
         super().__init__()
         self.input_size = input_size
