@@ -14,6 +14,7 @@ from utils.callbacks import (
     LogMetricsCallback,
     LogSegmentationCallback,
     LogTransformedImages,
+    LogBarlowPredictionsCallback
 )
 
 from agents.BaseTrainer import BaseTrainer
@@ -24,7 +25,7 @@ class trainer(BaseTrainer):
         super().__init__(config, run)
         self.metric_param = config.metric_param
         self.callback_param = config.callback_param
-
+        self.batch_size = config.data_param.batch_size
     def run(self):
         super().run()
         trainer = pl.Trainer(
@@ -48,12 +49,17 @@ class trainer(BaseTrainer):
         callbacks = [
             RichProgressBar(),
             LearningRateMonitor(),
-            LogTransformedImages(self.callback_param.log_pred_freq),
+            LogERFVisualizationCallback(
+                    self.callback_param.nb_erf,
+                    self.callback_param.log_erf_freq,
+                    self.batch_size,
+                ),
+            # LogTransformedImages(self.callback_param.log_pred_freq),
         ]
 
         if "Barlo" in self.config.arch:
             callbacks += [
-                LogBarlowCCMatrixCallback(self.callback_param.log_ccM_freq),
+                LogBarlowPredictionsCallback,LogBarlowCCMatrixCallback(self.callback_param.log_ccM_freq),
             ]
 
         elif self.config.arch == "Dino" or self.config.arch == "DinoTwins":
@@ -71,11 +77,6 @@ class trainer(BaseTrainer):
             callbacks += [
                 LogMetricsCallback(self.metric_param),
                 LogSegmentationCallback(self.callback_param.log_pred_freq),
-                LogERFVisualizationCallback(
-                    self.callback_param.nb_erf,
-                    self.callback_param.log_erf_freq,
-                    self.config.data_param.batch_size,
-                ),
                 EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
             ]
             monitor = "val/iou"

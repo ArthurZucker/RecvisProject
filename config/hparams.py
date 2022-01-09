@@ -47,8 +47,8 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (32, 32)   # image_size
-    batch_size        : int         = 128        # batch_size
+    input_size        : tuple       = (128, 128)   # image_size
+    batch_size        : int         = 16        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     n_crops           : int         = 5          # number of crops/global_crops
     n_global_crops    : int         = 2          # number of global crops
@@ -92,6 +92,7 @@ class CallBackParams:
     """Parameters to use for the logging callbacks
     """
     log_erf_freq       : int   = 10     # effective receptive fields
+    nb_erf             : int   = 6
     log_att_freq       : int   = 10     # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
     log_ccM_freq       : int   = 1      # log cc_M matrix frequency
@@ -145,20 +146,6 @@ class DinoConfig:
     teacher_temp              : float             = 0.07  # Default 0.04, can be linearly increased to 0.07 but then it becomes unstable
     warmup_teacher_temp       : float             = (0.04  )# would be different from techer temp if we used a warmup for this param
     backbone_parameters       : Optional[str]     = None
-    if backbone == "vit":
-        backbone_parameters: Dict[str, Any]    = dict_field(
-                dict(
-                    image_size  = 32,
-                    patch_size  = 4,
-                    num_classes = 0,
-                    dim         = 192,
-                    depth       = 4,
-                    heads       = 6,
-                    mlp_dim     = 1024,
-                    dropout     = 0.1,
-                    emb_dropout = 0.1,
-                )
-        )
     weight_checkpoint  : Optional[str] = osp.join(os.getcwd(),)
 
 
@@ -193,7 +180,7 @@ class Parameters:
             self.network_param.backbone_parameters = dict(
                         name                   = "B_16", # we don't use pretrained models
                         pretrained             = False,
-                        patches                = 16,
+                        patches                = self.data_param.input_size[0]//8,
                         dim                    = 768,
                         ff_dim                 = 3072,
                         num_heads              = 6,

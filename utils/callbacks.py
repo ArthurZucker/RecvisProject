@@ -60,7 +60,7 @@ class LogTransformedImages(Callback):
 
             samples.append(wandb.Image(bg_image,))
             
-        wandb.log({name: samples})
+        wandb.log({f"transformed images/{name}": samples})
         
 
 class LogSegmentationCallback(Callback):
@@ -512,9 +512,8 @@ class LogAttentionMapsCallback(Callback):
             attention_maps = []
             th_attention_map = []
             for i in range(self.nb_attention_images):
-                img = batch[0][
-                    i
-                ]  # only 1 image for now. The batch has [0,1,...,n_1] crops b_size images
+                img = batch[0][i]  
+                # only 1 image for now. The batch has [0,1,...,n_1] crops b_size images
                 w, h = (
                     img.shape[1] - img.shape[1] % pl_module.patch_size,
                     img.shape[2] - img.shape[2] % pl_module.patch_size,
@@ -640,10 +639,8 @@ class LogAttentionMapsCallback(Callback):
             _mask = mask[i].numpy()
             # Mask
             masked_image = apply_mask(masked_image, _mask, color, alpha=0.5)
-            # Mask Polygon
-            # Pad to ensure proper polygons for masks that touch image edges.
             ax.imshow(masked_image.astype(np.uint8))
-        ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+            ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
 
     def _register_layer_hooks(self, pl_module):
 
