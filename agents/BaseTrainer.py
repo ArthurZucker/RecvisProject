@@ -6,10 +6,17 @@ class BaseTrainer:
     def __init__(self, config, run) -> None:
         self.config = config.hparams
         self.wb_run = run
-        self.encoder = config.network_param.backbone
-        self.model = get_net(
-            config.hparams.arch, config.network_param, config.optim_param
-        )
+        if "Barlow" in self.config.arch or "Dino" in self.config.arch: 
+            self.encoder = config.network_param.backbone
+            self.model = get_net(
+                config.hparams.arch, config.network_param, config.optim_param
+            )
+        elif "Seg" in self.config.arch:
+            self.model = get_net(
+                config.hparams.arch, config.network_param, config.optim_param, config.loss_param
+            )
+            self.encoder = None
+
         self.wb_run.watch(self.model,log_graph=False)
         self.datamodule = get_datamodule(
             config.hparams.datamodule, config.data_param,config.hparams.dataset
