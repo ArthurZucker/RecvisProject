@@ -1,10 +1,10 @@
-from kornia.losses import DiceLoss
 from pytorch_lightning import LightningModule
 from utils.agent_utils import get_net, import_class
 from utils.hooks import get_activation
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-
+from .unet import Unet
+import importlib
 
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
@@ -14,6 +14,7 @@ class Segmentation(LightningModule):
     Args:
         LightningModule ([type]): [description]
     """
+
     def __init__(self, network_param, optimizer_param, loss_param):
         """method used to define our model parameters"""
         super().__init__()
@@ -21,20 +22,16 @@ class Segmentation(LightningModule):
         self.rq_grad = False
 
         # backbone :
-        self.net = get_net(network_param.encoder, network_param)
-
+        # self.net = get_net(network_param.backbone, network_param)
+        self.net = Unet(n_channels=network_param.n_channels,
+                        n_classes=network_param.n_classes)
         # loss
-        name, params = next(iter(loss_param.items()))
-        name = name.replace("_", ".")
-        if "segmentation.models" in name:
-            name = name.replace("segmentation.models", "segmentation_models")
-        loss_cls = import_class(name)
-        if "weight" in params:
-            params["weight"] = torch.tensor(params["weight"])
-        self.loss = loss_cls(**params)
+        module = importlib.import_module(f"models.losses.segmentation.dice")
+
+        self.loss = getattr(module, loss_param.name)()
 
         # optimizer parameters
-        self.lr = network_param.lr
+        self.lr = optimizer_param.lr
 
     def forward(self, x):
         x.requires_grad_(self.rq_grad)
@@ -76,22 +73,32 @@ class Segmentation(LightningModule):
 
         return preds
 
-    def network_paramure_optimizers(self):
+    def configure_optimizers(self):
         """defines model optimizer"""
-        optimizer = getattr(torch.optim, self.optim_param.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr)
+        optimizer = getattr(torch.optim, self.optimizer_param.optimizer)
+        optimizer = optimizer(self.parameters(), lr=self.optimizer_param.lr)
 
-        scheduler = LinearWarmupCosineAnnealingLR(
-            optimizer,
-            warmup_epochs=10,
-            max_epochs=self.optim_param.max_epochs,
-            warmup_start_lr=0.1
-            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
-            eta_min=0.1
-            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
-        )  # @TODO if we need other, should be adde dbnut I doubt that will be needed
+        # scheduler = LinearWarmupCosineAnnealingLR(
+        #     optimizer,
+        #     warmup_epochs=10,
+        #     max_epochs=self.optimizer_param.max_epochs,
+        #     warmup_start_lr=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        #     eta_min=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        # )  # @TODO if we need other, should be adde dbnut I doubt that will be needed
 
-        return [[optimizer], [scheduler]]
+        # scheduler = LinearWarmupCosineAnnealingLR(
+        #     optimizer,
+        #     warmup_epochs=10,
+        #     max_epochs=self.optimizer_param.max_epochs,
+        #     warmup_start_lr=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        #     eta_min=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        # ) 
+
+        return [optimizer] #, [scheduler]]
 
     def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(
