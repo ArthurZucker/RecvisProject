@@ -7,9 +7,10 @@ import torch
 https://torchmetrics.readthedocs.io/en/stable/references/modules.html#base-class MODULE METRICS
 """
 
+
 class MetricsModule():
 
-    def __init__(self, set_name, params,device,) -> None:
+    def __init__(self, set_name, params, device) -> None:
         """
         metrics : list of name metrics e.g ["Accuracy", "IoU"]
         set_name: val/train/test
@@ -18,7 +19,12 @@ class MetricsModule():
         dict_metrics = {}
         if set_name != "train":
             for name in params.metrics:
-                instance = import_class("torchmetrics." + name)(compute_on_step=False, **params.pop("metrics"))
+                if name != "IoU":
+                    instance = import_class("torchmetrics." + name)(compute_on_step=False, num_classes=params.num_classes,
+                                                                    **params.pixel_wise_parameters)
+                else:
+                    instance = import_class("torchmetrics." + name)(compute_on_step=False, num_classes=params.num_classes,
+                                                                    )
                 dict_metrics[name.lower()] = instance.to(device)
         else:
             dict_metrics["iou"] = import_class(
@@ -46,10 +52,11 @@ class MetricsModule():
             # metric on all batches using custom accumulation
             metric = m.compute()
 
-            if k =="confusionmatrix":
+            if k == "confusionmatrix":
                 class_names = [v for k, v in PASCAL_VOC_classes.items()]
                 class_names.remove("void")
-                wandb.log({name + "confusionmatrix" : wandb.plots.HeatMap(class_names, class_names, metric.cpu(), show_text=True)})
+                wandb.log({name + "confusionmatrix": wandb.plots.HeatMap(class_names,
+                          class_names, metric.cpu(), show_text=True)})
             else:
                 if metric.numel() != 1:
                     data = [[PASCAL_VOC_classes[idx], val]
