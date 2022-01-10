@@ -5,15 +5,20 @@ from torch.nn import MarginRankingLoss
 
 
 
-def get_net(arch,network_param, optimizer_param = None):
+def get_net(arch, network_param, optimizer_param = None, loss_param = None):
     """
     Get Network Architecture based on arguments provided
     """
     # FIXME this iss fucking strange the import needs to be done twice to work
+    # TODO dictionnary for parameters (network, optim, loss)
     mod = importlib.import_module(f"models.{arch}")
-    net = getattr(mod,arch)
-    if optimizer_param is not None:
-        return net(network_param,optimizer_param)
+    net = getattr(mod, arch)
+    if optimizer_param is not None and loss_param is not None:
+        return net(network_param, optimizer_param, loss_param)
+    elif optimizer_param is not None:
+        return net(network_param, optimizer_param)
+    elif loss_param is not None:
+        return net(network_param, loss_param)
     else : 
         return net(network_param)
 
