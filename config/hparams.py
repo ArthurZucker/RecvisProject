@@ -23,19 +23,19 @@ class Hparams:
 
 
     agent       : str           = "trainer"         # trainer agent to use for training
-    arch        : str           = "BarlowTwins"     # architecture to use
-    datamodule  : str           = "BarlowTwins"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"         # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"     # architecture to use
+    datamodule  : str           = "Segmentation"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"         # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     tune_batch_size: bool          = False  # tune the model on first run
-    gpu            : int           = 1      # number or gpu
+    gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 1024   # gradient accumulation batch size
+    accumulate_size: int           = 64   # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -46,7 +46,7 @@ class DatasetParams:
     ! The batch_size and number of crops should be defined here
     """
     
-    num_workers       : int         = 20         # number of workers for dataloadersint
+    num_workers       : int         = 1         # number of workers for dataloadersint
     input_size        : tuple       = (128, 128)   # image_size
     batch_size        : int         = 16        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
@@ -88,6 +88,11 @@ class OptimizerParams:
     )
 
 @dataclass
+class LossParams:
+    """Loss parameters"""
+    name: str = "DiceLoss"
+
+@dataclass
 class CallBackParams:
     """Parameters to use for the logging callbacks
     """
@@ -102,13 +107,19 @@ class CallBackParams:
 
 @dataclass
 class MetricsParams:
-    num_classes : int       = 21        # number of classes for the segmentation task
-    average     : str       = "weighted"
-    mdmc_average: str       = "global"
-    ignore_index: int       = 21
     metrics     : List[str] = list_field("Accuracy","Recall","Precision","F1","IoU") # name of the metrics which will be used
+    pixel_wise_parameters : Dict[str, Any] = dict_field(
+        dict(
+            average           = "weighted",
+            mdmc_average      = "global"
+        )
+    )
+    num_classes : int       = 21        # number of classes for the segmentation task
+    # average     : str       = "weighted"
+    # mdmc_average: str       = "global"
+    # ignore_index: int       = 21
+# FIXME metrics have not all the same arguments (IoU VS Pixelwise metrics)
 
-    
 
 @dataclass
 class BarlowConfig:
@@ -149,6 +160,11 @@ class DinoConfig:
     weight_checkpoint  : Optional[str] = osp.join(os.getcwd(),)
 
 
+@dataclass
+class SegmentationConfig:
+    backbone: str = "unet"
+    n_channels : int = 3
+    n_classes : int = 21
 
 @dataclass
 class Parameters:
@@ -158,6 +174,7 @@ class Parameters:
     data_param    : DatasetParams   = DatasetParams()
     callback_param: CallBackParams  = CallBackParams()
     metric_param  : MetricsParams   = MetricsParams()
+    loss_param  : LossParams   = LossParams()
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
@@ -169,25 +186,27 @@ class Parameters:
             self.network_param: BarlowConfig = BarlowConfig()
         elif "Dino" in self.hparams.arch:
             self.network_param: DinoConfig = DinoConfig()
-        
+        elif "Segmentation" in self.hparams.arch:
+            self.network_param: SegmentationConfig = SegmentationConfig()
+
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
             
             
-            
-        if self.network_param.backbone == "vit":
-            self.network_param.backbone_parameters = dict(
-                        name                   = "B_16", # we don't use pretrained models
-                        pretrained             = False,
-                        patches                = self.data_param.input_size[0]//8,
-                        dim                    = 768,
-                        ff_dim                 = 3072,
-                        num_heads              = 6,
-                        num_layers             = 4,
-                        image_size             = self.data_param.input_size,
-                        num_classes            = None, # self.data_param.num_classes otherwise? 
-                    )
+        if "BarlowTwins" in self.hparams.arch or "Dino" in self.hparams.arch:
+            if self.network_param.backbone == "vit":
+                self.network_param.backbone_parameters = dict(
+                            name                   = "B_16", # we don't use pretrained models
+                            pretrained             = False,
+                            patches                = self.data_param.input_size[0]//8,
+                            dim                    = 768,
+                            ff_dim                 = 3072,
+                            num_heads              = 6,
+                            num_layers             = 4,
+                            image_size             = self.data_param.input_size,
+                            num_classes            = None, # self.data_param.num_classes otherwise? 
+                        )
             
                 
         
