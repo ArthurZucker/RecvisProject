@@ -2,28 +2,26 @@ import importlib
 
 from torch import nn, optim
 from torch.nn import MarginRankingLoss
+from easydict import EasyDict
 
 
-
-def get_net(arch, network_param, optimizer_param = None, loss_param = None):
+def get_net(arch, network_param):
     """
     Get Network Architecture based on arguments provided
     """
-    # FIXME this iss fucking strange the import needs to be done twice to work
-    # TODO dictionnary for parameters (network, optim, loss)
     mod = importlib.import_module(f"models.{arch}")
     net = getattr(mod, arch)
-    if optimizer_param is not None and loss_param is not None:
-        return net(network_param, optimizer_param, loss_param)
-    elif optimizer_param is not None:
-        return net(network_param, optimizer_param)
-    elif loss_param is not None:
-        return net(network_param, loss_param)
-    else : 
-        return net(network_param)
+    return net(network_param)
 
 
-def get_datamodule(datamodule,data_param,dataset = None):
+def get_lightning_module(arch, config):
+
+    mod = importlib.import_module(f"lightningmodules.{arch}")
+    net = getattr(mod, arch)
+    return net(EasyDict(config))
+
+
+def get_datamodule(datamodule, data_param, dataset = None):
     """
     Fetch Network Function Pointer
     """
@@ -31,7 +29,6 @@ def get_datamodule(datamodule,data_param,dataset = None):
     mod = importlib.import_module(module)
     net = getattr(mod, datamodule)
     return net(data_param,dataset)
-
 
 
 def import_class(name, instantiate=None):

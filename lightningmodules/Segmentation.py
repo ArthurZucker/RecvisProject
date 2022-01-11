@@ -3,8 +3,11 @@ from utils.agent_utils import get_net, import_class
 from utils.hooks import get_activation
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-from .unet import Unet
+from models.unet import Unet
+import models.deeplabv3
+import models.resnet50
 import importlib
+from torchvision.models import resnet50
 
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
@@ -15,23 +18,33 @@ class Segmentation(LightningModule):
         LightningModule ([type]): [description]
     """
 
-    def __init__(self, network_param, optimizer_param, loss_param):
+    def __init__(self, config):
         """method used to define our model parameters"""
         super().__init__()
-        self.optimizer_param = optimizer_param
+
+        self.network_param = config.network_param
+        self.loss_param = config.loss_param
+        self.optimizer_param = config.optim_param
+
         self.rq_grad = False
 
         # backbone :
         # self.net = get_net(network_param.backbone, network_param)
-        self.net = Unet(n_channels=network_param.n_channels,
-                        n_classes=network_param.n_classes)
+        # self.net = Unet(n_channels=network_param.n_channels,
+        #                 n_classes=network_param.n_classes)
+        # encoder = models.resnet50.Resnet50()
+        if self.network_param.model == "deeplabv3":
+            self.net = models.deeplabv3.Deeplabv3(
+                num_classes=self.network_param.n_classes, encoder=self.network_param.encoder)
+        else:
+            raise ValueError(f'option {self.network_param.model} does not exist !')
+
         # loss
         module = importlib.import_module(f"models.losses.segmentation.dice")
-
-        self.loss = getattr(module, loss_param.name)()
+        self.loss = getattr(module, self.loss_param.name)()
 
         # optimizer parameters
-        self.lr = optimizer_param.lr
+        self.lr = self.optimizer_param.lr
 
     def forward(self, x):
         x.requires_grad_(self.rq_grad)
@@ -96,9 +109,9 @@ class Segmentation(LightningModule):
         #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
         #     eta_min=0.1
         #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        # ) 
+        # )
 
-        return [optimizer] #, [scheduler]]
+        return [optimizer]  # , [scheduler]]
 
     def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(
