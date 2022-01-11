@@ -1,8 +1,4 @@
-from pytorch_pretrained_vit import ViT
+from vit_pytorch import ViT
 
-def vit( vit_parameters,freeze = False) -> None:
-    net = ViT(**vit_parameters) # @TODO filllatere
-    if freeze:
-        for param in net.parameters():
-            param.requires_grad = False
-    return net
+def vit(vit_parameters):
+    return ViT(**vit_parameters)

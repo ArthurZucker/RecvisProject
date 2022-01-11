@@ -27,27 +27,27 @@ class BarlowTwins(LightningDataModule):
         # transforms
         # split dataset
         if stage in (None, "fit"):
-            self.cifar_train = self.dataset(
+            self.train = self.dataset(
                 self.root, img_size=self.config.input_size,image_set = "train"
             )
-            self.cifar_val = self.dataset(
+            self.val = self.dataset(
                 self.root, img_size=self.config.input_size,image_set = "val"
             )
 
     def train_dataloader(self):
-        cifar_train = DataLoader(
-            self.cifar_train,
+        train = DataLoader(
+            self.train,
             batch_size=self.batch_size,
             num_workers=self.config.num_workers,
             shuffle=True,
         )
-        return cifar_train
+        return train
 
     def val_dataloader(self):
-        cifar_val = DataLoader(
-            self.cifar_val,
+        val = DataLoader(
+            self.val,
             batch_size=self.batch_size,
             num_workers=self.config.num_workers,
             shuffle=False,
         )
-        return cifar_val
+        return val

@@ -35,7 +35,7 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 1024   # gradient accumulation batch size
+    accumulate_size: int           = 256   # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -47,8 +47,8 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (128, 128)   # image_size
-    batch_size        : int         = 16        # batch_size
+    input_size        : tuple       = (32, 32)   # image_size
+    batch_size        : int         = 256        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     n_crops           : int         = 5          # number of crops/global_crops
     n_global_crops    : int         = 2          # number of global crops
@@ -60,32 +60,21 @@ class DatasetParams:
 class OptimizerParams:
     """Optimization parameters"""
 
-    optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 5e-4     # learning rate,                             default = 0.0002
+    optimizer           : str            = "Adam"  # Optimizer (adam, rmsprop)
+    lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
     min_lr              : float          = 5e-6     # minimum lr for the scheduler
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
-    warmup_epochs       : int            = 10
+    warmup_epochs       : int            = 40
+    max_epochs          : int            = 400
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
-            base_value         = 0.9995,
-            final_value        = 1,
+            warmup_start_lr    = 0.9995,
             max_epochs         = 0,
-            niter_per_ep       = 0,
-            warmup_epochs      = 0,
-            start_warmup_value = 0,
+            warmup_epochs      = warmup_epochs,
         )
     )
-    lr_scheduler_parameters: Dict[str, Any] = dict_field(
-        dict(
-            base_value         = 0,
-            final_value        = 0,
-            max_epochs         = 0,
-            niter_per_ep       = 0,
-            warmup_epochs      = 10,
-            start_warmup_value = 0,
-        )
-    )
+    
 
 @dataclass
 class CallBackParams:
@@ -118,36 +107,14 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit"
+    backbone              : str           = "resnet50"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 2048      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     use_backbone_features : bool          = True      # only use backbone features for FT
     weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),) # model checkpoint used in classification fine tuning
-    backbone_parameters       : Optional[str]     = None
-    
-    
-
-
-@dataclass
-class DinoConfig:
-    """Hyperparameters specific to the DINO Model.
-    Used when the `arch` option is set to "Barlow" in the hparams
-    """
-    backbone                  : str               = "vit" 
-    proj_layers               : int               = 3
-    proj_channels             : int               = 2048
-    bottleneck_dim            : int               = 256
-    out_channels              : int               = 4096
-    warmup_teacher_temp_epochs: int               = 10  # Default 30
-    center_momentum           : float             = 0.9  # Default 0.9
-    student_temp              : float             = 0.1
-    teacher_temp              : float             = 0.07  # Default 0.04, can be linearly increased to 0.07 but then it becomes unstable
-    warmup_teacher_temp       : float             = (0.04  )# would be different from techer temp if we used a warmup for this param
-    backbone_parameters       : Optional[str]     = None
-    weight_checkpoint  : Optional[str] = osp.join(os.getcwd(),)
-
+    backbone_parameters   : Optional[str] = None
 
 
 @dataclass
@@ -167,8 +134,6 @@ class Parameters:
         # Set render number of channels
         if "BarlowTwins" in self.hparams.arch:
             self.network_param: BarlowConfig = BarlowConfig()
-        elif "Dino" in self.hparams.arch:
-            self.network_param: DinoConfig = DinoConfig()
         
         # Set random seed
         if self.hparams.seed_everything is None:
@@ -178,20 +143,16 @@ class Parameters:
             
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
-                        name                   = "B_16", # we don't use pretrained models
-                        pretrained             = False,
-                        patches                = self.data_param.input_size[0]//8,
-                        dim                    = 768,
-                        ff_dim                 = 3072,
-                        num_heads              = 6,
-                        num_layers             = 4,
-                        image_size             = self.data_param.input_size,
-                        num_classes            = None, # self.data_param.num_classes otherwise? 
-                    )
-            
-                
-        
-
+                image_size      = self.data_param.input_size[0],
+                patch_size      = self.data_param.input_size[0]//8,
+                num_classes     = 0,
+                dim             = 768,
+                depth           = 4,
+                heads           = 6,
+                mlp_dim         = 1024,
+                dropout         = 0.1,
+                emb_dropout     = 0.1,
+            )
         
         print("Random Seed: ", self.hparams.seed_everything)
         random.seed(self.hparams.seed_everything)

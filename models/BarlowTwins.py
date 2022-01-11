@@ -27,7 +27,7 @@ class BarlowTwins(LightningModule):
             network_param.backbone, network_param.backbone_parameters
         )
         if network_param.backbone_parameters is not None:
-            self.patch_size = network_param.backbone_parameters["patches"]
+            self.patch_size = network_param.backbone_parameters["patch_size"]
         self.in_features = list(self.backbone.modules())[-1].in_features
         name_classif = list(self.backbone.named_children())[-1][0]
         self.backbone._modules[name_classif] = nn.Identity()
@@ -37,9 +37,8 @@ class BarlowTwins(LightningModule):
         # first layer
         proj_layers = [
             nn.Linear(self.in_features, self.proj_dim, bias=False),
-            nn.GELU(),
         ]
-        for i in range(self.nb_proj_layers):
+        for i in range(self.nb_proj_layers-1):
             proj_layers.append(nn.BatchNorm1d(self.proj_dim))
             proj_layers.append(nn.ReLU(inplace=True))
             proj_layers.append(nn.Linear(self.proj_dim, self.proj_dim, bias=False))
@@ -71,10 +70,16 @@ class BarlowTwins(LightningModule):
         """defines model optimizer"""
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
         optimizer = optimizer(self.parameters(), lr=self.optim_param.lr)
-        # scheduler = LinearWarmupCosineAnnealingLR(
-        #     optimizer, warmup_epochs=5, max_epochs=40
-        # )
-        return optimizer  # [[optimizer], [scheduler]]
+        scheduler = LinearWarmupCosineAnnealingLR(
+            optimizer,
+            warmup_epochs=40,
+            max_epochs=self.optim_param.max_epochs,
+            warmup_start_lr=0.1
+            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
+            eta_min=0.1
+            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
+        )
+        return [[optimizer], [scheduler]]
 
     def _get_loss(self, batch):
         """convenience function since train/valid/test steps are similar"""

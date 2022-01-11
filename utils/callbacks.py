@@ -292,18 +292,6 @@ class LogBarlowCCMatrixCallback(Callback):
 
 
 class LogERFVisualizationCallback(Callback):
-    # TODO add feature vizualization for training and validation data
-    # should probably use hooks to keep the model structure
-    # classe image = classe predominante dans l'image + prendre features encoder
-    # We shall use the activation map in order to visualize the effective receptive fields
-    # those can be obtained by projecting the activation maps from upper layers
-    # and resizing with a deconvolution or with interpolation ?
-    # the original paper uses an average over 1000 images, this can also be considered.
-
-    # implementation will rely on the only git available out there : https://github.com/mcFloskel/houseNet/wiki/Effective-receptive-field
-    # and the original paper giving the definition of the effective receptive field
-    # It is defined as the partial derivative of the center pixel of the output map
-    # with respect to the input map (we can set the input as an input image and take the various output maps
 
     def __init__(self, nb_erf,erf_freq,b_size) -> None:
         """Initialize the callback with the layers
@@ -317,20 +305,14 @@ class LogERFVisualizationCallback(Callback):
         self.erf_freq = erf_freq
         self.nb_erf = nb_erf
         self.eps = 1e-7
-        self.gradient = {i: self.eps for i in range(self.layers)}
+        self.gradient = {i: self.eps for i in range(self.nb_erf)}
         self.batch_size = b_size
-    # from different stages of the network)
-    # Our implementation should be network independant
-    # def on_train_batch_start(self, trainer, pl_module, batch, batch_idx) -> None:
-    #     if (pl_module.current_epoch%self.config.erf_freq == 0 and batch_idx == 0):
-    #         pl_module._register_layer_hooks()
-    #         pl_module.rq_grad = True
 
     def on_epoch_start(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
         if (pl_module.current_epoch) % self.erf_freq == 0:
-            self._register_layer_hooks()
+            self._register_layer_hooks(pl_module)
             pl_module.rq_grad = True
 
     def on_train_batch_end(
@@ -345,7 +327,7 @@ class LogERFVisualizationCallback(Callback):
             and pl_module.current_epoch % self.erf_freq == 0
         ):  # exclude last batch were batch norm is appliedss FIXME
             x, _ = batch
-            for name in range(self.layers):
+            for name in range(self.nb_erf):
                 # for each layer, compute the mean
                 gradient_wrt_ipt = self.features[name]
                 if gradient_wrt_ipt != []:
@@ -404,7 +386,7 @@ class LogERFVisualizationCallback(Callback):
         if (pl_module.current_epoch) % self.erf_freq == 0:
 
             self.gradient = {
-                i: self.eps for i in range(self.layers)
+                i: self.eps for i in range(self.nb_erf)
             }  # in case we wanna log on other epochs
             for hooks in self.hooks:
                 hooks.remove()
@@ -413,7 +395,7 @@ class LogERFVisualizationCallback(Callback):
     def _register_layer_hooks(self,pl_module): # @URGENT @TODO should be in the ERF Callabck function, would be cleaner
         self.hooks = []
         nb_erf = self.nb_erf #TODO only use those layers not every layer
-        named_layers = list(dict(pl_module.named_modules())["net"].named_modules())[2:]
+        named_layers = list(pl_module.named_modules())[2:]
         layer_span = ((len(named_layers))//nb_erf) # span to take each layers
         selected_layers = named_layers[::layer_span][:nb_erf-1]+[named_layers[-1]]
         self.erf_layers_names = list(dict(selected_layers).keys())
@@ -427,6 +409,9 @@ class LogERFVisualizationCallback(Callback):
 
 
 class LogBarlowPredictionsCallback(Callback):
+    def __init__(self,erf_freq) -> None:
+        super().__init__()
+        self.erf_freq = erf_freq
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
@@ -436,7 +421,7 @@ class LogBarlowPredictionsCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % pl_module.log_pred_freq == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
             self.log_images("train", batch, 5, outputs)
 
     def on_validation_batch_end(
@@ -448,7 +433,7 @@ class LogBarlowPredictionsCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % pl_module.log_pred_freq == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
             self.log_images("val", batch, 5, outputs)
 
     def log_images(self, name, batch, n, outputs):
@@ -648,7 +633,7 @@ class LogAttentionMapsCallback(Callback):
         named_layers = dict(pl_module.named_modules())
         attend_layers = []
         for name in named_layers:
-            if ".attn.drop" in name:
+            if ".attend" in name:
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(

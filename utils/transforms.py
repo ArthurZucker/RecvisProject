@@ -102,15 +102,9 @@ class SegTransform(object):
     def __repr__(self):
         return self.__class__.__name__ + "()"
 
-
 class BarlowTwinsTransform(object):
-    # random croping
-    # resizing  224 × 224,
-    # horizontal flipping, p
-    # color jittering, p
-    # converting to grayscale,
-    # Gaussian blurring,  different proba for x1 and x2
-    # and solarization  different proba for x1 and x2
+    """TODO docstring
+    """
     def __init__(self, img_size) -> None:
         
         self.img_size = img_size
