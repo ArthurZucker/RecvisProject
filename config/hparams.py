@@ -165,30 +165,14 @@ class LossParams:
 class OptimizerParams_Segmentation:
     """Optimization parameters"""
 
-    optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 5e-4     # learning rate,                             default = 0.0002
-    lr_sched_type       : str            = "step"   # Learning rate scheduler type.
-    min_lr              : float          = 5e-6     # minimum lr for the scheduler
-    betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
-    warmup_epochs       : int            = 10
+    optimizer           : str            = "AdamW" 
+    lr                  : float          = 5e-4
+    scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
-            base_value         = 0.9995,
-            final_value        = 1,
-            max_epochs         = 0,
-            niter_per_ep       = 0,
-            warmup_epochs      = 0,
-            start_warmup_value = 0,
-        )
-    )
-    lr_scheduler_parameters: Dict[str, Any] = dict_field(
-        dict(
-            base_value         = 0,
-            final_value        = 0,
-            max_epochs         = 0,
-            niter_per_ep       = 0,
-            warmup_epochs      = 10,
-            start_warmup_value = 0,
+            patience = 4,
+            mode = "max",
+            threshold = 0.1
         )
     )
 

@@ -7,7 +7,6 @@ from models.unet import Unet
 import models.deeplabv3
 import models.resnet50
 import importlib
-from torchvision.models import resnet50
 
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
@@ -30,18 +29,15 @@ class Segmentation(LightningModule):
 
         # backbone :
         # self.net = get_net(network_param.backbone, network_param)
-        # self.net = Unet(n_channels=network_param.n_channels,
-        #                 n_classes=network_param.n_classes)
-        # encoder = models.resnet50.Resnet50()
         if self.network_param.model == "deeplabv3":
             self.net = models.deeplabv3.Deeplabv3(
-                num_classes=self.network_param.n_classes, encoder=self.network_param.encoder)
+                num_classes=self.network_param.n_classes, backbone=self.network_param.backbone)
         else:
             raise ValueError(f'option {self.network_param.model} does not exist !')
 
         # loss
-        module = importlib.import_module(f"models.losses.segmentation.dice")
-        self.loss = getattr(module, self.loss_param.name)()
+        loss_cls = import_class(self.loss_param.name)
+        self.loss = loss_cls(**self.loss_param.param)
 
         # optimizer parameters
         self.lr = self.optimizer_param.lr
@@ -89,7 +85,7 @@ class Segmentation(LightningModule):
     def configure_optimizers(self):
         """defines model optimizer"""
         optimizer = getattr(torch.optim, self.optimizer_param.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.optimizer_param.lr)
+        optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), lr=self.optimizer_param.lr)
 
         # scheduler = LinearWarmupCosineAnnealingLR(
         #     optimizer,
@@ -110,8 +106,13 @@ class Segmentation(LightningModule):
         #     eta_min=0.1
         #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
         # )
+        if hasattr(self.optimizer_param, "scheduler"):
+            scheduler_cls = import_class(self.optimizer_param.scheduler)
+            scheduler = scheduler_cls(optimizer, **self.optimizer_param.scheduler_parameters)
+            lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
+            return ([optimizer], [lr_scheduler])
 
-        return [optimizer]  # , [scheduler]]
+        return optimizer
 
     def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(
