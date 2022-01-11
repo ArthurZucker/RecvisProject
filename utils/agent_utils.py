@@ -3,139 +3,41 @@ import importlib
 from torch import nn, optim
 from torch.nn import MarginRankingLoss
 
-"""
-Get loss function from str parameter
-"""
-def get_loss(args):
-    """
-    Get the criterion based on the loss function
-    args: commandline arguments
-    return: criterion, criterion_val
-    """
-
-    if args == "NNL":
-       return nn.NLLLoss()
-    if args == "CrossEntropy":
-      return nn.CrossEntropyLoss(reduction='mean')
-    else:
-       print("Not implemented yet")
 
 
-"""
-Get model from str parameter
-"""
-def get_net(args):
+def get_net(arch,network_param, optimizer_param = None):
     """
     Get Network Architecture based on arguments provided
     """
-    net = get_model(args)
-    num_params = sum([param.nelement() for param in net.parameters()])
-    print('Model params = {:2.1f}M'.format(num_params / 1000000))
-   #  net = net.cuda()
-    return net
+    # FIXME this iss fucking strange the import needs to be done twice to work
+    mod = importlib.import_module(f"models.{arch}")
+    net = getattr(mod,arch)
+    if optimizer_param is not None:
+        return net(network_param,optimizer_param)
+    else : 
+        return net(network_param)
 
-def get_model(args):
+
+def get_datamodule(datamodule,data_param,dataset = None):
     """
     Fetch Network Function Pointer
     """
-    module='models.'+args.arch
+    module = "datamodules." + datamodule
     mod = importlib.import_module(module)
-    net = getattr(mod, (args.arch.title()))
-    return net(args)
- 
-def get_datamodule(args):
-    """
-    Fetch Network Function Pointer
-    """
-    module='datamodule.'+args.datamodule
-    mod = importlib.import_module(module)
-    net = getattr(mod, (args.datamodule))
-    return net(args)
-
-"""
-Get optimizer from str parameter
-"""
-def get_optimizer(args, net):
-    """
-    Decide Optimizer (Adam or SGD)
-    """
-    param_groups = net.parameters()
-
-    if args.optimizer == 'SGD':
-        optimizer = optim.SGD(param_groups,
-                              lr=args.lr,
-                              weight_decay=args.weight_decay,
-                              momentum=args.momentum,
-                              nesterov=False)
-    elif args.optimizer == 'Adam':
-        optimizer = optim.Adam(param_groups,
-                               lr=args.lr,
-                               weight_decay=args.weight_decay)
-    elif args.optimizer == "Rmsprop":
-        optimizer = optim.RMSprop(param_groups,
-                                  lr=args.lr,alpha=0.95,eps=1e-8)
-    elif args.optimizer =="MarginRankingLoss":
-       optimizer = MarginRankingLoss(margin=args.margin)
-    else:
-        raise ValueError('Not a valid optimizer')
-
-   #  def poly_schd(epoch):
-   #      return math.pow(1 - epoch / args.max_epoch, args.poly_exp)
-
-   #  def poly2_schd(epoch):
-   #      if epoch < args.poly_step:
-   #          poly_exp = args.poly_exp
-   #      else:
-   #          poly_exp = 2 * args.poly_exp
-   #      return math.pow(1 - epoch / args.max_epoch, poly_exp)
-    
-   #  if args.lr_schedule == 'poly2':
-   #      scheduler = optim.lr_scheduler.LambdaLR(optimizer,
-   #                                              lr_lambda=poly2_schd)
-   #  elif args.lr_schedule == 'poly':
-   #      scheduler = optim.lr_scheduler.LambdaLR(optimizer,
-   #                                              lr_lambda=poly_schd)
-   #  else:
-   #      raise ValueError('unknown lr schedule {}'.format(args.lr_schedule))
-
-    return optimizer #, scheduler
+    net = getattr(mod, datamodule)
+    return net(data_param,dataset)
 
 
-"""
-Get activation function from str parameter
-"""
-def get_act_func(act_type):
 
- if act_type=="relu":
-    return nn.ReLU()
-            
- if act_type=="tanh":
-    return nn.Tanh()
-            
- if act_type=="sigmoid":
-    return nn.Sigmoid()
-           
- if act_type=="leaky_relu":
-    return nn.LeakyReLU(0.2)
-            
- if act_type=="elu":
-    return nn.ELU()
-                     
- if act_type=="softmax":
-    return nn.LogSoftmax(dim=1)
-        
- if act_type=="linear":
-    return nn.LeakyReLU(1) # initializzed like this, but not used in forward!
+def import_class(name, instantiate=None):
 
-def import_class(name, instantiate = None):
+    namesplit = name.split(".")
+    module = importlib.import_module(".".join(namesplit[:-1]))
+    imported_class = getattr(module, namesplit[-1])
 
-   namesplit = name.split(".")
-   module = importlib.import_module(".".join(namesplit[:-1])) 
-   imported_class = getattr(module, namesplit[-1])
-
-   if imported_class:
-      if instantiate is not None:
+    if imported_class:
+        if instantiate is not None:
             return imported_class(**instantiate)
-      else:
+        else:
             return imported_class
-   raise Exception ("Class {} can be imported".format(import_class))
+    raise Exception("Class {} can be imported".format(import_class))

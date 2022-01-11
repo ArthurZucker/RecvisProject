@@ -1,239 +1,159 @@
 import os
-import os.path as osp
-from dataclasses import dataclass
-from posixpath import split
-from typing import List, Dict, ClassVar, Optional, Tuple
-import numpy as np
-from simple_parsing.helpers import dict_field, list_field
-import torch
-import simple_parsing
-from simple_parsing import choice
 import random
+from dataclasses import dataclass
+from os import path as osp
+from typing import Any, ClassVar, Dict, List, Optional
 
-"""Dataclass allows to have arguments and easily use wandb's sweep module.
-
-Each arguments can be preceded by a comment, which will describe it when you call 'main.pu --help
-An example of every datatype is provided. Some of the available arguments are also available.
-Most notably, the agent, dataset, optimizer and loss can all be specified and automatically parsed
-"""
+import numpy as np
+import simple_parsing
+import torch
+import torch.optim
+from simple_parsing.helpers import Serializable, choice, dict_field, list_field
 
 
 @dataclass
 class Hparams:
-    """Hyperparameters of the Model"""
+    """Hyperparameters of for the run"""
 
-    # weight and biases
-    wandb_entity: str = "recvis"
-    # projectname
-    wandb_project: str = "test-sem-seg"
-    # seed
-    seed_everything: float = 40  # np.random.randint(10000)
-    # maximum number of epochs
-    max_epochs: int = 40
-    # path to download pascal voc
-    asset_path: str = osp.join(os.getcwd(), "assets")
-    # ignore class
-    ignore_index: int = 21
-    # loss to train the model
-    # loss: Dict[str, Dict[str, str]] = dict_field(
-    #     dict(
-    #         torch_nn_CrossEntropyLoss=dict(
-    #             # ignore_index=ignore_index,
-    #             weight=torch.cat((torch.tensor([0.5]), torch.ones(21))),
-    #         )
-    #     )
-    # )
-    loss: Dict[str, Dict[str, str]] = dict_field(
-        dict(
-            models_losses_segmentation_models_dice_DiceLoss=dict(
-                mode="multiclass",
-                # classes=[i for i in range(0,21)],
-            )
-        )
-    )  # FIXME add a loss dataclass
-    # loss: Dict[str, Dict[str, str]] = dict_field(
-    #     dict(
-    #         models_losses_segmentation_models_focal_FocalLoss=dict(
-    #             mode="multiclass",
-    #             ignore_index=ignore_index,
-    #         )
-    #     )
-    # )
-    # resize coefficients for H and w
-    input_size: tuple = (256, 256)
-    # learning rate
-    lr: float = 0.0005
-    # agent to use for training
-    agent: str = "BaseTrainer"
-    # architecture to use
-    arch: str = "deeplabv3"
-    # data module
-    datamodule: str = "VOCSegmentationDataModule"
-    # classes
-    n_classes: int = 21
-    # number of channels
-    n_channels: int = 3
-    # batch size for training
-    batch_size: int = 8
-    # split value
-    split_val: float = 0.2
-    # validation frequency
-    val_freq: int = 1
-    # developpment mode, only run 1 batch of train val and test
-    dev_run: bool = False
-    # gradient accumulation batch size
-    accumulate_size: int = 32
-    # save directory
-    save_dir: str = osp.join(os.getcwd(), "wandb")
-    # number of workers for dataloaders
-    num_workers: int = 16
-    # tune the model on first run
-    tune_lr: bool = False
-    # tune the model on first run
-    tune_batch_size: bool = False
-    # number or gpu
-    gpu: int = 1
-    # precision
-    precision: int = 32
-    # effective receptive fields log frequency
-    erf_freq: int = 20
-    # index of the layers to use for the receptive field visualization
-    layers: int = 5 #  TODO number of layers to plot a repartition ex quartiles 25%, 50% etx
-    # metrics
-    metrics: Dict[
-        str, Dict[str, str]
-    ] = dict_field(  # TODO use simple parsing inheritance, list of various dataclasses
-        dict(
-            Accuracy=dict(
-                num_classes=n_classes,
-                average="weighted",
-                mdmc_average="global",
-                # ignore_index=ignore_index,
-            ),
-            Recall=dict(
-                num_classes=n_classes,
-                average="weighted",
-                mdmc_average="global",
-                # ignore_index=ignore_index,
-            ),
-            Precision=dict(
-                num_classes=n_classes,
-                average="weighted",
-                mdmc_average="global",
-                # ignore_index=ignore_index,
-            ),
-            F1=dict(
-                num_classes=n_classes,
-                average="weighted",
-                mdmc_average="global",
-                # ignore_index=ignore_index,
-            ),
-            ConfusionMatrix=dict(
-                num_classes=n_classes,
-                normalize='true'
-                # ignore_index=ignore_index,
-            ),
-            #     AveragePrecision=dict(
-            #         num_classes=n_classes, average="weighted", ignore_index=ignore_index
-            # ),
-            IoU=dict(
-                num_classes=n_classes,
-                # ignore_index=ignore_index
-            ),
-        )
-    )
+    
+    wandb_entity  : str  = "recvis"         # name of the project
+    test          : bool = True             # test code before running
+    wandb_project : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
+    save_dir      : str  = osp.join(os.getcwd(), "wandb")   # directory to save wandb outputs
 
-    # optimizer
-    optimizer: Dict[str, Dict[str, str]] = dict_field(
-        dict(torch_optim_SGD=dict(momentum=0.9, nesterov=False))
-    )
 
-    # scheduler
-    scheduler: Dict[str, Dict[str, str]] = dict_field(
-        dict(
-            torch_optim_lr_scheduler_ReduceLROnPlateau=dict(
-                patience=4, mode="max", threshold=0.1
-            )
-        )
-    )
+    agent       : str           = "trainer"         # trainer agent to use for training
+    arch        : str           = "BarlowTwins"     # architecture to use
+    datamodule  : str           = "BarlowTwins"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "BarlowTwinsDataset"         # dataset, use <Dataset>Eval for FT
+    weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
+    asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
+        
+    seed_everything: Optional[int] = None   # seed for the whole run
+    tune_lr        : bool          = False  # tune the model on first run
+    tune_batch_size: bool          = False  # tune the model on first run
+    gpu            : int           = 1      # number or gpu
+    precision      : int           = 32     # precision
+    val_freq       : int           = 1      # validation frequency
+    accumulate_size: int           = 256   # gradient accumulation batch size
+    max_epochs     : int           = 400    # maximum number of epochs
+    dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
 @dataclass
 class DatasetParams:
-    """Dataset Parameters"""
-
-    default_root: ClassVar[str] = "/dataset"  # the default root directory to use.
-
-    dataset: str = "CIFAR10"  # laptop,pistol
-    """ dataset name: only [cifar10] for now """
-
-    root_dir: str = default_root  # dataset root directory
-
-
-@dataclass
-class NetworkParams:
-    # Network parameters
-    encoder_type: str = choice(
-        "resnet50", "swinT", "swinS", "resnet", default="resnet50"
-    )  # One of: mlp, cnn, dcgan, resnet # try resnet :)
-
+    """Dataset Parameters
+    ! The batch_size and number of crops should be defined here
+    """
+    
+    num_workers       : int         = 20         # number of workers for dataloadersint
+    input_size        : tuple       = (32, 32)   # image_size
+    batch_size        : int         = 256        # batch_size
+    asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
+    n_crops           : int         = 5          # number of crops/global_crops
+    n_global_crops    : int         = 2          # number of global crops
+    global_crops_scale: List[int]   = list_field(0.5, 1)      # scale range of the global crops
+    local_crops_scale : List[float] = list_field(0.05, 0.5)   # scale range of the local crops
+    # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
 @dataclass
 class OptimizerParams:
     """Optimization parameters"""
 
-    optimizer: str = "adam"  # Optimizer (adam, rmsprop)
-    lr: float = 0.0001  # learning rate, default=0.0002
-    lr_sched_type: str = "step"  # Learning rate scheduler type.
-    z_lr_sched_step: int = 100000  # Learning rate schedule for z.
-    lr_iter: int = 10000  # Learning rate operation iterations
-    normal_lr_sched_step: int = 100000  # Learning rate schedule for normal.
-    z_lr_sched_gamma: float = 1.0  # Learning rate gamma for z.
-    normal_lr_sched_gamma: float = 1.0  # Learning rate gamma for normal.
-    normal_consistency_loss_weight: float = 1e-3  # Normal consistency loss weight.
-    z_norm_weight_init: float = 1e-2  # Normal consistency loss weight.
-    z_norm_activate_iter: float = 1000  # Normal consistency loss weight.
-    spatial_var_loss_weight: float = 1e-2  # Spatial variance loss weight.
-    grad_img_depth_loss: float = 2.0  # Spatial variance loss weight.
-    spatial_loss_weight: float = 0.5  # Spatial smoothness loss weight.
-    beta1: float = 0.0  # beta1 for adam. default=0.5
-    n_iter: int = 76201  # number of iterations to train
-    batchSize: int = 4  # input batch size
-    alt_opt_zn_interval: Optional[int] = None
-    """ Alternating optimization interval.
-    - None: joint optimization
-    - 20: every 20 iterations, etc.
+    optimizer           : str            = "Adam"  # Optimizer (adam, rmsprop)
+    lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
+    lr_sched_type       : str            = "step"   # Learning rate scheduler type.
+    min_lr              : float          = 5e-6     # minimum lr for the scheduler
+    betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
+    warmup_epochs       : int            = 40
+    max_epochs          : int            = 400
+    scheduler_parameters: Dict[str, Any] = dict_field(
+        dict(
+            warmup_start_lr    = 0.9995,
+            max_epochs         = 0,
+            warmup_epochs      = warmup_epochs,
+        )
+    )
+    
+
+@dataclass
+class CallBackParams:
+    """Parameters to use for the logging callbacks
     """
-    alt_opt_zn_start: int = 100000
-    """Alternating optimization start interation.
-    - -1: starts immediately,
-    - '100: starts alternating after the first 100 iterations.
+    log_erf_freq       : int   = 10     # effective receptive fields
+    nb_erf             : int   = 6
+    log_att_freq       : int   = 10     # attention maps
+    log_pred_freq      : int   = 10     # log_pred_freq
+    log_ccM_freq       : int   = 1      # log cc_M matrix frequency
+    log_dino_freq      : int   = 1      # log output frrequency for dino
+    attention_threshold: float = 0.5    # Logging attention threshold for head fusion
+    nb_attention       : int   = 5      # nb of images for which the attention will be visualised
+
+@dataclass
+class MetricsParams:
+    num_classes : int       = 21        # number of classes for the segmentation task
+    average     : str       = "weighted"
+    mdmc_average: str       = "global"
+    ignore_index: int       = 21
+    metrics     : List[str] = list_field("Accuracy","Recall","Precision","F1","IoU") # name of the metrics which will be used
+
+    
+
+@dataclass
+class BarlowConfig:
+    """Hyperparameters specific to Barlow Twin Model.
+    Used when the `arch` option is set to "Barlow" in the hparams
     """
+    
+    # lambda coefficient used to scale the scale of the redundancy loss
+    # so it doesn't overwhelm the invariance loss
+    backbone              : str           = "resnet50"
+    nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
+    lmbda                 : float         = 5e-3
+    bt_proj_dim           : int           = 2048      # number of channels to use for projection
+    pretrained_encoder    : bool          = False     # use a pretrained model
+    use_backbone_features : bool          = True      # only use backbone features for FT
+    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),) # model checkpoint used in classification fine tuning
+    backbone_parameters   : Optional[str] = None
 
 
 @dataclass
 class Parameters:
     """base options."""
-
-    # Dataset parameters.
-    dataset: DatasetParams = DatasetParams()
-    # Set of parameters related to the optimizer.
-    optimizer: OptimizerParams = OptimizerParams()
-    # GAN Settings
-    hparams: Hparams = Hparams()
-
+    hparams       : Hparams         = Hparams()
+    optim_param   : OptimizerParams = OptimizerParams()
+    data_param    : DatasetParams   = DatasetParams()
+    callback_param: CallBackParams  = CallBackParams()
+    metric_param  : MetricsParams   = MetricsParams()
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-
+        
+        
         # Set render number of channels
-        if self.hparams.arch == "barlow":
-            pass  # TODO later we might need to do something
-
+        if "BarlowTwins" in self.hparams.arch:
+            self.network_param: BarlowConfig = BarlowConfig()
+        
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
+            
+            
+            
+        if self.network_param.backbone == "vit":
+            self.network_param.backbone_parameters = dict(
+                image_size      = self.data_param.input_size[0],
+                patch_size      = self.data_param.input_size[0]//8,
+                num_classes     = 0,
+                dim             = 768,
+                depth           = 4,
+                heads           = 6,
+                mlp_dim         = 1024,
+                dropout         = 0.1,
+                emb_dropout     = 0.1,
+            )
+        
         print("Random Seed: ", self.hparams.seed_everything)
         random.seed(self.hparams.seed_everything)
         torch.manual_seed(self.hparams.seed_everything)

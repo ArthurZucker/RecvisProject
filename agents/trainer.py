@@ -1,65 +1,36 @@
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint, RichProgressBar, LearningRateMonitor
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from utils.agent_utils import get_datamodule, get_net
-from utils.callbacks import LogERFVisualizationCallback, LogPredictionsCallback, LogMetricsCallback
-from utils.logger import init_logger
+import wandb
+from pytorch_lightning.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
+    ModelCheckpoint,
+    RichProgressBar,
+)
+from utils.callbacks import (
+    LogAttentionMapsCallback,
+    LogBarlowCCMatrixCallback,
+    LogDinoImagesCallback,
+    LogERFVisualizationCallback,
+    LogMetricsCallback,
+    LogSegmentationCallback,
+    LogTransformedImages,
+    LogBarlowPredictionsCallback
+)
 
-class BaseTrainer:
-    def __init__(self, config, run) -> None:
-        super().__init__()
-        self.config = config
-        self.wb_run = run
-        self.model = get_net(config)
-        # print(self.model)
-        self.wb_run.watch(self.model)
-        self.datamodule = get_datamodule(config)
-        self.logger = init_logger("Trainer", "DEBUG")
-    
+from agents.BaseTrainer import BaseTrainer
+
+
+class trainer(BaseTrainer):
+    def __init__(self, config, run):
+        super().__init__(config, run)
+        self.metric_param = config.metric_param
+        self.callback_param = config.callback_param
+        self.batch_size = config.data_param.batch_size
     def run(self):
-        
-        if self.config.tune_lr:
-            trainer = pl.Trainer(
-                logger=self.wb_run,
-                gpus=self.config.gpu,
-                auto_lr_find=True,
-                accelerator="auto",
-            )
-            trainer.logger = self.wb_run
-            trainer.tune(self.model, datamodule=self.datamodule)
-        
-        if self.config.tune_batch_size:
-            trainer = pl.Trainer(
-                logger=self.wb_run,
-                gpus=self.config.gpu,
-                auto_scale_batch_size="power",
-                accelerator="auto",
-            )
-            trainer.logger = self.wb_run
-            trainer.tune(self.model, datamodule=self.datamodule)
-            
-        
-        # TODO feature hook for feature fizualization, for every
-        # should be implemented as a callback?
-        # self.activation = np.array([])
-        # self.feature_hook = self.model.net.fc.register_forward_hook(self.getActivation(f'{self.model.net.fc}'))
-
-        # ------------------------
-        # 3 INIT TRAINER
-        # ------------------------
-        # trainer = pl.Trainer.from_argparse_args(self.config)
-
+        super().run()
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
-            callbacks=[
-                ModelCheckpoint(monitor="val/loss", mode="min", verbose=True),  # our model checkpoint callback
-                LogPredictionsCallback(),
-                # LogERFVisualizationCallback(self.config),
-                RichProgressBar(),
-                LogMetricsCallback(self.config),
-                EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
-                LearningRateMonitor()
-            ],  # logging of sample predictions
+            callbacks=self.get_callbacks(),
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
             precision=self.config.precision,  # train in half precision
@@ -68,8 +39,73 @@ class BaseTrainer:
             fast_dev_run=self.config.dev_run,
             accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
-            # limit_train_batches=10
-            # detect_anomaly = True,
+            default_root_dir=f"{wandb.run.name}",
         )
         trainer.logger = self.wb_run
         trainer.fit(self.model, datamodule=self.datamodule)
+
+    def get_callbacks(self):
+
+        callbacks = [
+            RichProgressBar(),
+            LearningRateMonitor(),
+            
+            # LogTransformedImages(self.callback_param.log_pred_freq),
+        ]
+
+        if "Barlo" in self.config.arch:
+            callbacks += [
+                LogBarlowPredictionsCallback(self.callback_param.log_pred_freq),LogBarlowCCMatrixCallback(self.callback_param.log_ccM_freq),
+            ]
+
+        elif self.config.arch == "Dino" or self.config.arch == "DinoTwins":
+            callbacks += [LogDinoImagesCallback(self.callback_param.log_pred_freq)]
+
+        if self.encoder == "vit":
+            callbacks += [
+                LogAttentionMapsCallback(
+                    self.callback_param.attention_threshold,
+                    self.callback_param.nb_attention,
+                )
+            ]
+
+        if "Seg" in self.config.datamodule:
+            callbacks += [
+                LogERFVisualizationCallback(
+                    self.callback_param.nb_erf,
+                    self.callback_param.log_erf_freq,
+                    self.batch_size,
+                ),
+                LogMetricsCallback(self.metric_param),
+                LogSegmentationCallback(self.callback_param.log_pred_freq),
+                EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
+            ]
+            monitor = "val/iou"
+            mode = "max"
+        else:
+            monitor = "val/loss"
+            mode = "min"
+        wandb.define_metric(monitor, summary=mode)
+        if "Dino" in self.config.arch:
+            save_top_k = -1
+            every_n_epochs = 20
+        else:
+            save_top_k = 5
+            every_n_epochs = 1
+
+        if self.config.test:  # don't need to save if we are just testing
+            save_top_k = 0
+
+        callbacks += [
+            ModelCheckpoint(
+                monitor=monitor,
+                mode=mode,
+                filename="{epoch:02d}-{val/loss:.2f}",
+                verbose=True,
+                dirpath=self.config.weights_path + f"/{str(wandb.run.name)}",
+                save_top_k=save_top_k,
+                every_n_epochs=every_n_epochs,
+            )
+        ]  # our model checkpoint callback
+
+        return callbacks

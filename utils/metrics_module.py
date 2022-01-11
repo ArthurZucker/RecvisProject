@@ -9,7 +9,7 @@ https://torchmetrics.readthedocs.io/en/stable/references/modules.html#base-class
 
 class MetricsModule():
 
-    def __init__(self, set_name, config_metrics, device, n_classes=None) -> None:
+    def __init__(self, set_name, params,device,) -> None:
         """
         metrics : list of name metrics e.g ["Accuracy", "IoU"]
         set_name: val/train/test
@@ -17,12 +17,12 @@ class MetricsModule():
         self.device = device
         dict_metrics = {}
         if set_name != "train":
-            for name, params in config_metrics.items():
-                instance = import_class("torchmetrics." + name)(compute_on_step=False, **params)
+            for name in params.metrics:
+                instance = import_class("torchmetrics." + name)(compute_on_step=False, **params.pop("metrics"))
                 dict_metrics[name.lower()] = instance.to(device)
         else:
             dict_metrics["iou"] = import_class(
-                "torchmetrics.IoU")(compute_on_step=False, num_classes=n_classes).to(device)
+                "torchmetrics.IoU")(compute_on_step=False, num_classes=params.num_classes).to(device)
 
         self.dict_metrics = dict_metrics
 

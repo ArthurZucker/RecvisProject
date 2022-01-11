@@ -10,18 +10,18 @@ Self-supervised learning using transformers has shown interesting emerging prope
 
 # TO DO : 
 
-- [ ] Define metrics and baseline to compare our architectures 
-- [ ] Download dataset and create dataloader 
-- [ ] Visualize effective receptive field
+- [x] Define metrics and baseline to compare our architectures 
+- [x] Download dataset and create dataloader 
+- [x] Visualize effective receptive field
 - [ ] Create Transformer network
-- [ ] Create BarlowTwins agent 
+- [x] Create BarlowTwins agent 
 - [ ] BoTnet
 - [ ] SwinTransformer
-- [ ] Implement feature map visualization 
+- [ ] Create find biggest image size
 
-## Defining baseline : 
 
-### 1. Emerging properties of self supervise learning and attention 
+1. Please clearly define quantitative measures and baseline methods with which you are going to compare results.
+2. Please clearly define steps of your project from simple to more complicated and how you are going to evaluate each step (point 1. above). It is important to have some quantitative evaluation and comparison with baselines early on in the project so that you don’t run out of time. Having quantitative experiments and comparison with baselines (ideally published methods) is an important component of the final project evaluation.
 
 Here no baseline is required, this is mostly a visual evaluation but we could invent a metric of how significant the attention heads are, how much information they carry, and thus could create a loss to push the attention heads to learn even more meaningful attentino maps. 
 
