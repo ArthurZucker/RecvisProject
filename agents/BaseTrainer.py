@@ -17,7 +17,7 @@ class BaseTrainer:
                                               {"network_param": config.network_param,
                                                "optim_param": config.optim_param,
                                                "loss_param": config.loss_param})
-            self.encoder = config.network_param.encoder
+            self.encoder = config.network_param.backbone
 
         self.wb_run.watch(self.model, log_graph=False)
         self.datamodule = get_datamodule(

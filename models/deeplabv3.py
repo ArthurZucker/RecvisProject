@@ -12,11 +12,11 @@ https://pytorch.org/vision/stable/models.html#torchvision.models.segmentation.de
 
 
 class Deeplabv3(nn.Module):
-    def __init__(self, num_classes, pretrained=False, encoder="vit", freeze=False) -> None:
+    def __init__(self, num_classes, pretrained=False, backbone=None, freeze=False) -> None:
         super(Deeplabv3, self).__init__()
-        self.name_encoder = encoder
+        self.name_encoder = backbone
 
-        if encoder is None:
+        if self.name_encoder is None:
             # model pre-trained on COCO train2017 which contains the same classes as Pascal VOC
             self.net = deeplabv3_resnet101(
                 pretrained=pretrained, num_classes=num_classes)

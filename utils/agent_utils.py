@@ -1,7 +1,4 @@
 import importlib
-
-from torch import nn, optim
-from torch.nn import MarginRankingLoss
 from easydict import EasyDict
 
 
