@@ -317,7 +317,7 @@ class LogERFVisualizationCallback(Callback):
         self.erf_freq = erf_freq
         self.nb_erf = nb_erf
         self.eps = 1e-7
-        self.gradient = {i: self.eps for i in range(self.layers)}
+        self.gradient = {i: self.eps for i in range(self.layers)} # FIXME self.layers ???
         self.batch_size = b_size
     # from different stages of the network)
     # Our implementation should be network independant
