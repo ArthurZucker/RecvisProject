@@ -1,21 +1,13 @@
 import pytorch_lightning as pl
 import wandb
-from pytorch_lightning.callbacks import (
-    EarlyStopping,
-    LearningRateMonitor,
-    ModelCheckpoint,
-    RichProgressBar,
-)
-from utils.callbacks import (
-    LogAttentionMapsCallback,
-    LogBarlowCCMatrixCallback,
-    LogDinoImagesCallback,
-    LogERFVisualizationCallback,
-    LogMetricsCallback,
-    LogSegmentationCallback,
-    LogTransformedImages,
-    LogBarlowPredictionsCallback
-)
+from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
+                                         ModelCheckpoint, RichProgressBar)
+from utils.callbacks import (LogAttentionMapsCallback,
+                             LogBarlowCCMatrixCallback,
+                             LogBarlowPredictionsCallback,
+                             LogDinoImagesCallback,
+                             LogERFVisualizationCallback, LogMetricsCallback,
+                             LogSegmentationCallback, LogTransformedImages)
 
 from agents.BaseTrainer import BaseTrainer
 
@@ -26,6 +18,7 @@ class trainer(BaseTrainer):
         self.metric_param = config.metric_param
         self.callback_param = config.callback_param
         self.batch_size = config.data_param.batch_size
+
     def run(self):
         super().run()
         trainer = pl.Trainer(
@@ -49,25 +42,25 @@ class trainer(BaseTrainer):
         callbacks = [
             RichProgressBar(),
             LearningRateMonitor(),
-            
-            # LogTransformedImages(self.callback_param.log_pred_freq),
         ]
 
         if "Barlo" in self.config.arch:
             callbacks += [
-                LogBarlowPredictionsCallback(self.callback_param.log_pred_freq),LogBarlowCCMatrixCallback(self.callback_param.log_ccM_freq),
+                LogBarlowPredictionsCallback(self.callback_param.log_pred_freq), LogBarlowCCMatrixCallback(
+                    self.callback_param.log_ccM_freq),
             ]
 
         elif self.config.arch == "Dino" or self.config.arch == "DinoTwins":
-            callbacks += [LogDinoImagesCallback(self.callback_param.log_pred_freq)]
+            callbacks += [LogDinoImagesCallback(
+                self.callback_param.log_pred_freq)]
 
-        if self.encoder == "vit":
-            callbacks += [
-                LogAttentionMapsCallback(
-                    self.callback_param.attention_threshold,
-                    self.callback_param.nb_attention,
-                )
-            ]
+        # if self.encoder == "vit":
+        #     callbacks += [
+        #         LogAttentionMapsCallback(
+        #             self.callback_param.attention_threshold,
+        #             self.callback_param.nb_attention,
+        #         )
+        #     ]
 
         if "Seg" in self.config.datamodule:
             callbacks += [
@@ -78,7 +71,8 @@ class trainer(BaseTrainer):
                 ),
                 LogMetricsCallback(self.metric_param),
                 LogSegmentationCallback(self.callback_param.log_pred_freq),
-                EarlyStopping(monitor="val/loss", patience=4, mode="min", verbose=True),
+                EarlyStopping(monitor="val/loss", patience=4,
+                              mode="min", verbose=True),
             ]
             monitor = "val/iou"
             mode = "max"

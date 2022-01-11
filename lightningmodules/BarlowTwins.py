@@ -13,7 +13,7 @@ class BarlowTwins(LightningModule):
     The encoder used as backbone can be defined in the hparams file
     """
 
-    def __init__(self, network_param, optim_param=None):
+    def __init__(self, network_param, optim_param):
         """method used to define our model parameters
         Args: BarlowConfig : config = network parameters to use.
         """

@@ -1,10 +1,12 @@
-from kornia.losses import DiceLoss
 from pytorch_lightning import LightningModule
 from utils.agent_utils import get_net, import_class
 from utils.hooks import get_activation
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-
+from models.unet import Unet
+import models.deeplabv3
+import models.resnet50
+import importlib
 
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
@@ -14,27 +16,31 @@ class Segmentation(LightningModule):
     Args:
         LightningModule ([type]): [description]
     """
-    def __init__(self, network_param, optimizer_param, loss_param):
+
+    def __init__(self, config):
         """method used to define our model parameters"""
         super().__init__()
-        self.optimizer_param = optimizer_param
+
+        self.network_param = config.network_param
+        self.loss_param = config.loss_param
+        self.optimizer_param = config.optim_param
+
         self.rq_grad = False
 
         # backbone :
-        self.net = get_net(network_param.encoder, network_param)
+        # self.net = get_net(network_param.backbone, network_param)
+        if self.network_param.model == "deeplabv3":
+            self.net = models.deeplabv3.Deeplabv3(
+                num_classes=self.network_param.n_classes, backbone=self.network_param.backbone)
+        else:
+            raise ValueError(f'option {self.network_param.model} does not exist !')
 
         # loss
-        name, params = next(iter(loss_param.items()))
-        name = name.replace("_", ".")
-        if "segmentation.models" in name:
-            name = name.replace("segmentation.models", "segmentation_models")
-        loss_cls = import_class(name)
-        if "weight" in params:
-            params["weight"] = torch.tensor(params["weight"])
-        self.loss = loss_cls(**params)
+        loss_cls = import_class(self.loss_param.name)
+        self.loss = loss_cls(**self.loss_param.param)
 
         # optimizer parameters
-        self.lr = network_param.lr
+        self.lr = self.optimizer_param.lr
 
     def forward(self, x):
         x.requires_grad_(self.rq_grad)
@@ -76,22 +82,37 @@ class Segmentation(LightningModule):
 
         return preds
 
-    def network_paramure_optimizers(self):
+    def configure_optimizers(self):
         """defines model optimizer"""
-        optimizer = getattr(torch.optim, self.optim_param.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr)
+        optimizer = getattr(torch.optim, self.optimizer_param.optimizer)
+        optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), lr=self.optimizer_param.lr)
 
-        scheduler = LinearWarmupCosineAnnealingLR(
-            optimizer,
-            warmup_epochs=10,
-            max_epochs=self.optim_param.max_epochs,
-            warmup_start_lr=0.1
-            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
-            eta_min=0.1
-            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
-        )  # @TODO if we need other, should be adde dbnut I doubt that will be needed
+        # scheduler = LinearWarmupCosineAnnealingLR(
+        #     optimizer,
+        #     warmup_epochs=10,
+        #     max_epochs=self.optimizer_param.max_epochs,
+        #     warmup_start_lr=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        #     eta_min=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        # )  # @TODO if we need other, should be adde dbnut I doubt that will be needed
 
-        return [[optimizer], [scheduler]]
+        # scheduler = LinearWarmupCosineAnnealingLR(
+        #     optimizer,
+        #     warmup_epochs=10,
+        #     max_epochs=self.optimizer_param.max_epochs,
+        #     warmup_start_lr=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        #     eta_min=0.1
+        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        # )
+        if hasattr(self.optimizer_param, "scheduler"):
+            scheduler_cls = import_class(self.optimizer_param.scheduler)
+            scheduler = scheduler_cls(optimizer, **self.optimizer_param.scheduler_parameters)
+            lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
+            return ([optimizer], [lr_scheduler])
+
+        return optimizer
 
     def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(

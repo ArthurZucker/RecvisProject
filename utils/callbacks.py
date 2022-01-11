@@ -64,7 +64,7 @@ class LogTransformedImages(Callback):
         
 
 class LogSegmentationCallback(Callback):
-    def __init__(self,log_img_freq) -> None:
+    def __init__(self, log_img_freq) -> None:
         super().__init__()
         self.log_img_freq = log_img_freq
         
@@ -77,7 +77,7 @@ class LogSegmentationCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
+        if batch_idx == 0 or pl_module.current_epoch % self.log_img_freq == 0:
             self.log_images("validation", batch, 5, outputs)
 
     def on_train_batch_end(
@@ -89,7 +89,7 @@ class LogSegmentationCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
+        if batch_idx == 0 or pl_module.current_epoch % self.log_img_freq == 0:
             self.log_images("train", batch, 5, outputs)
 
     def log_images(self, name, batch, n, outputs):
@@ -133,63 +133,6 @@ class LogSegmentationCallback(Callback):
                 )
             )
         wandb.log({name: samples})
-
-
-class LogDinoImagesCallback(Callback):
-    def __init__(self, log_img_freq) -> None:
-        super().__init__()
-        self.log_img_freq = log_img_freq
-
-    def on_train_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
-    ):
-        """Called when the training batch ends."""
-        # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
-            self.loss = pl_module.loss
-            self.log_images("train", batch, outputs)
-
-    def on_validation_batch_end(
-        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
-    ):
-        """Called when the training batch ends."""
-
-        # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
-            self.loss = pl_module.loss
-            self.log_images("val", batch, outputs)
-
-    def log_images(self, name, batch, outputs):
-
-        # retrieve 1 sample of the 8 crops
-        augmented_images = [i[0].cpu().detach().numpy() for i in batch]
-        full_st_output = augmented_images
-        full_teacher_output = augmented_images[:2]
-        samples1 = []
-        samples2 = []
-        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
-        std = np.array([0.229, 0.224, 0.225])
-
-        samples1 = []
-        samples2 = []
-        for j in range(len(full_st_output)):
-
-            bg1 = full_st_output[j].transpose((1, 2, 0))
-            bg1 = std * bg1 + mean
-            bg1 = np.clip(bg1, 0, 1)
-            samples1.append(wandb.Image(bg1))
-
-            if j < 2:
-                bg2 = full_teacher_output[j].transpose((1, 2, 0))
-                bg2 = std * bg2 + mean
-                bg2 = np.clip(bg2, 0, 1)
-                samples2.append(wandb.Image(bg2))
-
-        self.generate_distrib_plot(samples1, samples2)
-        wandb.log({f"Student images/{name}": samples1})
-        wandb.log({f"Teacher images/{name}": samples2})
-        del bg1, bg2, samples1, samples2
-
 
 class LogMetricsCallback(Callback):
     def __init__(self, config):

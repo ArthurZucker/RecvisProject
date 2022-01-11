@@ -6,10 +6,11 @@ https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
 """
 
 class Unet(nn.Module):
-    def __init__(self, config, bilinear=True):
-        super(Unet, self).__init__(config)
-        self.n_channels = self.config.n_channels
-        self.n_classes = self.config.n_classes
+    def __init__(self, n_channels, n_classes, bilinear=True):
+        super().__init__()
+
+        self.n_channels = n_channels
+        self.n_classes = n_classes
 
         self.inc = DoubleConv(self.n_channels, 64)
         self.down1 = Down(64, 128)
@@ -23,8 +24,8 @@ class Unet(nn.Module):
         self.up4 = Up(128, 64, bilinear)
         self.fc = OutConv(64, self.n_classes)
 
-        checkpoint = 'https://github.com/milesial/Pytorch-UNet/releases/download/v2.0/unet_carvana_scale0.5_epoch1.pth'
-        self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True), strict=False)
+        # checkpoint = 'https://github.com/milesial/Pytorch-UNet/releases/download/v2.0/unet_carvana_scale0.5_epoch1.pth'
+        # self.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True), strict=False, map_location=torch.device('cpu'))
 
     def forward(self, x):
         x1 = self.inc(x)

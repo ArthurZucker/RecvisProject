@@ -13,7 +13,7 @@ class FocalLoss(_Loss):
 
     def __init__(
         self,
-        mode: str,
+        mode: str = "multiclass",
         alpha: Optional[float] = None,
         gamma: Optional[float] = 2.,
         ignore_index: Optional[int] = None, 

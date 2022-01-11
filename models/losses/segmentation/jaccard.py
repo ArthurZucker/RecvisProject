@@ -13,7 +13,7 @@ class JaccardLoss(_Loss):
 
     def __init__(
         self,
-        mode: str,
+        mode: str = "multiclass",
         classes: Optional[List[int]] = None,
         log_loss: bool = False,
         from_logits: bool = True,

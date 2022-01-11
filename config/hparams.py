@@ -10,6 +10,7 @@ import torch
 import torch.optim
 from simple_parsing.helpers import Serializable, choice, dict_field, list_field
 
+################################## Genéral parameters ##################################
 
 @dataclass
 class Hparams:
@@ -23,16 +24,16 @@ class Hparams:
 
 
     agent       : str           = "trainer"         # trainer agent to use for training
-    arch        : str           = "BarlowTwins"     # architecture to use
-    datamodule  : str           = "BarlowTwins"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"         # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"     # architecture to use
+    datamodule  : str           = "Segmentation"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"         # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
-    seed_everything: Optional[int] = None   # seed for the whole run
+    seed_everything: Optional[int] = 10   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     tune_batch_size: bool          = False  # tune the model on first run
-    gpu            : int           = 1      # number or gpu
+    gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
     accumulate_size: int           = 256   # gradient accumulation batch size
@@ -56,25 +57,6 @@ class DatasetParams:
     local_crops_scale : List[float] = list_field(0.05, 0.5)   # scale range of the local crops
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
-@dataclass
-class OptimizerParams:
-    """Optimization parameters"""
-
-    optimizer           : str            = "Adam"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
-    lr_sched_type       : str            = "step"   # Learning rate scheduler type.
-    min_lr              : float          = 5e-6     # minimum lr for the scheduler
-    betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
-    warmup_epochs       : int            = 40
-    max_epochs          : int            = 400
-    scheduler_parameters: Dict[str, Any] = dict_field(
-        dict(
-            warmup_start_lr    = 0.9995,
-            max_epochs         = 0,
-            warmup_epochs      = warmup_epochs,
-        )
-    )
-    
 
 @dataclass
 class CallBackParams:
@@ -83,21 +65,13 @@ class CallBackParams:
     log_erf_freq       : int   = 10     # effective receptive fields
     nb_erf             : int   = 6
     log_att_freq       : int   = 10     # attention maps
-    log_pred_freq      : int   = 10     # log_pred_freq
+    log_pred_freq      : int   = 1     # log_pred_freq
     log_ccM_freq       : int   = 1      # log cc_M matrix frequency
     log_dino_freq      : int   = 1      # log output frrequency for dino
     attention_threshold: float = 0.5    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
 
-@dataclass
-class MetricsParams:
-    num_classes : int       = 21        # number of classes for the segmentation task
-    average     : str       = "weighted"
-    mdmc_average: str       = "global"
-    ignore_index: int       = 21
-    metrics     : List[str] = list_field("Accuracy","Recall","Precision","F1","IoU") # name of the metrics which will be used
-
-    
+################################## Self-supervised learning parameters ##################################
 
 @dataclass
 class BarlowConfig:
@@ -116,15 +90,94 @@ class BarlowConfig:
     weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),) # model checkpoint used in classification fine tuning
     backbone_parameters   : Optional[str] = None
 
+@dataclass
+class OptimizerParams_SSL: # @TODO change name 
+    """Optimization parameters"""
+
+    optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
+    lr                  : float          = 5e-4     # learning rate,                             default = 0.0002
+    lr_sched_type       : str            = "step"   # Learning rate scheduler type.
+    min_lr              : float          = 5e-6     # minimum lr for the scheduler
+    betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
+    warmup_epochs       : int            = 10
+    scheduler_parameters: Dict[str, Any] = dict_field(
+        dict(
+            base_value         = 0.9995,
+            final_value        = 1,
+            max_epochs         = 0,
+            niter_per_ep       = 0,
+            warmup_epochs      = 0,
+            start_warmup_value = 0,
+        )
+    )
+    lr_scheduler_parameters: Dict[str, Any] = dict_field(
+        dict(
+            base_value         = 0,
+            final_value        = 0,
+            max_epochs         = 0,
+            niter_per_ep       = 0,
+            warmup_epochs      = 10,
+            start_warmup_value = 0,
+        )
+    )
+
+################################## Fine-tuning on segmentation task parameters ##################################
+
+@dataclass
+class SegmentationConfig:
+    """Hyperparameters specific to the Segmentation Model.
+    Used when the `arch` option is set to "Segmentation" in the hparams
+    """
+    backbone: str = "resnet50"
+    model: str = "deeplabv3"
+    n_channels : int = 3
+    n_classes : int = 21
+
+
+@dataclass
+class LossParams: # @TODO remove classs, put in segmentaiton config 
+    """Loss parameters"""
+    name: str = "models.losses.segmentation.dice.DiceLoss"
+    param: Dict[str, Any] = dict_field(dict())
+
+
+@dataclass
+class OptimizerParams_Segmentation:
+    """Optimization parameters"""
+
+    optimizer           : str            = "AdamW" 
+    lr                  : float          = 5e-4
+    scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
+    scheduler_parameters: Dict[str, Any] = dict_field(
+        dict(
+            patience = 4,
+            mode = "min",
+            threshold = 0.1
+        )
+    )
+
+
+@dataclass
+class MetricsParams:
+    metrics     : List[str] = list_field("Accuracy", "Recall", "Precision", "F1", "IoU") # name of the metrics which will be used
+    pixel_wise_parameters : Dict[str, Any] = dict_field(
+        dict(
+            average           = "weighted",
+            mdmc_average      = "global"
+        )
+    )
+    num_classes : int          = 21        # number of classes for the segmentation task
+
+
+################################## Call correct parameters ##################################
 
 @dataclass
 class Parameters:
     """base options."""
     hparams       : Hparams         = Hparams()
-    optim_param   : OptimizerParams = OptimizerParams()
     data_param    : DatasetParams   = DatasetParams()
     callback_param: CallBackParams  = CallBackParams()
-    metric_param  : MetricsParams   = MetricsParams()
+
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
@@ -134,11 +187,18 @@ class Parameters:
         # Set render number of channels
         if "BarlowTwins" in self.hparams.arch:
             self.network_param: BarlowConfig = BarlowConfig()
-        
+            self.optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
+        elif "Segmentation" in self.hparams.arch:
+            self.network_param: SegmentationConfig  = SegmentationConfig()
+            self.metric_param  : MetricsParams      = MetricsParams()
+            self.loss_param    : LossParams         = LossParams()
+            self.optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
+        else:
+            raise ValueError(f'Architecture {self.hparams.arch} not supported !')
+
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
-            
             
             
         if self.network_param.backbone == "vit":
