@@ -49,7 +49,7 @@ class Deeplabv3(nn.Module):
                     for param in self.net.backbone.parameters():
                         param.requires_grad = False
 
-            elif self.name_encoder == "vit":
+            elif self.name_encoder == "vit": # @TODO get_net using backbone_parameters
                 self.vit = ViT(
                         image_size=(128, 128),
                         patch_size=128//8,
@@ -61,7 +61,7 @@ class Deeplabv3(nn.Module):
                         )
                 self.vit.mlp_head = nn.Identity()
                 self.vit = Extractor(self.vit)
-                self.classifier = DeepLabHead(768, num_classes)
+                self.classifier = DeepLabHead(768, num_classes) # @TODO @FIXME Arthur debug this 
 
                 # Freeze backbone weights
                 if freeze:
