@@ -28,8 +28,8 @@ class Deeplabv3(nn.Module):
                 self.net = deeplabv3_resnet50(
                     pretrained=pretrained, num_classes=num_classes)
                 pth = torch.load(
-                    "/home/clement/Documents/Cours/MVA/S1/Cours_to_validate/RECVIS_2021/Projet/RecvisProject/weights/barlow_twins/resnet50.pth", map_location=torch.device('cpu'))
-                self.net.backbone.load_state_dict(pth, strict=False)
+                    "weights/barlow_twins/resnet50.pth", map_location=torch.device('cpu'))
+                self.net.backbone.load_state_dict(pth, strict=False) # Meilleur resultats avec pretrain avec barlowtwins
 
                 # just add deeplabhead
                 # self.net = resnet50(pretrained=pretrained)
@@ -48,6 +48,7 @@ class Deeplabv3(nn.Module):
                 if freeze:
                     for param in self.net.backbone.parameters():
                         param.requires_grad = False
+
             elif self.name_encoder == "vit":
                 self.vit = ViT(
                         image_size=(128, 128),

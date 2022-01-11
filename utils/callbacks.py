@@ -64,7 +64,7 @@ class LogTransformedImages(Callback):
         
 
 class LogSegmentationCallback(Callback):
-    def __init__(self,log_img_freq) -> None:
+    def __init__(self, log_img_freq) -> None:
         super().__init__()
         self.log_img_freq = log_img_freq
         
@@ -77,7 +77,7 @@ class LogSegmentationCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
+        if batch_idx == 0 or pl_module.current_epoch % self.log_img_freq == 0:
             self.log_images("validation", batch, 5, outputs)
 
     def on_train_batch_end(
@@ -89,7 +89,7 @@ class LogSegmentationCallback(Callback):
         # which corresponds to our model predictions in this case
 
         # Let's log 20 sample image predictions from first batch
-        if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
+        if batch_idx == 0 or pl_module.current_epoch % self.log_img_freq == 0:
             self.log_images("train", batch, 5, outputs)
 
     def log_images(self, name, batch, n, outputs):

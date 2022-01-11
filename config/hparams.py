@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 64   # gradient accumulation batch size
+    accumulate_size: int           = 1   # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -171,7 +171,7 @@ class OptimizerParams_Segmentation:
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
             patience = 4,
-            mode = "max",
+            mode = "min",
             threshold = 0.1
         )
     )
