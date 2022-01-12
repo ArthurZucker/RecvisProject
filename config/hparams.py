@@ -10,7 +10,7 @@ import torch
 import torch.optim
 from simple_parsing.helpers import Serializable, choice, dict_field, list_field
 
-################################## Genéral parameters ##################################
+################################## Global parameters ##################################
 
 @dataclass
 class Hparams:
@@ -23,20 +23,20 @@ class Hparams:
     save_dir      : str  = osp.join(os.getcwd(), "wandb")   # directory to save wandb outputs
 
 
-    agent       : str           = "trainer"         # trainer agent to use for training
-    arch        : str           = "Segmentation"     # architecture to use
-    datamodule  : str           = "Segmentation"     # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "VOCSegmentation"         # dataset, use <Dataset>Eval for FT
+    agent       : str           = "trainer"             # trainer agent to use for training
+    arch        : str           = "Segmentation"        # architecture to use
+    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
-    seed_everything: Optional[int] = 10   # seed for the whole run
+    seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     tune_batch_size: bool          = False  # tune the model on first run
-    gpu            : int           = 0      # number or gpu
+    gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 256   # gradient accumulation batch size
+    accumulate_size: int           = 256    # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -48,8 +48,8 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (32, 32)   # image_size
-    batch_size        : int         = 256        # batch_size
+    input_size        : tuple       = (256, 256)   # image_size
+    batch_size        : int         = 128        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     n_crops           : int         = 5          # number of crops/global_crops
     n_global_crops    : int         = 2          # number of global crops
@@ -81,13 +81,13 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "resnet50"
+    backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 2048      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     use_backbone_features : bool          = True      # only use backbone features for FT
-    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),) # model checkpoint used in classification fine tuning
+    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -100,6 +100,7 @@ class OptimizerParams_SSL: # @TODO change name
     min_lr              : float          = 5e-6     # minimum lr for the scheduler
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
+    max_epochs          : int            = 400      # @TODO duplicate of dataparam
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
             base_value         = 0.9995,
@@ -128,10 +129,11 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone: str = "resnet50"
-    model: str = "deeplabv3"
-    n_channels : int = 3
-    n_classes : int = 21
+    backbone          : str           = "vit"
+    model             : str           = "deeplabv3"
+    n_channels        : int           = 3
+    n_classes         : int           = 21
+    weight_checkpoint : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
 
 
 @dataclass
@@ -186,10 +188,10 @@ class Parameters:
         
         # Set render number of channels
         if "BarlowTwins" in self.hparams.arch:
-            self.network_param: BarlowConfig = BarlowConfig()
+            self.network_param : BarlowConfig        = BarlowConfig()
             self.optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
         elif "Segmentation" in self.hparams.arch:
-            self.network_param: SegmentationConfig  = SegmentationConfig()
+            self.network_param : SegmentationConfig = SegmentationConfig()
             self.metric_param  : MetricsParams      = MetricsParams()
             self.loss_param    : LossParams         = LossParams()
             self.optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
@@ -207,7 +209,7 @@ class Parameters:
                 patch_size      = self.data_param.input_size[0]//8,
                 num_classes     = 0,
                 dim             = 768,
-                depth           = 4,
+                depth           = 6,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,

@@ -60,11 +60,11 @@ class trainer(BaseTrainer):
 
         if "Seg" in self.config.datamodule:
             callbacks += [
-                LogERFVisualizationCallback(
-                    self.callback_param.nb_erf,
-                    self.callback_param.log_erf_freq,
-                    self.batch_size,
-                ),
+                # LogERFVisualizationCallback(
+                #     self.callback_param.nb_erf,
+                #     self.callback_param.log_erf_freq,
+                #     self.batch_size,
+                # ),
                 LogMetricsCallback(self.metric_param),
                 LogSegmentationCallback(self.callback_param.log_pred_freq),
                 EarlyStopping(monitor="val/loss", patience=4,

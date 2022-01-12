@@ -11,7 +11,12 @@ import importlib
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
     Supports various encoders, implements basic metric functions, and
-    training steps
+    training steps.
+
+    Should allow full initialization if only a backbone is provided, else if 
+    a head is also given, should fuse the both of them. 
+
+    Ex : resnet50 backbone with DeepLabV3 head. Requires a get_head function as well as the get_net 
 
     Args:
         LightningModule ([type]): [description]
@@ -27,6 +32,9 @@ class Segmentation(LightningModule):
 
         self.rq_grad = False
 
+        if self.network_param.backbone_parameters is not None:
+            self.patch_size = self.network_param.backbone_parameters["patch_size"]
+            
         # backbone :
         # self.net = get_net(network_param.backbone, network_param)
         if self.network_param.model == "deeplabv3":

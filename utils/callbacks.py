@@ -235,7 +235,7 @@ class LogBarlowCCMatrixCallback(Callback):
 
 
 class LogERFVisualizationCallback(Callback):
-
+    # FIXME memory issue 
     def __init__(self, nb_erf,erf_freq,b_size) -> None:
         """Initialize the callback with the layers
         to use to compute the effective receptive fields
@@ -305,7 +305,8 @@ class LogERFVisualizationCallback(Callback):
                 for name in self.gradient:
                     heatmap = self.gradient[name]
                     # average the gradients over the batches but sum it over the channels
-                    if heatmap.size != 0:  # FIXE ME
+                    
+                    if type(heatmap) != float:  # FIXE ME
                         plt.ioff()
                         heatmap = heatmap / (batch_idx + 1) * self.batch_size
                         heatmap = (
@@ -316,6 +317,7 @@ class LogERFVisualizationCallback(Callback):
                         ax = sns.heatmap(heatmap, cmap="rainbow", cbar=False)
                         plt.title(f"Layer {self.erf_layers_names[name]}")
                         ax.set_axis_off()
+                        
                         heatmaps.append(wandb.Image(plt))
                         plt.close()
 
@@ -339,6 +341,8 @@ class LogERFVisualizationCallback(Callback):
         self.hooks = []
         nb_erf = self.nb_erf #TODO only use those layers not every layer
         named_layers = list(pl_module.named_modules())[2:]
+        if "loss" in named_layers[-1]:
+            named_layers = named_layers[:-1]
         layer_span = ((len(named_layers))//nb_erf) # span to take each layers
         selected_layers = named_layers[::layer_span][:nb_erf-1]+[named_layers[-1]]
         self.erf_layers_names = list(dict(selected_layers).keys())
@@ -506,7 +510,7 @@ class LogAttentionMapsCallback(Callback):
         import torchvision.transforms.functional as F
 
         plt.ioff()
-        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
+        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True,constrained_layout=True)
         mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
         std = np.array([0.229, 0.224, 0.225])
         for j, sample in enumerate(imgs):
@@ -524,7 +528,8 @@ class LogAttentionMapsCallback(Callback):
             self.log_th_attention(
                 image, th_attention_map[j], axs[j, i + 1]
             )  # log the thresholded attention maps
-
+        fix.tight_layout()
+        fix.subplots_adjust(left = 0, right = 1, top = 1, bottom = 0)
         fix.subplots_adjust(wspace=0.005, hspace=0.005)
         attention_heads = wandb.Image(plt)
         wandb.log({"attention heads": attention_heads})

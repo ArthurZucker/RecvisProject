@@ -12,7 +12,7 @@ https://pytorch.org/vision/stable/models.html#torchvision.models.segmentation.de
 
 
 class Deeplabv3(nn.Module):
-    def __init__(self, num_classes, pretrained=False, backbone=None, freeze=False) -> None:
+    def __init__(self, num_classes, pretrained=False, backbone=None, freeze=True) -> None:
         super(Deeplabv3, self).__init__()
         self.name_encoder = backbone
 
@@ -51,16 +51,21 @@ class Deeplabv3(nn.Module):
 
             elif self.name_encoder == "vit": # @TODO get_net using backbone_parameters
                 self.vit = ViT(
-                        image_size=(128, 128),
-                        patch_size=128//8,
+                        image_size=(256, 256),
+                        patch_size=256//8,
                         dim=768,
                         heads=6,
                         depth=4,
                         mlp_dim=1,
                         num_classes=21,  
                         )
-                self.vit.mlp_head = nn.Identity()
-                self.vit = Extractor(self.vit)
+                
+                pth = torch.load("weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+                self.vit.load_state_dict(pth, strict=False)
+                
+                # self.vit.mlp_head = nn.Identity() useless because the Extractor does not use the mlp head
+                self.vit = Extractor(self.vit, return_embeddings_only= True)
+                self.upsample = None
                 self.classifier = DeepLabHead(768, num_classes) # @TODO @FIXME Arthur debug this 
 
                 # Freeze backbone weights
@@ -75,6 +80,9 @@ class Deeplabv3(nn.Module):
             dic = self.net(x)
             return dic['out']
         else:
-            _, embeddings = self.vit(x)
-            x = self.classifier(embeddings.unsqueeze(3).permute(0,2,1,3))
+            embeddings = self.vit(x)
+            embeddings = embeddings[:,1:,:].reshape(embeddings.shape[0],embeddings.shape[2],(embeddings.shape[1]-1)//8,(embeddings.shape[1]-1)//8)
+                        
+            x = self.classifier(embeddings)
+            x = nn.functional.upsample(x, scale_factor=32, mode='bilinear')
             return x
