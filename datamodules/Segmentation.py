@@ -13,13 +13,16 @@ import datasets
 class Segmentation(LightningDataModule):
     def __init__(self, config, dataset_name="VOCSegmentation"):
         super().__init__()
+        self.config = config
         if dataset_name == "VOCSegmentation":
             self.dataset = getattr(torchvision.datasets, dataset_name)
+            self.root = os.path.join(self.config.asset_path, "VOC")
         else: # use custom dataset : 
+            raise NotImplementedError
             self.dataset = getattr(datasets, dataset_name)
-        self.config = config
+            self.root = os.path.join(self.config.asset_path, dataset_name)
+        
         self.batch_size = self.config.batch_size
-        self.root = os.path.join(self.config.asset_path, dataset_name)
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
 

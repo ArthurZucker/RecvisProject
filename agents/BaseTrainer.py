@@ -7,17 +7,15 @@ class BaseTrainer:
         self.config = config.hparams
         self.wb_run = run
         if "Barlow" in self.config.arch or "Dino" in self.config.arch:
-            self.encoder = config.network_param.backbone
-            self.model = get_lightning_module(config.hparams.arch,
-                                              {"network_param": config.network_param,
-                                               "optim_param": config.optim_param}
-                                              )
+
+            self.model = get_lightning_module(config.hparams.arch, {
+                                              "network_param": config.network_param, "optim_param": config.optim_param})
         elif "Seg" in self.config.arch:
             self.model = get_lightning_module(config.hparams.arch,
                                               {"network_param": config.network_param,
                                                "optim_param": config.optim_param,
                                                "loss_param": config.loss_param})
-            self.encoder = config.network_param.backbone
+        self.encoder = config.network_param.backbone
 
         self.wb_run.watch(self.model, log_graph=False)
         self.datamodule = get_datamodule(

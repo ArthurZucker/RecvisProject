@@ -5,9 +5,8 @@ from pytorch_lightning.callbacks import (EarlyStopping, LearningRateMonitor,
 from utils.callbacks import (LogAttentionMapsCallback,
                              LogBarlowCCMatrixCallback,
                              LogBarlowPredictionsCallback,
-                             LogDinoImagesCallback,
                              LogERFVisualizationCallback, LogMetricsCallback,
-                             LogSegmentationCallback, LogTransformedImages)
+                             LogSegmentationCallback)
 
 from agents.BaseTrainer import BaseTrainer
 
@@ -15,7 +14,8 @@ from agents.BaseTrainer import BaseTrainer
 class trainer(BaseTrainer):
     def __init__(self, config, run):
         super().__init__(config, run)
-        self.metric_param = config.metric_param
+        if "Seg" in config.hparams.datamodule:
+            self.metric_param = config.metric_param
         self.callback_param = config.callback_param
         self.batch_size = config.data_param.batch_size
 
@@ -30,7 +30,7 @@ class trainer(BaseTrainer):
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
-            accumulate_grad_batches=self.config.accumulate_size,
+            # accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
             default_root_dir=f"{wandb.run.name}",
         )
@@ -50,17 +50,13 @@ class trainer(BaseTrainer):
                     self.callback_param.log_ccM_freq),
             ]
 
-        elif self.config.arch == "Dino" or self.config.arch == "DinoTwins":
-            callbacks += [LogDinoImagesCallback(
-                self.callback_param.log_pred_freq)]
-
-        # if self.encoder == "vit":
-        #     callbacks += [
-        #         LogAttentionMapsCallback(
-        #             self.callback_param.attention_threshold,
-        #             self.callback_param.nb_attention,
-        #         )
-        #     ]
+        if self.encoder == "vit":
+            callbacks += [
+                LogAttentionMapsCallback(
+                    self.callback_param.attention_threshold,
+                    self.callback_param.nb_attention,
+                )
+            ]
 
         if "Seg" in self.config.datamodule:
             callbacks += [
