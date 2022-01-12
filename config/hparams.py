@@ -18,7 +18,7 @@ class Hparams:
 
     
     wandb_entity  : str  = "recvis"         # name of the project
-    test          : bool = True             # test code before running
+    test          : bool = False             # test code before running
     wandb_project : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
     save_dir      : str  = osp.join(os.getcwd(), "wandb")   # directory to save wandb outputs
 
@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 128        # batch_size
+    batch_size        : int         = 32        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
@@ -76,7 +76,7 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit"
+    backbone              : str           = "resnet50"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 2048      # number of channels to use for projection

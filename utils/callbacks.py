@@ -433,14 +433,14 @@ class LogAttentionMapsCallback(Callback):
     def on_validation_batch_start(
         self, trainer, pl_module, batch, batch_idx, dataloader_idx
     ) -> None:
-        if batch_idx == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.log_freq == 0:
             self.hooks = []
             self.hooks.append(self._register_layer_hooks(pl_module))
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
-        if batch_idx == 0:
+        if batch_idx == 0 and pl_module.current_epoch % self.log_freq == 0:
             attention_maps = []
             th_attention_map = []
             for i in range(self.nb_attention_images):
@@ -510,7 +510,7 @@ class LogAttentionMapsCallback(Callback):
         import torchvision.transforms.functional as F
 
         plt.ioff()
-        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True,constrained_layout=True)
+        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
         mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
         std = np.array([0.229, 0.224, 0.225])
         for j, sample in enumerate(imgs):

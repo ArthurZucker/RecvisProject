@@ -13,21 +13,25 @@ class BarlowTwins(LightningModule):
     The encoder used as backbone can be defined in the hparams file
     """
 
-    def __init__(self, network_param, optim_param):
+    def __init__(self, config):
         """method used to define our model parameters
         Args: BarlowConfig : config = network parameters to use.
         """
         super().__init__()
-        self.loss = CrossCorrelationMatrixLoss(network_param.lmbda)
-        self.optim_param = optim_param
-        self.proj_dim = network_param.bt_proj_dim
-        self.nb_proj_layers = network_param.nb_proj_layers
+        
+        self.network_param = config.network_param
+        self.optim_param = config.optim_param
+
+        self.loss = CrossCorrelationMatrixLoss(self.network_param.lmbda)
+
+        self.proj_dim = self.network_param.bt_proj_dim
+        self.nb_proj_layers = self.network_param.nb_proj_layers
         # get backbone model and adapt it to the task
         self.backbone = get_net(
-            network_param.backbone, network_param.backbone_parameters
+            self.network_param.backbone, self.network_param.backbone_parameters
         )
-        if network_param.backbone_parameters is not None:
-            self.patch_size = network_param.backbone_parameters["patch_size"]
+        if self.network_param.backbone_parameters is not None:
+            self.patch_size = self.network_param.backbone_parameters["patch_size"]
         self.in_features = list(self.backbone.modules())[-1].in_features
         name_classif = list(self.backbone.named_children())[-1][0]
         self.backbone._modules[name_classif] = nn.Identity()

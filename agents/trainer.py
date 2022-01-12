@@ -90,9 +90,9 @@ class trainer(BaseTrainer):
             ModelCheckpoint(
                 monitor=monitor,
                 mode=mode,
-                filename="{epoch:02d}-{val/loss:.2f}",
                 verbose=True,
-                dirpath=self.config.weights_path + f"/{str(wandb.run.name)}",
+                dirpath= f"{self.config.weights_path}/{str(wandb.run.name)}",
+                filename="{epoch:02d}-val_loss{val/loss:.2f}",
                 save_top_k=save_top_k,
                 every_n_epochs=every_n_epochs,
             )
