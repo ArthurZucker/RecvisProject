@@ -12,68 +12,51 @@ https://pytorch.org/vision/stable/models.html#torchvision.models.segmentation.de
 
 
 class Deeplabv3(nn.Module):
-    def __init__(self, num_classes, pretrained=False, backbone=None, freeze=True) -> None:
+    def __init__(self, config) -> None:
         super(Deeplabv3, self).__init__()
-        self.name_encoder = backbone
+        self.config = config
+        num_classes = self.config.model_param['n_classes']
+        self.name_encoder = config.backbone
 
         if self.name_encoder is None:
             # model pre-trained on COCO train2017 which contains the same classes as Pascal VOC
             self.net = deeplabv3_resnet101(
-                pretrained=pretrained, num_classes=num_classes)
+                pretrained=self.config.model_param.pretrained, num_classes=num_classes)
             self.name_encoder = None
+
         else:
 
-            # option 2 :
             if self.name_encoder == "resnet50":
                 self.net = deeplabv3_resnet50(
-                    pretrained=pretrained, num_classes=num_classes)
-                pth = torch.load(
-                    "weights/barlow_twins/resnet50.pth", map_location=torch.device('cpu'))
-                self.net.backbone.load_state_dict(pth, strict=False) # Meilleur resultats avec pretrain avec barlowtwins
-
-                # just add deeplabhead
-                # self.net = resnet50(pretrained=pretrained)
-                # pth = torch.load("/home/clement/Documents/Cours/MVA/S1/Cours_to_validate/RECVIS_2021/Projet/RecvisProject/weights/barlow_twins/resnet50.pth", map_location=torch.device('cpu'))
-                # self.net.load_state_dict(pth, strict=False)
-                # features = self.net.fc.in_features
-                # # 1
-                # self.net.fc = nn.Identity()
-                # self.net.fc = DeepLabHead(features, num_classes)
-                # 2 
-                # self.net = DeepLabV3(backbone=self.encoder, classifier=DeepLabHead(features, num_classes))
-                # self.net.backbone = encoder
-                # self.net.classifier = DeepLabHead(features, num_classes)
+                    pretrained=self.config.model_param.pretrained, num_classes=num_classes)
+                if hasattr(self.config, "weight_checkpoint_backbone"):
+                    pth = torch.load(self.config.weight_checkpoint_backbone)
+                    self.net.backbone.load_state_dict(pth, strict=False)
 
                 # Freeze backbone weights
-                if freeze:
+                if self.config.freeze:
                     for param in self.net.backbone.parameters():
                         param.requires_grad = False
 
-            elif self.name_encoder == "vit": # @TODO get_net using backbone_parameters
-                self.vit = ViT(
-                        image_size=(256, 256),
-                        patch_size=256//8,
-                        dim=768,
-                        heads=6,
-                        depth=4,
-                        mlp_dim=1,
-                        num_classes=21,  
-                        )
-                
-                pth = torch.load("weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
-                self.vit.load_state_dict(pth, strict=False)
-                
-                # self.vit.mlp_head = nn.Identity() useless because the Extractor does not use the mlp head
-                self.vit = Extractor(self.vit, return_embeddings_only= True)
-                self.upsample = None
-                self.classifier = DeepLabHead(768, num_classes) # @TODO @FIXME Arthur debug this 
+            elif self.name_encoder == "vit":  # @TODO get_net using backbone_parameters
+                self.vit = ViT(**self.config.backbone_parameters)
+
+                if hasattr(self.config, "weight_checkpoint_backbone"):
+                    pth = torch.load(self.config.weight_checkpoint_backbone)
+                    self.vit.load_state_dict(pth, strict=False)
+
+                self.vit = Extractor(self.vit, return_embeddings_only=True)
+
+                self.classifier = DeepLabHead(
+                    self.config.backbone_parameters['dim'], num_classes)
 
                 # Freeze backbone weights
-                if freeze:
+                if self.config.model_param['freeze']:
                     for param in self.vit.parameters():
                         param.requires_grad = False
             else:
-                raise ValueError(f'option encoder {self.name_encoder} does not exist !')
+                raise ValueError(
+                    f'option encoder {self.name_encoder} does not exist !')
 
     def forward(self, x):
         if self.name_encoder != "vit":
@@ -81,8 +64,9 @@ class Deeplabv3(nn.Module):
             return dic['out']
         else:
             embeddings = self.vit(x)
-            embeddings = embeddings[:,1:,:].reshape(embeddings.shape[0],embeddings.shape[2],(embeddings.shape[1]-1)//8,(embeddings.shape[1]-1)//8)
-                        
+            embeddings = embeddings[:, 1:, :].reshape(
+                embeddings.shape[0], embeddings.shape[2], (embeddings.shape[1]-1)//8, (embeddings.shape[1]-1)//8)
+
             x = self.classifier(embeddings)
             x = nn.functional.upsample(x, scale_factor=32, mode='bilinear')
             return x

@@ -24,9 +24,9 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "Segmentation"        # architecture to use
-    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "BarlowTwins"        # architecture to use
+    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
@@ -51,10 +51,6 @@ class DatasetParams:
     input_size        : tuple       = (256, 256)   # image_size
     batch_size        : int         = 128        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
-    n_crops           : int         = 5          # number of crops/global_crops
-    n_global_crops    : int         = 2          # number of global crops
-    global_crops_scale: List[int]   = list_field(0.5, 1)      # scale range of the global crops
-    local_crops_scale : List[float] = list_field(0.05, 0.5)   # scale range of the local crops
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
 
@@ -65,9 +61,8 @@ class CallBackParams:
     log_erf_freq       : int   = 10     # effective receptive fields
     nb_erf             : int   = 6
     log_att_freq       : int   = 10     # attention maps
-    log_pred_freq      : int   = 1     # log_pred_freq
-    log_ccM_freq       : int   = 1      # log cc_M matrix frequency
-    log_dino_freq      : int   = 1      # log output frrequency for dino
+    log_pred_freq      : int   = 10     # log_pred_freq
+    log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.5    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
 
@@ -131,9 +126,14 @@ class SegmentationConfig:
     """
     backbone          : str           = "vit"
     model             : str           = "deeplabv3"
-    n_channels        : int           = 3
-    n_classes         : int           = 21
-    weight_checkpoint : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    model_param       : Dict[str, Any] = dict_field(
+        dict(
+            n_classes=21,
+            freeze=True,
+            pretrained=False,
+        )
+    )
+    weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
 
 
 @dataclass

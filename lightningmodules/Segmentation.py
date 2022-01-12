@@ -38,8 +38,7 @@ class Segmentation(LightningModule):
         # backbone :
         # self.net = get_net(network_param.backbone, network_param)
         if self.network_param.model == "deeplabv3":
-            self.net = models.deeplabv3.Deeplabv3(
-                num_classes=self.network_param.n_classes, backbone=self.network_param.backbone)
+            self.net = models.deeplabv3.Deeplabv3(self.network_param)
         else:
             raise ValueError(f'option {self.network_param.model} does not exist !')
 
