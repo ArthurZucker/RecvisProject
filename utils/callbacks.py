@@ -423,11 +423,10 @@ class LogAttentionMapsCallback(Callback):
                 return blk(x, return_attention=True)
     """
 
-    def __init__(self, log_student_distrib, nb_attention) -> None:
+    def __init__(self, attention_threshold, nb_attention, log_att_freq) -> None:
         super().__init__()
-        self.log_freq = log_student_distrib
-        self.threshold = 0.5
-        self.teacher_distrib = None
+        self.log_freq = log_att_freq
+        self.threshold = attention_threshold
         self.nb_attention_images = nb_attention
 
     def on_validation_batch_start(
@@ -503,8 +502,9 @@ class LogAttentionMapsCallback(Callback):
 
             self.show(attention_maps, th_attention_map)
 
-            del attention_maps
+            del attention_maps,th_attention_map
             self._clear_hooks()
+
 
     def show(self, imgs, th_attention_map):
         import torchvision.transforms.functional as F
@@ -534,6 +534,7 @@ class LogAttentionMapsCallback(Callback):
         attention_heads = wandb.Image(plt)
         wandb.log({"attention heads": attention_heads})
         plt.close()
+        del attention_heads
 
     def log_th_attention(self, image, th_att, ax):
         """th_attn should have every thrsholded attention maps for each heds, and each image that is being worked on"""
@@ -574,7 +575,9 @@ class LogAttentionMapsCallback(Callback):
             masked_image = apply_mask(masked_image, _mask, color, alpha=0.5)
             ax.imshow(masked_image.astype(np.uint8))
             ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
-
+        del masked_image
+        
+        
     def _register_layer_hooks(self, pl_module):
 
         self.hooks = []
