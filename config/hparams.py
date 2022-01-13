@@ -83,7 +83,7 @@ class BarlowConfig:
     bt_proj_dim           : int           = 2048      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     use_backbone_features : bool          = True      # only use backbone features for FT
-    weight_checkpoint     : Optional[str] = None
+    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -134,7 +134,7 @@ class SegmentationConfig:
             pretrained=False,
         )
     )
-    # weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
 
 
 @dataclass
@@ -181,23 +181,22 @@ class Parameters:
     data_param    : DatasetParams   = DatasetParams()
     callback_param: CallBackParams  = CallBackParams()
 
+    # Set render number of channels
+    if "BarlowTwins" in hparams.arch:
+        network_param : BarlowConfig        = BarlowConfig()
+        optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
+    elif "Segmentation" in hparams.arch:
+        network_param : SegmentationConfig = SegmentationConfig()
+        metric_param  : MetricsParams      = MetricsParams()
+        loss_param    : LossParams         = LossParams()
+        optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
+    else:
+        raise ValueError(f'Architecture {hparams.arch} not supported !')
+
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-        
-        
-        # Set render number of channels
-        if "BarlowTwins" in self.hparams.arch:
-            self.network_param : BarlowConfig        = BarlowConfig()
-            self.optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
-        elif "Segmentation" in self.hparams.arch:
-            self.network_param : SegmentationConfig = SegmentationConfig()
-            self.metric_param  : MetricsParams      = MetricsParams()
-            self.loss_param    : LossParams         = LossParams()
-            self.optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
-        else:
-            raise ValueError(f'Architecture {self.hparams.arch} not supported !')
 
         # Set random seed
         if self.hparams.seed_everything is None:
