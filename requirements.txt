@@ -5,7 +5,7 @@ imgaug==0.4.0
 matplotlib==3.3.2
 numpy==1.21.0
 pandas==1.1.3
-Pillow==8.4.0
+Pillow==9.0.0
 pytorch_lightning==1.5.7
 pytorch_pretrained_vit==0.0.7
 scikit_learn==1.0.1
