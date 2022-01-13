@@ -32,7 +32,7 @@ class trainer(BaseTrainer):
             fast_dev_run=self.config.dev_run,
             # accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
-            default_root_dir=f"{wandb.run.name}",
+            # default_root_dir=f"{wandb.run.name}",
         )
         trainer.logger = self.wb_run
         trainer.fit(self.model, datamodule=self.datamodule)
@@ -55,6 +55,7 @@ class trainer(BaseTrainer):
                 LogAttentionMapsCallback(
                     self.callback_param.attention_threshold,
                     self.callback_param.nb_attention,
+                    self.callback_param.log_att_freq
                 )
             ]
 
@@ -67,8 +68,7 @@ class trainer(BaseTrainer):
                 # ),
                 LogMetricsCallback(self.metric_param),
                 LogSegmentationCallback(self.callback_param.log_pred_freq),
-                EarlyStopping(monitor="val/loss", patience=4,
-                              mode="min", verbose=True),
+                EarlyStopping(monitor="val/loss", patience=4,mode="min", verbose=True),
             ]
             monitor = "val/iou"
             mode = "max"
@@ -92,7 +92,6 @@ class trainer(BaseTrainer):
                 mode=mode,
                 verbose=True,
                 dirpath= f"{self.config.weights_path}/{str(wandb.run.name)}",
-                filename="{epoch:02d}-val_loss{val/loss:.2f}",
                 save_top_k=save_top_k,
                 every_n_epochs=every_n_epochs,
             )
