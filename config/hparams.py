@@ -18,9 +18,9 @@ class Hparams:
 
     
     wandb_entity  : str  = "recvis"         # name of the project
-    test          : bool = True             # test code before running
-    wandb_project : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
-    save_dir      : str  = osp.join(os.getcwd(), "wandb")   # directory to save wandb outputs
+    test          : bool = True            # test code before running, if testing, no checkpoints are written
+    wandb_project : str  = (f"{'test-'*test}sem-seg")
+    save_dir      : str  = osp.join(os.getcwd())   # directory to save wandb outputs
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 32        # batch_size
+    batch_size        : int         = 256        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -77,12 +77,11 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "resnet50"
+    backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
-    bt_proj_dim           : int           = 2048      # number of channels to use for projection
+    bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
-    use_backbone_features : bool          = True      # only use backbone features for FT
     weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
     backbone_parameters   : Optional[str] = None
 
@@ -91,12 +90,13 @@ class OptimizerParams_SSL: # @TODO change name
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 5e-4     # learning rate,                             default = 0.0002
+    lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
     min_lr              : float          = 5e-6     # minimum lr for the scheduler
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
     max_epochs          : int            = 400      # @TODO duplicate of dataparam
+    use_scheduler       : bool           = True
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
             base_value         = 0.9995,
@@ -180,24 +180,26 @@ class Parameters:
     hparams       : Hparams         = Hparams()
     data_param    : DatasetParams   = DatasetParams()
     callback_param: CallBackParams  = CallBackParams()
-
-    # Set render number of channels
+    metric_param  : MetricsParams   = MetricsParams()
+    loss_param    : LossParams      = LossParams()
+    
+          # name of the wandb entity, here our team
+    
     if "BarlowTwins" in hparams.arch:
-        network_param : BarlowConfig        = BarlowConfig()
-        optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
+            network_param : BarlowConfig        = BarlowConfig()
+            optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
     elif "Segmentation" in hparams.arch:
-        network_param : SegmentationConfig = SegmentationConfig()
-        metric_param  : MetricsParams      = MetricsParams()
-        loss_param    : LossParams         = LossParams()
-        optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
+            network_param : SegmentationConfig = SegmentationConfig()
+            optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
     else:
         raise ValueError(f'Architecture {hparams.arch} not supported !')
-
+    
+    
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-
+        self.hparams.wandb_project = (f"{'test-'*self.hparams.test}sem-seg") 
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
@@ -215,6 +217,8 @@ class Parameters:
                 dropout         = 0.1,
                 emb_dropout     = 0.1,
             )
+        
+        
         
         print("Random Seed: ", self.hparams.seed_everything)
         random.seed(self.hparams.seed_everything)
