@@ -76,10 +76,10 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit"
+    backbone              : str           = "resnet50"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
-    bt_proj_dim           : int           = 512      # number of channels to use for projection
+    bt_proj_dim           : int           = 1024      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
     backbone_parameters   : Optional[str] = None
@@ -91,7 +91,7 @@ class OptimizerParams_SSL: # @TODO change name
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
     lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
-    min_lr              : float          = 5e-6     # minimum lr for the scheduler
+    min_lr              : float          = 5e-6     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
     max_epochs          : int            = 400      # @TODO duplicate of dataparam
