@@ -48,7 +48,7 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (384, 384)   # image_size
+    input_size        : tuple       = (256, 256)   # image_size
     batch_size        : int         = 256        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
@@ -214,8 +214,8 @@ class Parameters:
                 patch_size      = self.data_param.input_size[0]//8,
                 num_classes     = 0,
                 dim             = 1024,
-                depth           = 6,
-                heads           = 6,
+                depth           = 10,
+                heads           = 12,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
                 emb_dropout     = 0.1,
