@@ -51,6 +51,7 @@ class DatasetParams:
     input_size        : tuple       = (256, 256)   # image_size
     batch_size        : int         = 32        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
+    root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
 
