@@ -19,7 +19,7 @@ class Hparams:
     
     wandb_entity  : str  = "recvis"         # name of the project
     test          : bool = True            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
+    wandb_project : str  = (f"{'test-'*test}sem-seg")
     save_dir      : str  = osp.join(os.getcwd())   # directory to save wandb outputs
 
 
@@ -79,7 +79,7 @@ class BarlowConfig:
     backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
-    bt_proj_dim           : int           = 1024      # number of channels to use for projection
+    bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
     backbone_parameters   : Optional[str] = None
@@ -179,25 +179,26 @@ class Parameters:
     hparams       : Hparams         = Hparams()
     data_param    : DatasetParams   = DatasetParams()
     callback_param: CallBackParams  = CallBackParams()
-
+    metric_param  : MetricsParams   = MetricsParams()
+    loss_param    : LossParams      = LossParams()
+    
+          # name of the wandb entity, here our team
+    
+    if "BarlowTwins" in hparams.arch:
+            network_param : BarlowConfig        = BarlowConfig()
+            optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
+    elif "Segmentation" in hparams.arch:
+            network_param : SegmentationConfig = SegmentationConfig()
+            optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
+    else:
+        raise ValueError(f'Architecture {hparams.arch} not supported !')
+    
+    
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-        
-        
-        # Set render number of channels
-        if "BarlowTwins" in self.hparams.arch:
-            self.network_param : BarlowConfig        = BarlowConfig()
-            self.optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
-        elif "Segmentation" in self.hparams.arch:
-            self.network_param : SegmentationConfig = SegmentationConfig()
-            self.metric_param  : MetricsParams      = MetricsParams()
-            self.loss_param    : LossParams         = LossParams()
-            self.optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
-        else:
-            raise ValueError(f'Architecture {self.hparams.arch} not supported !')
-
+        self.hparams.wandb_project = (f"{'test-'*self.hparams.test}sem-seg") 
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
