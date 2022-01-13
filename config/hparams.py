@@ -185,14 +185,7 @@ class Parameters:
     
           # name of the wandb entity, here our team
     
-    if "BarlowTwins" in hparams.arch:
-            network_param : BarlowConfig        = BarlowConfig()
-            optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
-    elif "Segmentation" in hparams.arch:
-            network_param : SegmentationConfig = SegmentationConfig()
-            optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
-    else:
-        raise ValueError(f'Architecture {hparams.arch} not supported !')
+    
     
     
     def __post_init__(self):
@@ -200,6 +193,16 @@ class Parameters:
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
         self.hparams.wandb_project = (f"{'test-'*self.hparams.test}sem-seg") 
+        
+        if "BarlowTwins" in self.hparams.arch:
+            self.network_param : BarlowConfig        = BarlowConfig()
+            self.optim_param   : OptimizerParams_SSL = OptimizerParams_SSL()
+        elif "Segmentation" in self.hparams.arch:
+                self.network_param : SegmentationConfig = SegmentationConfig()
+                self.optim_param   : OptimizerParams_Segmentation = OptimizerParams_Segmentation()
+        else:
+            raise ValueError(f'Architecture {self.hparams.arch} not supported !')
+    
         # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
