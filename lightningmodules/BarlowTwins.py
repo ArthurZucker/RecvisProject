@@ -21,7 +21,7 @@ class BarlowTwins(LightningModule):
         
         self.network_param = config.network_param
         self.optim_param = config.optim_param
-
+        self.lr = self.optim_param.lr
         self.loss = CrossCorrelationMatrixLoss(self.network_param.lmbda)
 
         self.proj_dim = self.network_param.bt_proj_dim
@@ -72,19 +72,24 @@ class BarlowTwins(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
+        self.optim_param.lr *= (self.trainer.datamodule.batch_size / 256) # from the paper
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr)
-        scheduler = LinearWarmupCosineAnnealingLR(
-            optimizer,
-            warmup_epochs=40,
-            max_epochs=self.optim_param.max_epochs,
-            warmup_start_lr=0.1
-            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
-            eta_min=0.1
-            * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
-        )
-        return [[optimizer], [scheduler]]
-
+        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr,weight_decay=10e-6)
+        if self.optim_param.use_scheduler :
+            scheduler = LinearWarmupCosineAnnealingLR(
+                optimizer,
+                warmup_epochs=40,
+                max_epochs=self.optim_param.max_epochs,
+                warmup_start_lr=0.1
+                * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
+                eta_min=0.1
+                * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
+            )
+            return [[optimizer], [scheduler]]
+        else:
+            
+            return optimizer
+        
     def _get_loss(self, batch):
         """convenience function since train/valid/test steps are similar"""
         x1, x2 = batch
