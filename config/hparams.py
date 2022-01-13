@@ -18,7 +18,7 @@ class Hparams:
 
     
     wandb_entity  : str  = "recvis"         # name of the project
-    test          : bool = False            # test code before running, if testing, no checkpoints are written
+    test          : bool = True            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"{'test-'*test}sem-seg")
     save_dir      : str  = osp.join(os.getcwd())   # directory to save wandb outputs
 
@@ -48,7 +48,7 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (384, 384)   # image_size
+    input_size        : tuple       = (256, 256)   # image_size
     batch_size        : int         = 256        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
