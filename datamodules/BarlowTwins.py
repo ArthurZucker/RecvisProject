@@ -10,12 +10,15 @@ class BarlowTwins(LightningDataModule):
     Args:
         LightningDataModule ([type]): [description]
     """
-    def __init__(self, config,dataset_name = "BarlowTwinsDataset"):
+    def __init__(self, config, dataset_name = "BarlowTwinsDataset"):
         super().__init__()
         self.dataset    = getattr(datasets,dataset_name)
         self.config     = config
         self.batch_size = self.config.batch_size
-        self.root = os.path.join(self.config.asset_path, "VOC")
+        if self.config.root_dataset is not None:
+            self.root = self.config.root_dataset
+        else:
+            self.root = os.path.join(self.config.asset_path, "VOC")
 
     # def prepare_data(self):
     # #use to download

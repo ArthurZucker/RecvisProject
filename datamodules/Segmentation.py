@@ -16,7 +16,10 @@ class Segmentation(LightningDataModule):
         self.config = config
         if dataset_name == "VOCSegmentation":
             self.dataset = getattr(torchvision.datasets, dataset_name)
-            self.root = os.path.join(self.config.asset_path, "VOC")
+            if self.config.root_dataset is not None:
+                self.root = self.config.root_dataset
+            else:
+                self.root = os.path.join(self.config.asset_path, "VOC")
         else: # use custom dataset : 
             raise NotImplementedError
             self.dataset = getattr(datasets, dataset_name)

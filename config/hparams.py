@@ -18,7 +18,7 @@ class Hparams:
 
     
     wandb_entity  : str  = "recvis"         # name of the project
-    test          : bool = True            # test code before running, if testing, no checkpoints are written
+    test          : bool = False            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"{'test-'*test}sem-seg")
     save_dir      : str  = osp.join(os.getcwd())   # directory to save wandb outputs
 
@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 256    # gradient accumulation batch size
+    # accumulate_size: int           = 256    # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -48,9 +48,10 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (256, 256)   # image_size
+    input_size        : tuple       = (384, 384)   # image_size
     batch_size        : int         = 256        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
+    root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
 
@@ -81,7 +82,7 @@ class BarlowConfig:
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 1024      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
-    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
+    weight_checkpoint     : Optional[str] = None
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -212,7 +213,7 @@ class Parameters:
                 image_size      = self.data_param.input_size[0],
                 patch_size      = self.data_param.input_size[0]//8,
                 num_classes     = 0,
-                dim             = 768,
+                dim             = 1024,
                 depth           = 6,
                 heads           = 6,
                 mlp_dim         = 1024,
