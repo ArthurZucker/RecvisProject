@@ -83,7 +83,7 @@ class BarlowConfig:
     bt_proj_dim           : int           = 2048      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     use_backbone_features : bool          = True      # only use backbone features for FT
-    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
+    weight_checkpoint     : Optional[str] = None
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -134,7 +134,7 @@ class SegmentationConfig:
             pretrained=False,
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
 
 
 @dataclass
