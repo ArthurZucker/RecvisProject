@@ -1,4 +1,5 @@
 import os
+from turtle import forward
 
 import torch
 from torchvision.transforms.functional import InterpolationMode
@@ -8,12 +9,17 @@ from torchvision import transforms
 import torchvision.datasets 
 from utils.transforms import toLongTensor, SegTransform
 import datasets
-
+from utils.agent_utils import get_net,get_head
 
 class Segmentation(LightningDataModule):
     def __init__(self, config, dataset_name="VOCSegmentation"):
         super().__init__()
-        self.config = config
+        
+        self.network_param = config.network_param
+        self.optim_param = config.optim_param
+        self.lr = self.optim_param.lr
+        
+        
         if dataset_name == "VOCSegmentation":
             self.dataset = getattr(torchvision.datasets, dataset_name)
             if self.config.root_dataset is not None:
@@ -25,13 +31,29 @@ class Segmentation(LightningDataModule):
             self.dataset = getattr(datasets, dataset_name)
             self.root = os.path.join(self.config.asset_path, dataset_name)
         
-        self.batch_size = self.config.batch_size
+        self.batch_size = self.config.dataset_param.batch_size
+
+        self.transform = self.get_transforms(config.dataset_param.input_size)
+
+        # intialize the backbone 
+        self.backbone = get_net(
+            self.network_param.backbone, self.network_param.backbone_parameters
+        )
+        if self.network_param.backbone_parameters is not None:
+            self.patch_size = self.network_param.backbone_parameters["patch_size"]
+        self.in_features = list(self.backbone.modules())[-1].in_features
+        name_classif = list(self.backbone.named_children())[-1][0]
+        self.backbone._modules[name_classif] = nn.Identity()
+        self.head = get_head(self.network_param.head,self.network_param.head_params)
+        
+
+    def get_transforms(self,input_size):
+        # @TODO should the mean be somewhere else?
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
-
-        self.transform = {
+        return {
             "train": SegTransform(
-                config.input_size,
+                input_size,
                 0.5,
                 0.5,
                 mean,
@@ -40,7 +62,7 @@ class Segmentation(LightningDataModule):
             "val": {
                 "data": transforms.Compose(
                     [
-                        transforms.Resize(config.input_size),
+                        transforms.Resize(input_size),
                         transforms.ToTensor(),
                         transforms.Normalize(mean, std),
                     ]
@@ -48,7 +70,7 @@ class Segmentation(LightningDataModule):
                 "target": transforms.Compose(
                     [
                         transforms.Resize(
-                            config.input_size, interpolation = InterpolationMode.NEAREST
+                            input_size, interpolation = InterpolationMode.NEAREST
                         ),
                         transforms.ToTensor(),
                         toLongTensor(),
@@ -56,16 +78,6 @@ class Segmentation(LightningDataModule):
                 ),
             },
         }
-
-    # When doing distributed training, Datamodules have two optional arguments for
-    # granular control over download/prepare/splitting data:
-
-    # OPTIONAL, called only on 1 GPU/machine
-    # def prepare_data(self):
-    # use to download
-    # VOCSegmentation(root = self.root, image_set='trainval', download=False)
-    # VOCSegmentation(root = self.root, image_set='val', download=False)
-
     # OPTIONAL, called for every GPU/machine (assigning state is OK)
     def setup(self, stage=None):
         # transforms
@@ -100,6 +112,13 @@ class Segmentation(LightningDataModule):
                 target_transform=self.transform["val"]["target"],
             )
 
+    def forward(self,x):
+        # @TODO @FIXME dimension will never be alright, has to correspond to the backbone> ViT should only use the extracor
+        x = self.backbone(x)
+        x = self.head(x)
+        return x
+        
+        
     def train_dataloader(self):
         voc_train = DataLoader(
             self.voc_train,
