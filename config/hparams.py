@@ -18,7 +18,7 @@ class Hparams:
 
     
     wandb_entity  : str  = "recvis"         # name of the project
-    test          : bool = False             # test code before running
+    test          : bool = True             # test code before running
     wandb_project : str  = (f"{'test-'*test}sem-seg")       # name of the wandb entity, here our team
     save_dir      : str  = osp.join(os.getcwd(), "wandb")   # directory to save wandb outputs
 
