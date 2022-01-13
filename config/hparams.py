@@ -213,7 +213,7 @@ class Parameters:
                 patch_size      = self.data_param.input_size[0]//8,
                 num_classes     = 0,
                 dim             = 768,
-                depth           = 6,
+                depth           = 4,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
