@@ -125,9 +125,10 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vit"
-    model             : str           = "deeplabv3"
-    model_param       : Dict[str, Any] = dict_field(
+    backbone            : str            = "vit"
+    head                : str            = "Baseline"
+    decoder_hidden_size : int            = 1024
+    head_params         : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
             freeze=True,
@@ -211,10 +212,10 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = self.data_param.input_size[0]//8,
+                patch_size      = 4, #self.data_param.input_size[0]//16,
                 num_classes     = 0,
-                dim             = 1024,
-                depth           = 6,
+                dim             = 384,
+                depth           = 12,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
