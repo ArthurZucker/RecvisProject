@@ -2,6 +2,7 @@ import os
 from turtle import forward
 
 import torch
+import torch.nn as nn
 from torchvision.transforms.functional import InterpolationMode
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, random_split
@@ -10,7 +11,7 @@ import torchvision.datasets
 from utils.transforms import toLongTensor, SegTransform
 import datasets
 from utils.agent_utils import get_net,get_head
-
+from vit_pytorch.extractor import Extractor
 class Segmentation(LightningDataModule):
     def __init__(self, config, dataset_name="VOCSegmentation"):
         super().__init__()
@@ -39,11 +40,20 @@ class Segmentation(LightningDataModule):
         self.backbone = get_net(
             self.network_param.backbone, self.network_param.backbone_parameters
         )
+        # load weights. here state dic keys should be taken care of
+        if self.network_param.weight_checkpoint is not None: 
+            pth = torch.load(self.network_param.weight_checkpoint)
+            state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+            self.backbone.load_state_dict(state_dict, strict = False)
+            print(f"Loaded checkpoints from {self.network_param.weight_checkpoint}")
+            if self.network_param.backbone == "vit":
+                self.backbone =  Extractor(self.backbone, return_embeddings_only=True)
+                
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
         self.in_features = list(self.backbone.modules())[-1].in_features
-        name_classif = list(self.backbone.named_children())[-1][0]
-        self.backbone._modules[name_classif] = nn.Identity()
+
+        # import mlp head
         self.head = get_head(self.network_param.head,self.network_param.head_params)
         
 
