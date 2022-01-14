@@ -30,8 +30,9 @@ class Deeplabv3(nn.Module):
                 self.net = deeplabv3_resnet50(
                     pretrained=self.config.model_param.pretrained, num_classes=num_classes)
                 if hasattr(self.config, "weight_checkpoint_backbone"):
-                    pth = torch.load(self.config.weight_checkpoint_backbone)
-                    self.net.backbone.load_state_dict(pth, strict=False)
+                    pth = torch.load(self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                    state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+                    self.net.backbone.load_state_dict(state_dict, strict=False)
 
                 # Freeze backbone weights
                 if self.config.freeze:
@@ -42,8 +43,11 @@ class Deeplabv3(nn.Module):
                 self.vit = ViT(**self.config.backbone_parameters)
 
                 if hasattr(self.config, "weight_checkpoint_backbone"):
-                    pth = torch.load(self.config.weight_checkpoint_backbone)
-                    self.vit.load_state_dict(pth, strict=False)
+                    pth = torch.load(self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                    state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+                    self.vit.load_state_dict(state_dict, strict=False)
+                
+                # for name, param in self.vit.named_parameters(): print(f"{name} : {param}")
 
                 self.vit = Extractor(self.vit, return_embeddings_only=True)
 
