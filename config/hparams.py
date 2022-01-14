@@ -183,7 +183,6 @@ class Parameters:
     metric_param  : MetricsParams   = MetricsParams()
     loss_param    : LossParams      = LossParams()
     
-          # name of the wandb entity, here our team
     
     
     
