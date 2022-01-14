@@ -134,7 +134,7 @@ class SegmentationConfig:
             pretrained=False,
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/fresh-snowflake_vit_epoch=394-step=3159.ckpt")
+    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/fresh-snowflake_vit_epoch394-step3159.ckpt")
 
 
 @dataclass
