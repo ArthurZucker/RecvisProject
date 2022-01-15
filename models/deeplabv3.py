@@ -28,14 +28,15 @@ class Deeplabv3(nn.Module):
 
             if self.name_encoder == "resnet50":
                 self.net = deeplabv3_resnet50(
-                    pretrained=self.config.model_param.pretrained, num_classes=num_classes)
+                    pretrained=self.config.model_param['pretrained'], num_classes=num_classes)
                 if hasattr(self.config, "weight_checkpoint_backbone"):
                     pth = torch.load(self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
-                    state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
-                    self.net.backbone.load_state_dict(state_dict, strict=False)
+                    if "resnet50.pth" not in self.config.weight_checkpoint_backbone:
+                        pth = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+                    self.net.backbone.load_state_dict(pth, strict=False)
 
                 # Freeze backbone weights
-                if self.config.freeze:
+                if self.config.model_param['freeze']:
                     for param in self.net.backbone.parameters():
                         param.requires_grad = False
 

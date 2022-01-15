@@ -125,7 +125,7 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vit"
+    backbone          : str           = "resnet50"
     model             : str           = "deeplabv3"
     model_param       : Dict[str, Any] = dict_field(
         dict(
@@ -134,8 +134,9 @@ class SegmentationConfig:
             pretrained=False,
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/fresh-snowflake_vit_epoch394-step3159.ckpt")
-
+    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights_barlow_twins/resnet50.pth")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights/barlow_twins", "resnet50.pth")
+    backbone_parameters: Dict[str, Any] = None
 
 @dataclass
 class LossParams: # @TODO remove classs, put in segmentaiton config 
