@@ -107,7 +107,7 @@ class Segmentation(LightningModule):
         if self.optim_param.use_scheduler :
             scheduler = LinearWarmupCosineAnnealingLR(
                 optimizer,
-                warmup_epochs=40,
+                warmup_epochs=5,
                 max_epochs=self.optim_param.max_epochs,
                 warmup_start_lr=0.1
                 * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
