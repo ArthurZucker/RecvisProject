@@ -77,7 +77,7 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "resnet50"
+    backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 512      # number of channels to use for projection
@@ -211,10 +211,10 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = self.data_param.input_size[0]//8,
+                patch_size      = 4,
                 num_classes     = 0,
-                dim             = 1024,
-                depth           = 6,
+                dim             = 384,
+                depth           = 12,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
