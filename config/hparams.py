@@ -151,7 +151,7 @@ class OptimizerParams_Segmentation:
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW" 
-    lr                  : float          = 5e-6
+    lr                  : float          = 5e-3
     max_epochs          : int            = 400      
     use_scheduler       : bool           = True
     # scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
