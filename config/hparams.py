@@ -214,7 +214,7 @@ class Parameters:
                 patch_size      = 16,
                 num_classes     = 0,
                 dim             = 384,
-                depth           = 12,
+                depth           = 4,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
