@@ -29,7 +29,8 @@ class Baseline(nn.Module):
         batch_size, n ,_  = hidden_states.shape
         # hidden_states = hidden_states.permute(0, 2, 1) # [B,emb_dim,nb_patch + 1]
         #hidden_states = self.proj(torch.flatten(hidden_states,start_dim=1))
-        h = self.proj(hidden_states[:,:,1:])
+        hidden_state = hidden_states[,1:,].permute(0,2,1)
+        h = self.proj(hidden_states.reshape(batch_size, -1, (self.img_size[0]//self.patch_size), (self.img_size[0]//self.patch_size))
         return h
         # encoder_hidden_state = hidden_states.permute(0, 2, 1)
         # hidden_states = hidden_states[:,:,1:].reshape(batch_size, -1, (self.img_size[0]//self.patch_size), (self.img_size[0]//self.patch_size))
