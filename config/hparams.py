@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 256        # batch_size
+    batch_size        : int         = 128        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -127,8 +127,9 @@ class SegmentationConfig:
     """
     backbone            : str            = "vit"
     head                : str            = "Baseline"
+    head_params         : Optional[str]  = None
     decoder_hidden_size : int            = 1024
-    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/light-rain-17/epoch=381-step=2291.ckpt")
 
 
 @dataclass
@@ -145,6 +146,8 @@ class OptimizerParams_Segmentation:
     optimizer           : str            = "AdamW" 
     lr                  : float          = 5e-4
     scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
+    use_scheduler : bool = True
+    
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
             patience = 4,
@@ -205,10 +208,10 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 4, #self.data_param.input_size[0]//16,
+                patch_size      = self.data_param.input_size[0]//8,
                 num_classes     = 0,
-                dim             = 384,
-                depth           = 12,
+                dim             = 768,
+                depth           = 6,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,

@@ -11,30 +11,29 @@ import torchvision.datasets
 from utils.transforms import toLongTensor, SegTransform
 import datasets
 
-from vit_pytorch.extractor import Extractor
 class Segmentation(LightningDataModule):
-    def __init__(self, config, dataset_name="VOCSegmentation"):
+    def __init__(self, config):
         super().__init__()
-        
+        dataset_name       = config.hparams.dataset
         self.network_param = config.network_param
-        self.optim_param = config.optim_param
-        self.lr = self.optim_param.lr
-        
+        self.optim_param   = config.optim_param
+        self.lr            = config.optim_param.lr
+        self.num_workers   = config.data_param.num_workers
         
         if dataset_name == "VOCSegmentation":
             self.dataset = getattr(torchvision.datasets, dataset_name)
-            if self.config.root_dataset is not None:
-                self.root = self.config.root_dataset
+            if config.data_param.root_dataset is not None:
+                self.root = config.data_param.root_dataset
             else:
-                self.root = os.path.join(self.config.asset_path, "VOC")
+                self.root = os.path.join(config.hparams.asset_path, "VOC")
         else: # use custom dataset : 
             raise NotImplementedError
             self.dataset = getattr(datasets, dataset_name)
             self.root = os.path.join(self.config.asset_path, dataset_name)
         
-        self.batch_size = self.config.dataset_param.batch_size
+        self.batch_size = config.data_param.batch_size
 
-        self.transform = self.get_transforms(config.dataset_param.input_size)
+        self.transform = self.get_transforms(config.data_param.input_size)
 
         
 
@@ -110,7 +109,7 @@ class Segmentation(LightningDataModule):
         voc_train = DataLoader(
             self.voc_train,
             batch_size=self.batch_size,
-            num_workers=self.config.num_workers,
+            num_workers=self.num_workers,
             shuffle=True,
         )
         return voc_train
@@ -119,7 +118,7 @@ class Segmentation(LightningDataModule):
         voc_val = DataLoader(
             self.voc_val,
             batch_size=self.batch_size,
-            num_workers=self.config.num_workers,
+            num_workers=self.num_workers,
         )
         return voc_val
 
@@ -127,7 +126,7 @@ class Segmentation(LightningDataModule):
         voc_test = DataLoader(
             self.voc_test,
             batch_size=self.batch_size,
-            num_workers=self.config.num_workers,
+            num_workers=self.num_workers,
         )
         return voc_test
 
@@ -135,6 +134,6 @@ class Segmentation(LightningDataModule):
         voc_predict = DataLoader(
             self.voc_predict,
             batch_size=self.batch_size,
-            num_workers=self.config.num_workers,
+            num_workers=self.num_workers,
         )
         return voc_predict

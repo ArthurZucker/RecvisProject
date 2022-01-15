@@ -22,17 +22,17 @@ def get_lightning_module(arch, config):
 
     mod = importlib.import_module(f"lightningmodules.{arch}")
     net = getattr(mod, arch)
-    return net(EasyDict(config))
+    return net(config)
 
 
-def get_datamodule(datamodule, data_param, dataset = None):
+def get_datamodule(datamodule, data_param):
     """
     Fetch Network Function Pointer
     """
     module = "datamodules." + datamodule
     mod = importlib.import_module(module)
     net = getattr(mod, datamodule)
-    return net(data_param,dataset)
+    return net(data_param)
 
 
 def import_class(name, instantiate=None):

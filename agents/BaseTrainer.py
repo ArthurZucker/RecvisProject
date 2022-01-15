@@ -6,20 +6,12 @@ class BaseTrainer:
     def __init__(self, config, run) -> None:
         self.config = config.hparams
         self.wb_run = run
-        if "Barlow" in self.config.arch or "Dino" in self.config.arch:
-
-            self.model = get_lightning_module(config.hparams.arch, {
-                                              "network_param": config.network_param, "optim_param": config.optim_param})
-        elif "Seg" in self.config.arch:
-            self.model = get_lightning_module(config.hparams.arch,
-                                              {"network_param": config.network_param,
-                                               "optim_param": config.optim_param,
-                                               "loss_param": config.loss_param})
+        self.model = get_lightning_module(config.hparams.arch,config)
         self.encoder = config.network_param.backbone
 
         self.wb_run.watch(self.model, log_graph=False)
         self.datamodule = get_datamodule(
-            config.hparams.datamodule, config.data_param, config.hparams.dataset
+            config.hparams.datamodule, config
         )
 
     def run(self):

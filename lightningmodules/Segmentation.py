@@ -6,7 +6,10 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from models.unet import Unet
 import models.deeplabv3
 import models.resnet50
-from utils.agent_utils import get_net,get_head
+from utils.agent_utils import get_net, get_head
+from easydict import EasyDict
+from vit_pytorch.extractor import Extractor
+
 
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
@@ -29,31 +32,38 @@ class Segmentation(LightningModule):
         self.network_param = config.network_param
         self.loss_param = config.loss_param
         self.optimizer_param = config.optim_param
-
+        self.input_size = config.data_param.input_size
         self.rq_grad = False
-
+        self.max_epochs = config.hparams.max_epochs
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
-            
-        # intialize the backbone 
+
+        # intialize the backbone
         self.backbone = get_net(
             self.network_param.backbone, self.network_param.backbone_parameters
         )
         # load weights. here state dic keys should be taken care of
-        if self.network_param.weight_checkpoint is not None: 
-            pth = torch.load(self.network_param.weight_checkpoint)
-            state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
-            self.backbone.load_state_dict(state_dict, strict = False)
-            print(f"Loaded checkpoints from {self.network_param.weight_checkpoint}")
+        if self.network_param.backbone_checkpoint is not None:
+            pth = torch.load(self.network_param.backbone_checkpoint)
+            state_dict = {k.replace('backbone.', ''): v for k, v in pth['state_dict'].items()}
+            self.backbone.load_state_dict(state_dict, strict=False)
+            print(
+                f"Loaded checkpoints from {self.network_param.backbone_checkpoint}")
             if self.network_param.backbone == "vit":
-                self.backbone =  Extractor(self.backbone, return_embeddings_only=True)
-                
+                self.backbone = Extractor(
+                    self.backbone, return_embeddings_only=True)
+
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
         self.in_features = list(self.backbone.modules())[-1].in_features
-
+        out_features = list(self.backbone.modules())[-1].out_features
+        
+        self.network_param.head_params = EasyDict({"input_dim": self.in_features, "img_size": self.input_size,
+                                          "patch_size": self.patch_size,"decoder_hidden_size":768,
+                                          "num_labels":21})
         # import mlp head
-        self.head = get_head(self.network_param.head,self.network_param.head_params)
+        self.head = get_head(self.network_param.head,
+                             self.network_param.head_params)
 
         # loss
         loss_cls = import_class(self.loss_param.name)
@@ -62,13 +72,12 @@ class Segmentation(LightningModule):
         # optimizer parameters
         self.lr = self.optimizer_param.lr
 
-    def forward(self,x):
+    def forward(self, x):
         x.requires_grad_(self.rq_grad)
         # @TODO @FIXME dimension will never be alright, has to correspond to the backbone> ViT should only use the extracor
         x = self.backbone(x)
         x = self.head(x)
         return x
-
 
     def training_step(self, batch, batch_idx):
         """needs to return a loss from a single batch"""
@@ -109,32 +118,20 @@ class Segmentation(LightningModule):
     def configure_optimizers(self):
         """defines model optimizer"""
         optimizer = getattr(torch.optim, self.optimizer_param.optimizer)
-        optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), lr=self.optimizer_param.lr)
+        optimizer = optimizer(filter(
+            lambda p: p.requires_grad, self.parameters()), lr=self.optimizer_param.lr)
 
-        # scheduler = LinearWarmupCosineAnnealingLR(
-        #     optimizer,
-        #     warmup_epochs=10,
-        #     max_epochs=self.optimizer_param.max_epochs,
-        #     warmup_start_lr=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        #     eta_min=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        # )  # @TODO if we need other, should be adde dbnut I doubt that will be needed
-
-        # scheduler = LinearWarmupCosineAnnealingLR(
-        #     optimizer,
-        #     warmup_epochs=10,
-        #     max_epochs=self.optimizer_param.max_epochs,
-        #     warmup_start_lr=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        #     eta_min=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        # )
-        if hasattr(self.optimizer_param, "scheduler"):
-            scheduler_cls = import_class(self.optimizer_param.scheduler)
-            scheduler = scheduler_cls(optimizer, **self.optimizer_param.scheduler_parameters)
-            lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
-            return ([optimizer], [lr_scheduler])
+        if self.optimizer_param.use_scheduler :
+            scheduler = LinearWarmupCosineAnnealingLR(
+                optimizer,
+                warmup_epochs=40,
+                max_epochs=self.max_epochs,
+                warmup_start_lr=0.1
+                * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+                eta_min=0.1
+                * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+            )
+            return [[optimizer], [scheduler]]
 
         return optimizer
 
