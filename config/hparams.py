@@ -131,10 +131,11 @@ class SegmentationConfig:
         dict(
             n_classes=21,
             freeze=False,
-            pretrained=False,
+            pretrained=True,
+            pretrained_backbone=True
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/resnet50.pth")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/resnet50.pth")
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights/barlow_twins", "resnet50.pth")
     backbone_parameters: Dict[str, Any] = None
 
