@@ -28,7 +28,7 @@ class Segmentation(LightningModule):
 
         self.network_param = config.network_param
         self.loss_param = config.loss_param
-        self.optimizer_param = config.optim_param
+        self.optim_param = config.optim_param
 
         self.rq_grad = False
 
@@ -47,7 +47,7 @@ class Segmentation(LightningModule):
         self.loss = loss_cls(**self.loss_param.param)
 
         # optimizer parameters
-        self.lr = self.optimizer_param.lr
+        self.lr = self.optim_param.lr
 
     def forward(self, x):
         x.requires_grad_(self.rq_grad)
@@ -91,35 +91,38 @@ class Segmentation(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        optimizer = getattr(torch.optim, self.optimizer_param.optimizer)
-        optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), lr=self.optimizer_param.lr)
+        optimizer = getattr(torch.optim, self.optim_param.optimizer)
+        optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), lr=self.optim_param.lr)
 
         # scheduler = LinearWarmupCosineAnnealingLR(
         #     optimizer,
         #     warmup_epochs=10,
-        #     max_epochs=self.optimizer_param.max_epochs,
+        #     max_epochs=self.optim_param.max_epochs,
         #     warmup_start_lr=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        #     * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
         #     eta_min=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+        #     * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
         # )  # @TODO if we need other, should be adde dbnut I doubt that will be needed
 
-        # scheduler = LinearWarmupCosineAnnealingLR(
-        #     optimizer,
-        #     warmup_epochs=10,
-        #     max_epochs=self.optimizer_param.max_epochs,
-        #     warmup_start_lr=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        #     eta_min=0.1
-        #     * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
-        # )
-        if hasattr(self.optimizer_param, "scheduler"):
-            scheduler_cls = import_class(self.optimizer_param.scheduler)
-            scheduler = scheduler_cls(optimizer, **self.optimizer_param.scheduler_parameters)
-            lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
-            return ([optimizer], [lr_scheduler])
-
-        return optimizer
+        if self.optim_param.use_scheduler :
+            scheduler = LinearWarmupCosineAnnealingLR(
+                optimizer,
+                warmup_epochs=40,
+                max_epochs=self.optim_param.max_epochs,
+                warmup_start_lr=0.1
+                * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
+                eta_min=0.1
+                * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
+            )
+            return [[optimizer], [scheduler]]
+        else:
+            
+            return optimizer
+        # if hasattr(self.optim_param, "scheduler"):
+        #     scheduler_cls = import_class(self.optim_param.scheduler)
+        #     scheduler = scheduler_cls(optimizer, **self.optim_param.scheduler_parameters)
+        #     lr_scheduler = {"scheduler": scheduler, "monitor": "train/loss"}
+        #     return ([optimizer], [lr_scheduler])
 
     def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(
