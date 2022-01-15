@@ -64,7 +64,7 @@ class CallBackParams:
     log_att_freq       : int   = 10     # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
-    attention_threshold: float = 0.5    # Logging attention threshold for head fusion
+    attention_threshold: float = 0.6    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
 
 ################################## Self-supervised learning parameters ##################################
