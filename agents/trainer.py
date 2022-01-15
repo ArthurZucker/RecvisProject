@@ -68,7 +68,7 @@ class trainer(BaseTrainer):
                 # ),
                 LogMetricsCallback(self.metric_param),
                 LogSegmentationCallback(self.callback_param.log_pred_freq),
-                EarlyStopping(monitor="val/loss", patience=4,mode="min", verbose=True),
+                EarlyStopping(monitor="val/loss", patience=50,mode="min", verbose=True),
             ]
             monitor = "val/iou"
             mode = "max"
