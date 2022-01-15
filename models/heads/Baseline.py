@@ -21,7 +21,7 @@ class Baseline(nn.Module):
         # if input is [B,C,Patch], flatten to [B,CxPatch]
         
         # self.proj = nn.Linear(input_dim*((img_size[0]//patch_size)**2+1), decoder_hidden_size)
-        self.proj = nn.ConvTranspose2d(decoder_hidden_size, num_labels, kernel_size=1)
+        self.proj = nn.ConvTranspose2d(decoder_hidden_size, num_labels, kernel_size=32,stride=30)
         
         # self.classifier = nn.Conv2d(decoder_hidden_size, num_labels, kernel_size=1)
         
@@ -31,10 +31,10 @@ class Baseline(nn.Module):
         #hidden_states = self.proj(torch.flatten(hidden_states,start_dim=1))
         hidden_states = hidden_states[:,1:,:].permute(0,2,1)
         h = self.proj(hidden_states.reshape(batch_size, -1, (self.img_size[0]//self.patch_size), (self.img_size[0]//self.patch_size)))
-        h = nn.functional.interpolate(
-            h, size=self.img_size, mode="bilinear", align_corners=False
-        )
-q        return h
+        # h = nn.functional.interpolate(
+        #     h, size=self.img_size, mode="bilinear", align_corners=False
+        # )
+        return h
         # encoder_hidden_state = hidden_states.permute(0, 2, 1)
         # hidden_states = hidden_states[:,:,1:].reshape(batch_size, -1, (self.img_size[0]//self.patch_size), (self.img_size[0]//self.patch_size))
         # # upsample
