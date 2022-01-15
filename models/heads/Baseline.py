@@ -21,7 +21,7 @@ class Baseline(nn.Module):
         # if input is [B,C,Patch], flatten to [B,CxPatch]
         
         # self.proj = nn.Linear(input_dim*((img_size[0]//patch_size)**2+1), decoder_hidden_size)
-        self.proj = nn.ConvTranspose2d(decoder_hidden_size, num_labels, kernel_size=32,stride=16)
+        self.proj = nn.ConvTranspose2d(decoder_hidden_size, num_labels, kernel_size=32,stride=32)
         
         # self.classifier = nn.Conv2d(decoder_hidden_size, num_labels, kernel_size=1)
         
