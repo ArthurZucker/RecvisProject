@@ -28,7 +28,7 @@ class Deeplabv3(nn.Module):
 
             if self.name_encoder == "resnet50":
                 self.net = deeplabv3_resnet50(
-                    pretrained=self.config.model_param['pretrained'], num_classes=num_classes)
+                    pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=False)
                 if hasattr(self.config, "weight_checkpoint_backbone"):
                     pth = torch.load(self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
                     if "resnet50.pth" not in self.config.weight_checkpoint_backbone:
