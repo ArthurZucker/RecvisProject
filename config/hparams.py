@@ -128,7 +128,7 @@ class SegmentationConfig:
     backbone            : str            = "vit"
     head                : str            = "Baseline"
     decoder_hidden_size : int            = 1024
-    weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
 
 
 @dataclass
