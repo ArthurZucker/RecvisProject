@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    # accumulate_size: int           = 256    # gradient accumulation batch size
+    accumulate_size: int           = 128    # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
