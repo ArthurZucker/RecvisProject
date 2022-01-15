@@ -62,7 +62,7 @@ class CallBackParams:
     log_erf_freq       : int   = 10     # effective receptive fields
     nb_erf             : int   = 6
     log_att_freq       : int   = 10     # attention maps
-    log_pred_freq      : int   = 10     # log_pred_freq
+    log_pred_freq      : int   = 1     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.5    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
@@ -79,7 +79,7 @@ class BarlowConfig:
     # so it doesn't overwhelm the invariance loss
     backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
-    lmbda                 : float         = 5e-3
+    lmbda                 : float         = 5e-2
     bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = None
