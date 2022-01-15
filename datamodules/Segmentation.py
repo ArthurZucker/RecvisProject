@@ -10,7 +10,7 @@ from torchvision import transforms
 import torchvision.datasets 
 from utils.transforms import toLongTensor, SegTransform
 import datasets
-from utils.agent_utils import get_net,get_head
+
 from vit_pytorch.extractor import Extractor
 class Segmentation(LightningDataModule):
     def __init__(self, config, dataset_name="VOCSegmentation"):
@@ -36,25 +36,6 @@ class Segmentation(LightningDataModule):
 
         self.transform = self.get_transforms(config.dataset_param.input_size)
 
-        # intialize the backbone 
-        self.backbone = get_net(
-            self.network_param.backbone, self.network_param.backbone_parameters
-        )
-        # load weights. here state dic keys should be taken care of
-        if self.network_param.weight_checkpoint is not None: 
-            pth = torch.load(self.network_param.weight_checkpoint)
-            state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
-            self.backbone.load_state_dict(state_dict, strict = False)
-            print(f"Loaded checkpoints from {self.network_param.weight_checkpoint}")
-            if self.network_param.backbone == "vit":
-                self.backbone =  Extractor(self.backbone, return_embeddings_only=True)
-                
-        if self.network_param.backbone_parameters is not None:
-            self.patch_size = self.network_param.backbone_parameters["patch_size"]
-        self.in_features = list(self.backbone.modules())[-1].in_features
-
-        # import mlp head
-        self.head = get_head(self.network_param.head,self.network_param.head_params)
         
 
     def get_transforms(self,input_size):
@@ -122,11 +103,7 @@ class Segmentation(LightningDataModule):
                 target_transform=self.transform["val"]["target"],
             )
 
-    def forward(self,x):
-        # @TODO @FIXME dimension will never be alright, has to correspond to the backbone> ViT should only use the extracor
-        x = self.backbone(x)
-        x = self.head(x)
-        return x
+    
         
         
     def train_dataloader(self):

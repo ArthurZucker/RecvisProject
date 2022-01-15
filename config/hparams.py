@@ -24,9 +24,9 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "BarlowTwins"        # architecture to use
-    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"        # architecture to use
+    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
@@ -128,13 +128,6 @@ class SegmentationConfig:
     backbone            : str            = "vit"
     head                : str            = "Baseline"
     decoder_hidden_size : int            = 1024
-    head_params         : Dict[str, Any] = dict_field(
-        dict(
-            n_classes=21,
-            freeze=True,
-            pretrained=False,
-        )
-    )
     weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
 
 

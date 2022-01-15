@@ -6,7 +6,7 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from models.unet import Unet
 import models.deeplabv3
 import models.resnet50
-import importlib
+from utils.agent_utils import get_net,get_head
 
 class Segmentation(LightningModule):
     """Base semantic Segmentation class, uses the segmentation datamodule
@@ -35,12 +35,25 @@ class Segmentation(LightningModule):
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
             
-        # backbone :
-        # self.net = get_net(network_param.backbone, network_param)
-        if self.network_param.model == "deeplabv3":
-            self.net = models.deeplabv3.Deeplabv3(self.network_param)
-        else:
-            raise ValueError(f'option {self.network_param.model} does not exist !')
+        # intialize the backbone 
+        self.backbone = get_net(
+            self.network_param.backbone, self.network_param.backbone_parameters
+        )
+        # load weights. here state dic keys should be taken care of
+        if self.network_param.weight_checkpoint is not None: 
+            pth = torch.load(self.network_param.weight_checkpoint)
+            state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+            self.backbone.load_state_dict(state_dict, strict = False)
+            print(f"Loaded checkpoints from {self.network_param.weight_checkpoint}")
+            if self.network_param.backbone == "vit":
+                self.backbone =  Extractor(self.backbone, return_embeddings_only=True)
+                
+        if self.network_param.backbone_parameters is not None:
+            self.patch_size = self.network_param.backbone_parameters["patch_size"]
+        self.in_features = list(self.backbone.modules())[-1].in_features
+
+        # import mlp head
+        self.head = get_head(self.network_param.head,self.network_param.head_params)
 
         # loss
         loss_cls = import_class(self.loss_param.name)
@@ -49,9 +62,13 @@ class Segmentation(LightningModule):
         # optimizer parameters
         self.lr = self.optimizer_param.lr
 
-    def forward(self, x):
+    def forward(self,x):
         x.requires_grad_(self.rq_grad)
-        return self.net(x)
+        # @TODO @FIXME dimension will never be alright, has to correspond to the backbone> ViT should only use the extracor
+        x = self.backbone(x)
+        x = self.head(x)
+        return x
+
 
     def training_step(self, batch, batch_idx):
         """needs to return a loss from a single batch"""
