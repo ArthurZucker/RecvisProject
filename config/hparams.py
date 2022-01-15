@@ -129,8 +129,8 @@ class SegmentationConfig:
     head                : str            = "Baseline"
     head_params         : Optional[str]  = None
     decoder_hidden_size : int            = 1024
-    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/light-rain-17/epoch=381-step=2291.ckpt")
-    # backbone_checkpoint : Optional[str]  = osp.join("/kaggle/input/","weights/epoch381-step2291.ckpt")
+    # backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/light-rain-17/epoch=381-step=2291.ckpt")
+    backbone_checkpoint : Optional[str]  = osp.join("/kaggle/input/","weights/epoch381-step2291.ckpt")
 
 
 @dataclass
