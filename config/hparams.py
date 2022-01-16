@@ -213,7 +213,7 @@ class Parameters:
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 8,
                 num_classes     = 0,
-                dim             = 1024,
+                dim             = 256,
                 depth           = 4,
                 heads           = 6,
                 mlp_dim         = 1024,
