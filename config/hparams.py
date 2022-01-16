@@ -211,7 +211,7 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 16,
+                patch_size      = 8,
                 num_classes     = 0,
                 dim             = 512,
                 depth           = 4,
