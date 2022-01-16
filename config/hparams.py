@@ -80,7 +80,7 @@ class BarlowConfig:
     backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
-    bt_proj_dim           : int           = 1024      # number of channels to use for projection
+    bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = None
     backbone_parameters   : Optional[str] = None
@@ -95,7 +95,7 @@ class OptimizerParams_SSL: # @TODO change name
     min_lr              : float          = 2.5e-4     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 5
-    max_epochs          : int            = 400      # @TODO duplicate of dataparam
+    max_epochs          : int            = 1000      # @TODO duplicate of dataparam
     use_scheduler       : bool           = True
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
