@@ -82,6 +82,7 @@ class BarlowConfig:
     lmbda                 : float         = 5e-2
     bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
+    weight_checkpoint     : Optional[str] = None
     # weight_checkpoint     : Optional[str] = osp.join("weights", "leafy-water_epoch=394-step=9084.ckpt")
     # weight_checkpoint     : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
     backbone_parameters   : Optional[str] = None
