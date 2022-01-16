@@ -48,8 +48,8 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 256        # batch_size
+    input_size        : tuple       = (128, 128)   # image_size
+    batch_size        : int         = 64        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -92,7 +92,7 @@ class OptimizerParams_SSL: # @TODO change name
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
     lr                  : float          = 1e-2     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
-    min_lr              : float          = 5e-3     # minimum lr for the scheduler 5e-6 for VIT works great
+    min_lr              : float          = 5e-6    # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
     max_epochs          : int            = 400      # @TODO duplicate of dataparam
@@ -211,10 +211,10 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 16,
+                patch_size      = 8,
                 num_classes     = 0,
-                dim             = 256,
-                depth           = 4,
+                dim             = 512,
+                depth           = 12,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
