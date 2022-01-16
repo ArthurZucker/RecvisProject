@@ -215,7 +215,7 @@ class Parameters:
                 num_classes     = 0,
                 dim             = 512,
                 depth           = 4,
-                heads           = 12,
+                heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
                 emb_dropout     = 0.1,
