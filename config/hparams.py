@@ -61,7 +61,7 @@ class CallBackParams:
     """
     log_erf_freq       : int   = 10     # effective receptive fields
     nb_erf             : int   = 6
-    log_att_freq       : int   = 10     # attention maps
+    log_att_freq       : int   = 1     # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
