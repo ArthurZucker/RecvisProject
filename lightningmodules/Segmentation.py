@@ -74,7 +74,7 @@ class Segmentation(LightningModule):
 
     def test_step(self, batch, batch_idx):
         """used for logging metrics"""
-        preds, loss, logits = self._get_preds_loss_accuracy(batch)
+        loss, logits = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
         self.log("test/loss", loss)

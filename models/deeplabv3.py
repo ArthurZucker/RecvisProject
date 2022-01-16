@@ -30,9 +30,11 @@ class Deeplabv3(nn.Module):
                 self.net = deeplabv3_resnet50(
                     pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.model_param['pretrained_backbone'])
                 if hasattr(self.config, "weight_checkpoint_backbone"):
-                    pth = torch.load(self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                    pth = torch.load(
+                        self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
                     if "resnet50.pth" not in self.config.weight_checkpoint_backbone:
-                        pth = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+                        pth = {k.replace('backbone.', ''): v for k,
+                               v in pth['state_dict'].items()}
                     self.net.backbone.load_state_dict(pth, strict=False)
 
                 # Freeze backbone weights
@@ -44,16 +46,23 @@ class Deeplabv3(nn.Module):
                 self.vit = ViT(**self.config.backbone_parameters)
 
                 if hasattr(self.config, "weight_checkpoint_backbone"):
-                    pth = torch.load(self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
-                    state_dict = { k.replace('backbone.','') : v for k,v in pth['state_dict'].items()}
+                    pth = torch.load(
+                        self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                    state_dict = {
+                        k.replace('backbone.', ''): v for k, v in pth['state_dict'].items()}
                     self.vit.load_state_dict(state_dict, strict=False)
-                
-                # for name, param in self.vit.named_parameters(): print(f"{name} : {param}")
 
+                # for name, param in self.vit.named_parameters(): print(f"{name} : {param}")
                 self.vit = Extractor(self.vit, return_embeddings_only=True)
 
-                self.classifier = DeepLabHead(
-                    self.config.backbone_parameters['dim'], num_classes)
+                if self.config.model_param['pretrained']:
+                    net = deeplabv3_resnet50(
+                        pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.model_param['pretrained_backbone'])
+                    self.classifier = net.classifier
+                    self.classifier #FIXME
+                else:
+                    self.classifier = DeepLabHead(
+                        self.config.backbone_parameters['dim'], num_classes)
 
                 # Freeze backbone weights
                 if self.config.model_param['freeze']:

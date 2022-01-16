@@ -125,18 +125,18 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "resnet50"
+    backbone          : str           = "vit"
     model             : str           = "deeplabv3"
     model_param       : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
             freeze=True,
-            pretrained=True,
+            pretrained=False,
             pretrained_backbone=False
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/resnet50.pth")
-    # weight_checkpoint_backbone : Optional[str] = osp.join("weights/barlow_twins", "resnet50.pth")
+    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/devout-energy_epoch354-step2129.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "devout-energy_epoch=354-step=2129.ckpt")
     backbone_parameters: Dict[str, Any] = None
 
 @dataclass
@@ -216,9 +216,9 @@ class Parameters:
                 image_size      = self.data_param.input_size[0],
                 patch_size      = self.data_param.input_size[0]//8,
                 num_classes     = 0,
-                dim             = 1024,
-                depth           = 10,
-                heads           = 12,
+                dim             = 768,
+                depth           = 4,
+                heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
                 emb_dropout     = 0.1,

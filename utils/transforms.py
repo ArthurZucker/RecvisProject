@@ -18,7 +18,7 @@ class toLongTensor(object):
 
     def __call__(self, tensor):
         temp = (tensor[0] * 255).long()
-        temp[temp == 255] = 0
+        temp[temp == 255] = 0 # FIXME only for voc segmentation dataset ?
         return temp
 
     def __repr__(self):
