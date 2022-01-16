@@ -76,11 +76,15 @@ class BarlowTwins(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        self.optim_param.lr *= (self.trainer.datamodule.batch_size /
-                                256)  # from the paper
+
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
         optimizer = optimizer(
             self.parameters(), lr=self.optim_param.lr, weight_decay=10e-6)
+        
+        if self.network_param.weight_checkpoint is not None:
+            pth = torch.load(self.network_param.weight_checkpoint, map_location=torch.device('cpu'))
+            optimizer.load_state_dict(pth['optimizer_states'][0])
+
         if self.optim_param.use_scheduler:
             scheduler = LinearWarmupCosineAnnealingLR(
                 optimizer,
@@ -91,6 +95,9 @@ class BarlowTwins(LightningModule):
                 eta_min=0.1
                 * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
             )
+            if self.network_param.weight_checkpoint is not None:
+                pth = torch.load(self.network_param.weight_checkpoint, map_location=torch.device('cpu'))
+                scheduler.load_state_dict(pth['lr_schedulers'][0])
             return [[optimizer], [scheduler]]
         else:
 
