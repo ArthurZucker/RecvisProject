@@ -61,7 +61,7 @@ class CallBackParams:
     """
     log_erf_freq       : int   = 10     # effective receptive fields
     nb_erf             : int   = 6
-    log_att_freq       : int   = 10     # attention maps
+    log_att_freq       : int   = 1     # attention maps
     log_pred_freq      : int   = 1     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.5    # Logging attention threshold for head fusion
@@ -77,13 +77,13 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "resnet50"
+    backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-2
     bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     # weight_checkpoint     : Optional[str] = osp.join("weights", "leafy-water_epoch=394-step=9084.ckpt")
-    weight_checkpoint     : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
+    # weight_checkpoint     : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -215,10 +215,10 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = self.data_param.input_size[0]//8,
+                patch_size      = self.data_param.input_size[0]//16,
                 num_classes     = 0,
                 dim             = 768,
-                depth           = 4,
+                depth           = 8,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
