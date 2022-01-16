@@ -98,7 +98,7 @@ class OptimizerParams_SSL: # @TODO change name
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
     max_epochs          : int            = 400      # @TODO duplicate of dataparam
-    use_scheduler       : bool           = False
+    use_scheduler       : bool           = True
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
             base_value         = 0.9995,
