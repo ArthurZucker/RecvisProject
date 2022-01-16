@@ -37,7 +37,7 @@ class Hparams:
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
     # accumulate_size: int           = 256    # gradient accumulation batch size
-    max_epochs     : int           = 400    # maximum number of epochs
+    max_epochs     : int           = 1000    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -90,7 +90,7 @@ class OptimizerParams_SSL: # @TODO change name
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 5e-6      # learning rate,                             default = 0.0002
+    lr                  : float          = 5e-9      # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
     min_lr              : float          = 2.5e-4     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
