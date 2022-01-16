@@ -18,7 +18,7 @@ class BarlowTwins(LightningModule):
         Args: BarlowConfig : config = network parameters to use.
         """
         super().__init__()
-        
+
         self.network_param = config.network_param
         self.optim_param = config.optim_param
         self.lr = self.optim_param.lr
@@ -36,6 +36,10 @@ class BarlowTwins(LightningModule):
         name_classif = list(self.backbone.named_children())[-1][0]
         self.backbone._modules[name_classif] = nn.Identity()
         self.head = self.get_head()
+
+        if self.network_param.weight_checkpoint is not None:
+            pth = torch.load(self.network_param.weight_checkpoint, map_location=torch.device('cpu'))
+            self.load_state_dict(pth['state_dict'], strict=True)
 
     def get_head(self):
         # first layer
@@ -72,10 +76,12 @@ class BarlowTwins(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        self.optim_param.lr *= (self.trainer.datamodule.batch_size / 256) # from the paper
+        self.optim_param.lr *= (self.trainer.datamodule.batch_size /
+                                256)  # from the paper
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr,weight_decay=10e-6)
-        if self.optim_param.use_scheduler :
+        optimizer = optimizer(
+            self.parameters(), lr=self.optim_param.lr, weight_decay=10e-6)
+        if self.optim_param.use_scheduler:
             scheduler = LinearWarmupCosineAnnealingLR(
                 optimizer,
                 warmup_epochs=40,
@@ -87,9 +93,9 @@ class BarlowTwins(LightningModule):
             )
             return [[optimizer], [scheduler]]
         else:
-            
+
             return optimizer
-        
+
     def _get_loss(self, batch):
         """convenience function since train/valid/test steps are similar"""
         x1, x2 = batch
