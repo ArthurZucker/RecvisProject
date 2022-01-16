@@ -72,7 +72,7 @@ class BarlowTwins(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        self.optim_param.lr *= (self.trainer.datamodule.batch_size / 256) # from the paper
+        # self.optim_param.lr *= (self.trainer.datamodule.batch_size / 256) # from the paper
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
         optimizer = optimizer(self.parameters(), lr=self.optim_param.lr,weight_decay=10e-6)
         if self.optim_param.use_scheduler :

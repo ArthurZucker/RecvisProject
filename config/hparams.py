@@ -90,11 +90,11 @@ class OptimizerParams_SSL: # @TODO change name
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
+    lr                  : float          = 3e-4      # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
     min_lr              : float          = 2.5e-4     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
-    warmup_epochs       : int            = 2
+    warmup_epochs       : int            = 5
     max_epochs          : int            = 400      # @TODO duplicate of dataparam
     use_scheduler       : bool           = True
     scheduler_parameters: Dict[str, Any] = dict_field(
