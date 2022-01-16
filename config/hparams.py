@@ -90,7 +90,7 @@ class OptimizerParams_SSL: # @TODO change name
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 3e-4      # learning rate,                             default = 0.0002
+    lr                  : float          = 5e-6      # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
     min_lr              : float          = 2.5e-4     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
@@ -213,7 +213,7 @@ class Parameters:
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 8,
                 num_classes     = 0,
-                dim             = 256,
+                dim             = 512,
                 depth           = 4,
                 heads           = 6,
                 mlp_dim         = 1024,
