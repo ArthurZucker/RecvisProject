@@ -24,9 +24,9 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "BarlowTwins"        # architecture to use
-    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"        # architecture to use
+    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
@@ -127,17 +127,17 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vit"
+    backbone          : str           = "resnet50"
     model             : str           = "deeplabv3"
     model_param       : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
             freeze=True,
-            pretrained=False,
+            pretrained=True,
             pretrained_backbone=False
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/devout-energy_epoch354-step2129.ckpt")
+    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "devout-energy_epoch=354-step=2129.ckpt")
     backbone_parameters: Dict[str, Any] = None
 
