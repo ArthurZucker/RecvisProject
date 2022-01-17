@@ -37,7 +37,7 @@ class Hparams:
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
     accumulate_size: int           = 128    # gradient accumulation batch size
-    max_epochs     : int           = 400    # maximum number of epochs
+    max_epochs     : int           = 800    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -97,7 +97,7 @@ class OptimizerParams_SSL: # @TODO change name
     min_lr              : float          = 5e-6     # minimum lr for the scheduler
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
-    max_epochs          : int            = 400      # @TODO duplicate of dataparam
+    max_epochs          : int            = 800      # @TODO duplicate of dataparam
     use_scheduler       : bool           = True
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
