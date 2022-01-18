@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    # accumulate_size: int           = 256    # gradient accumulation batch size
+    accumulate_size: int           = 512//16    # gradient accumulation batch size
     max_epochs     : int           = 400    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 128        # batch_size
+    batch_size        : int         = 8        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -59,9 +59,9 @@ class DatasetParams:
 class CallBackParams:
     """Parameters to use for the logging callbacks
     """
-    log_erf_freq       : int   = 10     # effective receptive fields
+    log_erf_freq       : int   = 10     # effective receptive fields5
     nb_erf             : int   = 6
-    log_att_freq       : int   = 10     # attention maps
+    log_att_freq       : int   = 1     # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.5    # Logging attention threshold for head fusion
@@ -209,9 +209,9 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = self.data_param.input_size[0]//8,
+                patch_size      = 8 ,#self.data_param.input_size[0]//8,
                 num_classes     = 0,
-                dim             = 768,
+                dim             = 2048,
                 depth           = 6,
                 heads           = 6,
                 mlp_dim         = 1024,
