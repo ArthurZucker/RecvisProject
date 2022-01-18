@@ -59,7 +59,6 @@ class Deeplabv3(nn.Module):
                     net = deeplabv3_resnet50(
                         pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.model_param['pretrained_backbone'])
                     self.classifier = net.classifier
-                    self.classifier #FIXME
                 else:
                     self.classifier = DeepLabHead(
                         self.config.backbone_parameters['dim'], num_classes)
