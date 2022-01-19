@@ -59,7 +59,7 @@ class DatasetParams:
 class CallBackParams:
     """Parameters to use for the logging callbacks
     """
-    log_erf_freq       : int   = 10     # effective receptive fields
+    log_erf_freq       : int   = 1     # effective receptive fields
     nb_erf             : int   = 6
     log_att_freq       : int   = 1     # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq

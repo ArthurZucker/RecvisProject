@@ -510,7 +510,7 @@ class LogAttentionMapsCallback(Callback):
         import torchvision.transforms.functional as F
 
         plt.ioff()
-        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
+        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1)
         mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
         std = np.array([0.229, 0.224, 0.225])
         for j, sample in enumerate(imgs):
@@ -584,7 +584,7 @@ class LogAttentionMapsCallback(Callback):
         named_layers = dict(pl_module.named_modules())
         attend_layers = []
         for name in named_layers:
-            if ".attend" in name:
+            if "attn.attn_drop" in name: #if ".attend" in name:
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(
