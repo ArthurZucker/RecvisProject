@@ -18,7 +18,7 @@ class Hparams:
 
     
     wandb_entity  : str  = "recvis"         # name of the project
-    test          : bool = False            # test code before running, if testing, no checkpoints are written
+    test          : bool = True            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"{'test-'*test}sem-seg")
     save_dir      : str  = osp.join(os.getcwd())   # directory to save wandb outputs
 
@@ -33,7 +33,7 @@ class Hparams:
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     tune_batch_size: bool          = False  # tune the model on first run
-    gpu            : int           = 1      # number or gpu
+    gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
     accumulate_size: int           = 128    # gradient accumulation batch size
@@ -48,8 +48,8 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 256        # batch_size
+    input_size        : tuple       = (224, 224)   # image_size
+    batch_size        : int         = 6        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -127,17 +127,17 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "resnet50"
+    backbone          : str           = "vitdino"
     model             : str           = "deeplabv3"
     model_param       : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
             freeze=True,
-            pretrained=True,
+            pretrained=False,
             pretrained_backbone=False
         )
     )
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weightsbarlowtwins/leafy-water_epoch394-step9084.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weightsbarlowtwins/leafy-water_epoch394-step9084.ckpt")
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "devout-energy_epoch=354-step=2129.ckpt")
     backbone_parameters: Dict[str, Any] = None
 
