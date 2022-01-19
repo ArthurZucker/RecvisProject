@@ -59,13 +59,13 @@ class DatasetParams:
 class CallBackParams:
     """Parameters to use for the logging callbacks
     """
-    log_erf_freq       : int   = 1     # effective receptive fields
+    log_erf_freq       : int   = 1      # effective receptive fields
     nb_erf             : int   = 6
-    log_att_freq       : int   = 1     # attention maps
+    log_att_freq       : int   = 1      # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
-    nb_attention       : int   = 5      # nb of images for which the attention will be visualised
+    nb_attention       : int   = 8      # nb of images for which the attention will be visualised
 ################################## Self-supervised learning parameters ##################################
 
 class BarlowConfig:

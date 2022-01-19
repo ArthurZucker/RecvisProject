@@ -369,7 +369,7 @@ class LogBarlowPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("train", batch, 5, outputs)
+            self.log_images("train", batch, 8, outputs)
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
@@ -381,7 +381,7 @@ class LogBarlowPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("val", batch, 5, outputs)
+            self.log_images("val", batch, 8, outputs)
 
     def log_images(self, name, batch, n, outputs):
 
