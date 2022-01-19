@@ -3,6 +3,7 @@ mostly of the code was taken in https://github.com/gupta-abhay/setr-pytorch/blob
 '''
 import torch.nn as nn 
 import torch
+import torch.nn.functional as F
 
 class IntermediateSequential(nn.Sequential):
     def __init__(self, *args, return_intermediate=True):
@@ -123,9 +124,12 @@ class SETR_PUP(nn.Module):
         )
 
 
+        self.pool = nn.MaxPool2d(2, 2)
+
     def forward(self, x):
         x = self._reshape_output(x)
         x = self.decode_net(x)
+        x = self.pool(x) # add by me
         return x
     
     def _reshape_output(self, x):
@@ -275,3 +279,49 @@ class SETR_MLA(nn.Module):
             _list = [(k - 1) // 2 for k in kernel_size]
             return tuple(_list)
         return tuple(0 for _ in kernel_size)
+
+from mmcv.cnn import build_norm_layer
+
+
+class MLAHead(nn.Module):
+    '''
+    https://github.com/fudan-zvg/SETR/blob/main/mmseg/models/decode_heads/vit_mla_head.py
+    '''
+    def __init__(self, mla_channels=256, mlahead_channels=128, norm_cfg=None):
+        super(MLAHead, self).__init__()
+        self.head2 = nn.Sequential(nn.Conv2d(mla_channels, mlahead_channels, 3, padding=1, bias=False),
+                                   build_norm_layer(norm_cfg, mlahead_channels)[
+            1], nn.ReLU(),
+            nn.Conv2d(
+                                       mlahead_channels, mlahead_channels, 3, padding=1, bias=False),
+            build_norm_layer(norm_cfg, mlahead_channels)[1], nn.ReLU())
+        self.head3 = nn.Sequential(nn.Conv2d(mla_channels, mlahead_channels, 3, padding=1, bias=False),
+                                   build_norm_layer(norm_cfg, mlahead_channels)[
+            1], nn.ReLU(),
+            nn.Conv2d(
+                                       mlahead_channels, mlahead_channels, 3, padding=1, bias=False),
+            build_norm_layer(norm_cfg, mlahead_channels)[1], nn.ReLU())
+        self.head4 = nn.Sequential(nn.Conv2d(mla_channels, mlahead_channels, 3, padding=1, bias=False),
+                                   build_norm_layer(norm_cfg, mlahead_channels)[
+            1], nn.ReLU(),
+            nn.Conv2d(
+                                       mlahead_channels, mlahead_channels, 3, padding=1, bias=False),
+            build_norm_layer(norm_cfg, mlahead_channels)[1], nn.ReLU())
+        self.head5 = nn.Sequential(nn.Conv2d(mla_channels, mlahead_channels, 3, padding=1, bias=False),
+                                   build_norm_layer(norm_cfg, mlahead_channels)[
+            1], nn.ReLU(),
+            nn.Conv2d(
+                                       mlahead_channels, mlahead_channels, 3, padding=1, bias=False),
+            build_norm_layer(norm_cfg, mlahead_channels)[1], nn.ReLU())
+
+    def forward(self, mla_p2, mla_p3, mla_p4, mla_p5):
+        # head2 = self.head2(mla_p2)
+        head2 = F.interpolate(self.head2(
+            mla_p2), 4*mla_p2.shape[-1], mode='bilinear', align_corners=True)
+        head3 = F.interpolate(self.head3(
+            mla_p3), 4*mla_p3.shape[-1], mode='bilinear', align_corners=True)
+        head4 = F.interpolate(self.head4(
+            mla_p4), 4*mla_p4.shape[-1], mode='bilinear', align_corners=True)
+        head5 = F.interpolate(self.head5(
+            mla_p5), 4*mla_p5.shape[-1], mode='bilinear', align_corners=True)
+        return torch.cat([head2, head3, head4, head5], dim=1)

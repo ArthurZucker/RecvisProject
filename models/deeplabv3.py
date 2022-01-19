@@ -82,14 +82,16 @@ class Deeplabv3(nn.Module):
                 #               w=(224 // 8), p1=8, p2=8, c=num_classes),
                 # )
 
-                # self.head = decoder.VisionTransformerUpHead(img_size=224, embed_dim=384, num_conv=1, num_classes=num_classes)
-                # self.head = decoder.UPerNet(num_class=num_classes)
-                self.head = decoder.SETR_Naive(
-                    embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
-                # self.head = decoder.SETR_PUP(
+                # self.head = decoder.VisionTransformerUpHead(img_size=224, embed_dim=384, num_conv=1, num_classes=num_classes) # doses'nt work
+                # self.head = decoder.UPerNet(num_class=num_classes) # doses'nt work
+                # self.head = decoder.SETR_Naive(
                 #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
+                self.head = decoder.SETR_PUP(
+                    embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes) # doses'nt work (*2 output)
                 # self.head = decoder.SETR_MLA(
-                #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
+                #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes) # doses'nt work
+                # self.head = decoder.MLAHead(mla_channels=256, mlahead_channels=128, norm_cfg=dict(
+                #     type='SyncBN', requires_grad=True)) # doses'nt work
 
                 # Freeze backbone weights
                 if self.config.model_param['freeze']:
