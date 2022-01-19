@@ -50,7 +50,7 @@ class trainer(BaseTrainer):
                     self.callback_param.log_ccM_freq),
             ]
 
-        if "vit" in self.encoder:
+        if "vit" in self.encoder :
             callbacks += [
                 LogAttentionMapsCallback(
                     self.callback_param.attention_threshold,

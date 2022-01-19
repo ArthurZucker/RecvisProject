@@ -584,7 +584,7 @@ class LogAttentionMapsCallback(Callback):
         named_layers = dict(pl_module.named_modules())
         attend_layers = []
         for name in named_layers:
-            if ".attend" in name:
+            if "attn.attn_drop" in name:
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(
