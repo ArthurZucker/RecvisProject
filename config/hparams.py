@@ -36,8 +36,8 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    # accumulate_size: int           = 256    # gradient accumulation batch size
-    max_epochs     : int           = 1000    # maximum number of epochs
+    accumulate_size: int           = 4    # gradient accumulation batch size
+    max_epochs     : int           = 800    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -48,7 +48,7 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (256, 256)   # image_size
+    input_size        : tuple       = (224, 224)   # image_size
     batch_size        : int         = 128        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
@@ -66,10 +66,8 @@ class CallBackParams:
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
-
 ################################## Self-supervised learning parameters ##################################
 
-@dataclass
 class BarlowConfig:
     """Hyperparameters specific to Barlow Twin Model.
     Used when the `arch` option is set to "Barlow" in the hparams
@@ -90,7 +88,7 @@ class OptimizerParams_SSL: # @TODO change name
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
-    lr                  : float          = 5e-6      # learning rate,                             default = 0.0002
+    lr                  : float          = 0.05248074602497723     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
     min_lr              : float          = 2.5e-4     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
