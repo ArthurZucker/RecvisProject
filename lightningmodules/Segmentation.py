@@ -3,8 +3,7 @@ from utils.agent_utils import get_net, import_class
 from utils.hooks import get_activation
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-from models.unet import Unet
-import models.deeplabv3
+
 import models.resnet50
 from utils.agent_utils import get_net, get_head
 from easydict import EasyDict
@@ -49,9 +48,9 @@ class Segmentation(LightningModule):
             self.backbone.load_state_dict(state_dict, strict=False)
             print(
                 f"Loaded checkpoints from {self.network_param.backbone_checkpoint}")
-            if self.network_param.backbone == "vit":
-                self.backbone = Extractor(
-                    self.backbone, return_embeddings_only=True)
+        if self.network_param.backbone == "vit":
+            self.backbone = Extractor(
+                self.backbone, return_embeddings_only=True)
 
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]

@@ -371,7 +371,7 @@ class LogBarlowPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("train", batch, 5, outputs)
+            self.log_images("train", batch, min(5,len(batch)), outputs)
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
@@ -383,7 +383,7 @@ class LogBarlowPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("val", batch, 5, outputs)
+            self.log_images("val", batch,  min(5,len(batch)), outputs)
 
     def log_images(self, name, batch, n, outputs):
 
@@ -444,7 +444,7 @@ class LogAttentionMapsCallback(Callback):
         if batch_idx == 0 and pl_module.current_epoch % self.log_freq == 0:
             attention_maps = []
             th_attention_map = []
-            for i in range(self.nb_attention_images):
+            for i in range(min(self.nb_attention_images,len(batch[0]))):
                 img = batch[0][i]  
                 # only 1 image for now. The batch has [0,1,...,n_1] crops b_size images
                 w, h = (

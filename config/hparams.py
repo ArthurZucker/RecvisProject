@@ -36,8 +36,8 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 512//16    # gradient accumulation batch size
-    max_epochs     : int           = 400    # maximum number of epochs
+    accumulate_size: int           = 512//64    # gradient accumulation batch size
+    max_epochs     : int           = 1000    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 8        # batch_size
+    batch_size        : int         = 64        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -62,9 +62,9 @@ class CallBackParams:
     log_erf_freq       : int   = 10     # effective receptive fields5
     nb_erf             : int   = 6
     log_att_freq       : int   = 1     # attention maps
-    log_pred_freq      : int   = 10     # log_pred_freq
-    log_ccM_freq       : int   = 10     # log cc_M matrix frequency
-    attention_threshold: float = 0.5    # Logging attention threshold for head fusion
+    log_pred_freq      : int   = 1     # log_pred_freq
+    log_ccM_freq       : int   = 1     # log cc_M matrix frequency
+    attention_threshold: float = 0.6    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
 
 ################################## Self-supervised learning parameters ##################################
@@ -151,7 +151,7 @@ class OptimizerParams_Segmentation:
     
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
-            patience = 4,
+            patience = 400,
             mode = "min",
             threshold = 0.1
         )
@@ -209,9 +209,9 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 8 ,#self.data_param.input_size[0]//8,
+                patch_size      = 32 ,#self.data_param.input_size[0]//8,
                 num_classes     = 0,
-                dim             = 2048,
+                dim             = 768,
                 depth           = 6,
                 heads           = 6,
                 mlp_dim         = 1024,
