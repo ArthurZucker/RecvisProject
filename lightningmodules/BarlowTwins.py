@@ -32,9 +32,14 @@ class BarlowTwins(LightningModule):
         )
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
-        self.in_features = list(self.backbone.modules())[-1].in_features
-        name_classif = list(self.backbone.named_children())[-1][0]
-        self.backbone._modules[name_classif] = nn.Identity()
+            self.in_features = list(self.backbone.modules())[-1].in_features
+            name_classif = list(self.backbone.named_children())[-1][0]
+            self.backbone._modules[name_classif] = nn.Identity()
+        else : # this is for the dino vit 
+            self.patch_size = 8
+            self.in_features = 384
+            
+        
         self.head = self.get_head()
 
     def get_head(self):

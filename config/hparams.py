@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 4    # gradient accumulation batch size
+    accumulate_size: int           = 8    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (224, 224)   # image_size
-    batch_size        : int         = 128        # batch_size
+    batch_size        : int         = 8        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -75,7 +75,7 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit"
+    backbone              : str           = "vit_dino"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 512      # number of channels to use for projection
@@ -206,7 +206,7 @@ class Parameters:
             self.hparams.seed_everything = random.randint(1, 10000)
             
             
-        if self.network_param.backbone == "vit":
+        if self.network_param.backbone=="vit" :
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 8,
