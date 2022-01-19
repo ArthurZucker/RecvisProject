@@ -125,11 +125,19 @@ class SETR_PUP(nn.Module):
 
 
         self.pool = nn.MaxPool2d(2, 2)
+        self.conv = nn.Conv2d(
+                    in_channels=self.num_classes,
+                    out_channels=self.num_classes,
+                    kernel_size=1,
+                    stride=2,
+                    padding=self._get_padding('VALID', (1, 1),),
+                )
 
     def forward(self, x):
         x = self._reshape_output(x)
         x = self.decode_net(x)
-        x = self.pool(x) # add by me
+        # x = self.pool(x) # add by me
+        x = self.conv(x) # add by me
         return x
     
     def _reshape_output(self, x):
