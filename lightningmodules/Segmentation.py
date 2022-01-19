@@ -35,7 +35,7 @@ class Segmentation(LightningModule):
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
         else: 
-            self.patch_size = 16
+            self.patch_size = 8
         # backbone :
         # self.net = get_net(network_param.backbone, network_param)
         if self.network_param.model == "deeplabv3":

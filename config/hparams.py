@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 128    # gradient accumulation batch size
+    accumulate_size: int           = 24    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -49,7 +49,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (224, 224)   # image_size
-    batch_size        : int         = 6        # batch_size
+    batch_size        : int         = 32        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -65,7 +65,7 @@ class CallBackParams:
     log_pred_freq      : int   = 1     # log_pred_freq
     log_ccM_freq       : int   = 10     # log cc_M matrix frequency
     attention_threshold: float = 0.5    # Logging attention threshold for head fusion
-    nb_attention       : int   = 5      # nb of images for which the attention will be visualised
+    nb_attention       : int   = 6      # nb of images for which the attention will be visualised
 
 ################################## Self-supervised learning parameters ##################################
 
