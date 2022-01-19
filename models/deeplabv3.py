@@ -72,18 +72,24 @@ class Deeplabv3(nn.Module):
                         param.requires_grad = False
 
             elif self.name_encoder == "vitdino":  # @TODO get_net using backbone_parameters
-                self.vit = timm.create_model('vit_small_patch8_224_dino', pretrained=True)
+                self.vit = timm.create_model(
+                    'vit_small_patch8_224_dino', pretrained=True)
                 self.vit.head = nn.Identity()
-                # self.vit = torch.hub.load(
-                #     'facebookresearch/dino:main', 'dino_vits8')
+
+                # self.head = nn.Sequential(
+                #     nn.Linear(384, 8*8*num_classes),
+                #     Rearrange('b (h w) (p1 p2 c) -> b c (h p1) (w p2)', h=(224 // 8),
+                #               w=(224 // 8), p1=8, p2=8, c=num_classes),
+                # )
+
                 # self.head = decoder.VisionTransformerUpHead(img_size=224, embed_dim=384, num_conv=1, num_classes=num_classes)
                 # self.head = decoder.UPerNet(num_class=num_classes)
-
-                self.to_reconstructed = nn.Sequential(
-                    nn.Linear(384, 8*8*num_classes),
-                    Rearrange('b (h w) (p1 p2 c) -> b c (h p1) (w p2)', h=(224 // 8),
-                              w=(224 // 8), p1=8, p2=8, c=num_classes),
-                )
+                self.head = decoder.SETR_Naive(
+                    embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
+                # self.head = decoder.SETR_PUP(
+                #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
+                # self.head = decoder.SETR_MLA(
+                #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
 
                 # Freeze backbone weights
                 if self.config.model_param['freeze']:
@@ -107,6 +113,5 @@ class Deeplabv3(nn.Module):
             return x
         elif self.name_encoder == "vitdino":
             embeddings = self.vit(x)
-            x = self.to_reconstructed(embeddings)
-            # x = self.head(embeddings)
+            x = self.head(embeddings)
             return x
