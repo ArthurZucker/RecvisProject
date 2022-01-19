@@ -510,7 +510,7 @@ class LogAttentionMapsCallback(Callback):
         import torchvision.transforms.functional as F
 
         plt.ioff()
-        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1)
+        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
         mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
         std = np.array([0.229, 0.224, 0.225])
         for j, sample in enumerate(imgs):
