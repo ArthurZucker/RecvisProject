@@ -87,7 +87,7 @@ class Deeplabv3(nn.Module):
                 # self.head = decoder.SETR_Naive(
                 #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
                 self.head = decoder.SETR_PUP(
-                    embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes) # doses'nt work (*2 output)
+                    embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes)
                 # self.head = decoder.SETR_MLA(
                 #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes) # doses'nt work
                 # self.head = decoder.MLAHead(mla_channels=256, mlahead_channels=128, norm_cfg=dict(
