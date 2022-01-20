@@ -22,17 +22,18 @@ class SemanticModel(nn.Module):
         self.config = config
         num_classes = self.config.encoder_param['n_classes']
         self.name_encoder = config.backbone
-        self.name_head = config.head
+        self.name_head = config.head if hasattr(config, 'head') else None 
 
         if self.name_encoder == "resnet50":
-            if self.config.backbone_pretrained == "ImageNet":
+            if self.name_head is None :
+                # deeplabv3 deeplab head pretrain + resnet50 imagenet classification
                 self.net = deeplabv3_resnet50(
+                    pretrained=False, num_classes=num_classes, pretrained_backbone=True)
+
+                temp_net = deeplabv3_resnet50(
                     pretrained=True, num_classes=num_classes, pretrained_backbone=True)
 
-                # temp_net = deeplabv3_resnet50(
-                #     pretrained=False, num_classes=num_classes, pretrained_backbone=True)
-
-                # self.net.backbone = temp_net.backbone
+                self.net.classifier = temp_net.classifier
             else:
                 self.net = deeplabv3_resnet50(
                     pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.model_param['pretrained_backbone'])
@@ -45,10 +46,10 @@ class SemanticModel(nn.Module):
                                v in pth['state_dict'].items()}
                     self.net.backbone.load_state_dict(pth, strict=False)
 
-                # Freeze backbone weights
-                if self.config.model_param['freeze']:
-                    for param in self.net.backbone.parameters():
-                        param.requires_grad = False
+            # Freeze backbone weights
+            if self.config.encoder_param['freeze']:
+                for param in self.net.backbone.parameters():
+                    param.requires_grad = False
 
         elif self.name_encoder == "vit":  # @TODO get_net using backbone_parameters
             self.vit = ViT(**self.config.backbone_parameters)

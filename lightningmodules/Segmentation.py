@@ -36,10 +36,11 @@ class Segmentation(LightningModule):
         # self.net = get_net(network_param.backbone, network_param)
         self.net = models.semanticmodel.SemanticModel(self.network_param)
         
-        if self.network_param.backbone_parameters is not None:
-            self.patch_size = self.network_param.backbone_parameters["patch_size"]
-        else: 
-            self.patch_size = self.net.patch_size
+        if "vit" in self.network_param.backbone :
+            if self.network_param.backbone_parameters is not None:
+                self.patch_size = self.network_param.backbone_parameters["patch_size"]
+            else: 
+                self.patch_size = self.net.patch_size
         
         # loss
         loss_cls = import_class(self.loss_param.name)
