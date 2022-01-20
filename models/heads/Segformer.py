@@ -9,7 +9,7 @@ class SegformerMLP(nn.Module):
     Linear Embedding.
     """
 
-    def __init__(self, config: config, input_dim):
+    def __init__(self, config, input_dim):
         super().__init__()
         self.proj = nn.Linear(input_dim, config.decoder_hidden_size)
 
@@ -18,7 +18,7 @@ class SegformerMLP(nn.Module):
         hidden_states = self.proj(hidden_states)
         return hidden_states
 
-class SegformerDecodeHead(SegformerPreTrainedModel):
+class SegformerDecodeHead(nn.Module): # SegformerPreTrainedModel
     def __init__(self, config):
         super().__init__()
         # linear layers which will unify the channel dimension of each of the encoder blocks to the same config.decoder_hidden_size

@@ -10,7 +10,7 @@ class CrossCorrelationMatrixLoss(nn.Module):
     def forward(self,z1,z2):
         # Normalize the projector's output across the batch
         norm_z1 = (z1 - torch.mean(z1,0)) / torch.std(z1,0)
-        norm_z2 = (z2 - torch.mean(z1,0)) / torch.std(z1,0)
+        norm_z2 = (z2 - torch.mean(z2,0)) / torch.std(z2,0)
 
         # Cross correlation matrix
         batch_size = z1.size(0)

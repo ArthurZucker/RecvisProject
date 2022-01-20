@@ -24,9 +24,9 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "BarlowTwins"        # architecture to use
-    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"        # architecture to use
+    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
@@ -36,8 +36,8 @@ class Hparams:
     gpu            : int           = 1      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 256    # gradient accumulation batch size
-    max_epochs     : int           = 400    # maximum number of epochs
+    accumulate_size: int           = 512//64    # gradient accumulation batch size
+    max_epochs     : int           = 1000    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -49,8 +49,9 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 256        # batch_size
+    batch_size        : int         = 64        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
+    root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
 
 
@@ -58,12 +59,12 @@ class DatasetParams:
 class CallBackParams:
     """Parameters to use for the logging callbacks
     """
-    log_erf_freq       : int   = 10     # effective receptive fields
+    log_erf_freq       : int   = 10     # effective receptive fields5
     nb_erf             : int   = 6
-    log_att_freq       : int   = 10     # attention maps
-    log_pred_freq      : int   = 10     # log_pred_freq
-    log_ccM_freq       : int   = 10     # log cc_M matrix frequency
-    attention_threshold: float = 0.5    # Logging attention threshold for head fusion
+    log_att_freq       : int   = 1     # attention maps
+    log_pred_freq      : int   = 1     # log_pred_freq
+    log_ccM_freq       : int   = 1     # log cc_M matrix frequency
+    attention_threshold: float = 0.6    # Logging attention threshold for head fusion
     nb_attention       : int   = 5      # nb of images for which the attention will be visualised
 
 ################################## Self-supervised learning parameters ##################################
@@ -76,12 +77,12 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit"
+    backbone              : str           = "resnet50"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
     bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
-    weight_checkpoint     : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt") # model checkpoint used in classification fine tuning
+    weight_checkpoint     : Optional[str] = None
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -91,7 +92,7 @@ class OptimizerParams_SSL: # @TODO change name
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
     lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
-    min_lr              : float          = 5e-6     # minimum lr for the scheduler
+    min_lr              : float          = 5e-6     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
     warmup_epochs       : int            = 10
     max_epochs          : int            = 400      # @TODO duplicate of dataparam
@@ -124,16 +125,12 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vit"
-    model             : str           = "deeplabv3"
-    model_param       : Dict[str, Any] = dict_field(
-        dict(
-            n_classes=21,
-            freeze=True,
-            pretrained=False,
-        )
-    )
-    weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    backbone            : str            = "vit"
+    head                : str            = "Baseline"
+    head_params         : Optional[str]  = None
+    decoder_hidden_size : int            = 1024
+    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/light-rain-17/epoch=381-step=2291.ckpt")
+    # backbone_checkpoint : Optional[str]  = osp.join("/kaggle/input/","weights/epoch381-step2291.ckpt")
 
 
 @dataclass
@@ -148,11 +145,13 @@ class OptimizerParams_Segmentation:
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW" 
-    lr                  : float          = 5e-4
+    lr                  : float          = 5e-3
     scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
+    use_scheduler : bool = True
+    
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
-            patience = 4,
+            patience = 400,
             mode = "min",
             threshold = 0.1
         )
@@ -210,7 +209,7 @@ class Parameters:
         if self.network_param.backbone == "vit":
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = self.data_param.input_size[0]//8,
+                patch_size      = 32 ,#self.data_param.input_size[0]//8,
                 num_classes     = 0,
                 dim             = 768,
                 depth           = 4,
