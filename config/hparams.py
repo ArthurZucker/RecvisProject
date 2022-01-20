@@ -129,7 +129,7 @@ class SegmentationConfig:
     """
     backbone          : str           = "vitsdino16"
     # backbone_pretrained : str         = "ImageNet"
-    head                : str          = "SETRPUP"
+    head                : str          = "SETRnaive"
     encoder_param       : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
