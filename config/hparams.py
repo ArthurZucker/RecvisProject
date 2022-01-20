@@ -128,7 +128,6 @@ class SegmentationConfig:
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
     backbone          : str           = "vitsdino16"
-    # backbone_pretrained : str         = "ImageNet"
     head                : str          = "SETRnaive"
     encoder_param       : Dict[str, Any] = dict_field(
         dict(
@@ -144,7 +143,7 @@ class SegmentationConfig:
         )
     )
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "brisk_valley_epoch=11-step=275.ckpt")
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/brisk_valley_epoch11-step275.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/brisk_valley_epoch11-step275.ckpt")
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "devout-energy_epoch=354-step=2129.ckpt")
     backbone_parameters: Dict[str, Any] = None
 
