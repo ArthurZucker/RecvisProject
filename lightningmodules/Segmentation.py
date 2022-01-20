@@ -4,7 +4,7 @@ from utils.hooks import get_activation
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from models.unet import Unet
-import models.deeplabv3
+import models.semanticmodel
 import models.resnet50
 import importlib
 
@@ -32,17 +32,15 @@ class Segmentation(LightningModule):
 
         self.rq_grad = False
 
+        # backbone :
+        # self.net = get_net(network_param.backbone, network_param)
+        self.net = models.semanticmodel.SemanticModel(self.network_param)
+        
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
         else: 
-            self.patch_size = 8
-        # backbone :
-        # self.net = get_net(network_param.backbone, network_param)
-        if self.network_param.model == "deeplabv3":
-            self.net = models.deeplabv3.Deeplabv3(self.network_param)
-        else:
-            raise ValueError(f'option {self.network_param.model} does not exist !')
-
+            self.patch_size = self.net.patch_size
+        
         # loss
         loss_cls = import_class(self.loss_param.name)
         self.loss = loss_cls(**self.loss_param.param)
