@@ -80,6 +80,13 @@ class SemanticModel(nn.Module):
 
             self.vit.head = nn.Identity()
 
+            if hasattr(self.config, "weight_checkpoint_backbone"):
+                pth = torch.load(
+                    self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                state_dict = {
+                    k.replace('backbone.', ''): v for k, v in pth['state_dict'].items()}
+                self.vit.load_state_dict(state_dict, strict=False)
+
             if "vits" in self.name_encoder:
                 embedding_dim = 384
             else:
