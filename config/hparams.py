@@ -143,7 +143,7 @@ class SegmentationConfig:
         )
     )
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "rare_valley_epoch=330-step=7612.ckpt")
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/rare_valley_epoch330-step7612.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/rare_valley_epoch330-step7612.ckpt")
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "barlow_twins/resnet50.pth")
     backbone_parameters: Dict[str, Any] = None
 
