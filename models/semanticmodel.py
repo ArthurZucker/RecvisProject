@@ -36,7 +36,7 @@ class SemanticModel(nn.Module):
                 self.net.classifier = temp_net.classifier
             else:
                 self.net = deeplabv3_resnet50(
-                    pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.model_param['pretrained_backbone'])
+                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.encoder_param['pretrained_backbone'])
 
                 if hasattr(self.config, "weight_checkpoint_backbone"):
                     pth = torch.load(
@@ -64,13 +64,13 @@ class SemanticModel(nn.Module):
             # for name, param in self.vit.named_parameters(): print(f"{name} : {param}")
             self.vit = Extractor(self.vit, return_embeddings_only=True)
 
-            if self.config.model_param['pretrained']:
+            if self.config.encoder_param['pretrained']:
                 net = deeplabv3_resnet50(
-                    pretrained=self.config.model_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.model_param['pretrained_backbone'])
+                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.encoder_param['pretrained_backbone'])
                 self.classifier = net.classifier
 
             # Freeze backbone weights
-            if self.config.model_param['freeze']:
+            if self.config.encoder_param['freeze']:
                 for param in self.vit.parameters():
                     param.requires_grad = False
 
