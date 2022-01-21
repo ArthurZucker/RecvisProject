@@ -36,7 +36,7 @@ class SemanticModel(nn.Module):
                 self.net.classifier = temp_net.classifier
             else:
                 self.net = deeplabv3_resnet50(
-                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.encoder_param['pretrained_backbone'])
+                    **self.config.encoder_param)
 
                 if hasattr(self.config, "weight_checkpoint_backbone"):
                     pth = torch.load(
@@ -66,7 +66,7 @@ class SemanticModel(nn.Module):
 
             if self.config.encoder_param['pretrained']:
                 net = deeplabv3_resnet50(
-                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes, pretrained_backbone=self.config.encoder_param['pretrained_backbone'])
+                    **self.config.encoder_param)
                 self.classifier = net.classifier
 
             # Freeze backbone weights
