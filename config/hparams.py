@@ -131,14 +131,14 @@ class SegmentationConfig:
     head                : str          = "deeplab"
     encoder_param       : Dict[str, Any] = dict_field(
         dict(
-            n_classes=21,
+            num_classes=21,
             freeze=True,
             pretrained=True,
         )
     )
     head_param : Dict[str, Any] = dict_field(
         dict(
-            n_classes=21,
+            num_classes=21,
             pretrained=True,
         )
     )
