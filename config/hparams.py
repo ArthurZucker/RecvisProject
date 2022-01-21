@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 1    # gradient accumulation batch size
+    accumulate_size: int           = 24    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -48,7 +48,7 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (256, 256)   # image_size
+    input_size        : tuple       = (224, 224)   # image_size
     batch_size        : int         = 32        # batch_size
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
@@ -127,23 +127,23 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "resnet50"
-    head                : str          = "deeplab"
+    backbone          : str           = "vitsdino16"
+    head                : str          = "SETRnaive"
     encoder_param       : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
             freeze=True,
-            pretrained=True,
+            pretrained=False,
         )
     )
     head_param : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
-            pretrained=True,
+            pretrained=False,
         )
     )
-    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "brisk_valley_epoch=11-step=275.ckpt")
-    weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/resnet50.pth")
+    weight_checkpoint_backbone : Optional[str] = osp.join("weights", "rare_valley_epoch=330-step=7612.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/rare_valley_epoch330-step7612.ckpt")
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "barlow_twins/resnet50.pth")
     backbone_parameters: Dict[str, Any] = None
 

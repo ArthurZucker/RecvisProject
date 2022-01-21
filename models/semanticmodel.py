@@ -77,7 +77,7 @@ class SemanticModel(nn.Module):
         elif self.name_encoder in vit_dino_dict:  # @TODO get_net using backbone_parameters
 
             self.vit = timm.create_model(
-                vit_dino_dict[self.name_encoder], pretrained=self.config.head_param['pretrained'])
+                vit_dino_dict[self.name_encoder], pretrained=self.config.encoder_param['pretrained'])
 
             self.vit.head = nn.Identity()
 
