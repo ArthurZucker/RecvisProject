@@ -14,7 +14,7 @@ class BarlowTwins(LightningDataModule):
         super().__init__()
         dataset_name    = config.hparams.dataset
         self.dataset    = getattr(datasets,dataset_name)
-        self.config     = config.dataset_param
+        self.config     = config.data_param
         self.batch_size = self.config.batch_size
         if self.config.root_dataset is not None:
             self.root = self.config.root_dataset
