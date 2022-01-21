@@ -131,20 +131,20 @@ class SegmentationConfig:
     head                : str          = "deeplab"
     encoder_param       : Dict[str, Any] = dict_field(
         dict(
-            num_classes=21,
+            n_classes=21,
             freeze=True,
             pretrained=True,
         )
     )
     head_param : Dict[str, Any] = dict_field(
         dict(
-            num_classes=21,
+            n_classes=21,
             pretrained=True,
         )
     )
     # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "brisk_valley_epoch=11-step=275.ckpt")
     weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/resnet50.pth")
-    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "devout-energy_epoch=354-step=2129.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "barlow_twins/resnet50.pth")
     backbone_parameters: Dict[str, Any] = None
 
 @dataclass

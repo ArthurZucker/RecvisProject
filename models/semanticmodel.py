@@ -20,7 +20,7 @@ class SemanticModel(nn.Module):
         name_head : Linear, SETRnaive, SETRPUP, DeepLabHead
         """
         self.config = config
-        num_classes = self.config.encoder_param['num_classes']
+        num_classes = self.config.encoder_param['n_classes']
         self.name_encoder = config.backbone
         self.name_head = config.head if hasattr(config, 'head') else None 
 
@@ -36,7 +36,7 @@ class SemanticModel(nn.Module):
                 self.net.classifier = temp_net.classifier
             else:
                 self.net = deeplabv3_resnet50(
-                    **self.config.encoder_param)
+                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes)
 
                 if hasattr(self.config, "weight_checkpoint_backbone"):
                     pth = torch.load(
@@ -66,7 +66,7 @@ class SemanticModel(nn.Module):
 
             if self.config.encoder_param['pretrained']:
                 net = deeplabv3_resnet50(
-                    **self.config.encoder_param)
+                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes)
                 self.classifier = net.classifier
 
             # Freeze backbone weights
