@@ -63,9 +63,9 @@ class CallBackParams:
     nb_erf             : int   = 6
     log_att_freq       : int   = 1      # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
-    log_ccM_freq       : int   = 10     # log cc_M matrix frequency
+    log_ccM_freq       : int   = 1     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
-    nb_attention       : int   = 8      # nb of images for which the attention will be visualised
+    nb_attention       : int   = 6      # nb of images for which the attention will be visualised
 ################################## Self-supervised learning parameters ##################################
 
 class BarlowConfig:

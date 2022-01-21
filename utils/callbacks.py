@@ -229,6 +229,8 @@ class LogBarlowCCMatrixCallback(Callback):
         ax = sns.heatmap(heatmap, cmap="rainbow", cbar=False)
         plt.title(f"Cross correlation matrix")
         ax.set_axis_off()
+        ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
         wandb.log({f"cc_Matrix/{name}": (wandb.Image(plt))})
         plt.close()
         self.cc_M = None
