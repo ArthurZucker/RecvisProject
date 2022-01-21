@@ -36,7 +36,7 @@ class Hparams:
     gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 24    # gradient accumulation batch size
+    accumulate_size: int           = 1    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
@@ -127,8 +127,8 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vitsdino8"
-    head                : str          = "SETRnaive"
+    backbone          : str           = "resnet50"
+    head                : str          = None
     encoder_param       : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
