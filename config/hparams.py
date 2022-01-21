@@ -224,7 +224,7 @@ class Parameters:
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 16,
                 dim             = 384, # 384 for vit16 small, 1000 for deit small
-                name = "vit_small_patch16_224_dino"
+                name = "deit_small_patch16_224"
             )
         
         
