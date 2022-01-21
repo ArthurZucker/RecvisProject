@@ -219,6 +219,13 @@ class Parameters:
                 emb_dropout     = 0.1,
             )
         
+        if self.network_param.backbone=="vit_dino" :
+            self.network_param.backbone_parameters = dict(
+                image_size      = self.data_param.input_size[0],
+                patch_size      = 16,
+                dim             = 1000, # 384 for vit16 small, 1000 for deit small
+                name = "deit_small_patch16_224"
+            )
         
         
         print("Random Seed: ", self.hparams.seed_everything)

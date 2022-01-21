@@ -36,8 +36,10 @@ class BarlowTwins(LightningModule):
             name_classif = list(self.backbone.named_children())[-1][0]
             self.backbone._modules[name_classif] = nn.Identity()
         else : # this is for the dino vit 
-            self.patch_size = 16
-            self.in_features = 1000
+            self.patch_size = self.network_param.backbone_parameters["patch_size"]
+            self.patch_size = self.network_param.backbone_parameters["embed_dim"]
+            # self.patch_size = 16
+            # self.in_features = 1000
             
         
         self.head = self.get_head()
