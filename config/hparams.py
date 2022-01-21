@@ -223,8 +223,8 @@ class Parameters:
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 16,
-                dim             = 1000, # 384 for vit16 small, 1000 for deit small
-                name = "deit_small_patch16_224"
+                dim             = 192, # 384 for vit16 small, 1000 for deit small
+                name = "deit_tiny_patch16_224"
             )
         
         
