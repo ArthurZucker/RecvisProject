@@ -2,7 +2,11 @@
 # Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation  : 
 Authors : Clement Apavou & Arthur 
 
-![Example of attention maps](/assets/attention_patch8_dino.png) ![Example of attention maps](/assets/attention_patch816_dino.png) 
+<p align="center">
+  <img alt="dino attention map with patch size 8" src="/assets/attention_patch8_dino.png" width="45%">
+&nbsp; &nbsp; &nbsp; &nbsp;
+  <img alt="dino attention map with patch size 16" src="/assets/attention_patch16_dino.png" width="45%">
+</p>
 ## Abstract 
 
 Self-supervised learning using transformers has shown interesting emerging properties and learn rich embeddings without annotations. Most recently, Barlow Twins proposed an elegant self-supervised learning technique using a ResNet-50 backbone which achieved competitive results when fine-tuned on downstream tasks. In this paper, we propose to study Vision Transformers trained using the Barlow Twins self-supervised method, and compare the results with. We demonstrate the effectiveness of the Barlow Twins method by showing that networks pretrained on the small PASCAL VOC 2012 dataset are able to generalize well while requiring less training and computing power than the DINO method. Finally we propose to leverage self-supervised vision transformers and their semantically rich attention maps for semantic segmentation tasks.
