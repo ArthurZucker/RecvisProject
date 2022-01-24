@@ -42,7 +42,7 @@ https://github.com/ArthurZucker/RecvisProject/wiki/Barlow-Twins-Training) and th
 
 # Contributions : 
 
-We implemented the global structure and the Barlow Twins method from scratch in PyTorch Lightning, our visualization of the attention maps is inspired from the official [DINO repository](https://github.com/facebookresearch/dino). Our `trainer` module takes care of initializing the lightning module and the datamodule, both of which can be chosen in our configuration file (\texttt{config/hparams.py}). \textit{simple parsing} package extracts and parses the configuration file and allows us to switch between the two tasks: Barlow Twins training and Semantic Segmentation fine-tuning. We used the very practical Weights \& Biases (wandb) \cite{wandb} library to log all of our experiments.
+We implemented the global structure and the Barlow Twins method from scratch in PyTorch Lightning, our visualization of the attention maps is inspired from the official [DINO repository](https://github.com/facebookresearch/dino). Our `trainer` module takes care of initializing the lightning module and the datamodule, both of which can be chosen in our configuration file (`config/hparams.py`). \textit{simple parsing} package extracts and parses the configuration file and allows us to switch between the two tasks: Barlow Twins training and Semantic Segmentation fine-tuning. We used the very practical Weights \& Biases (wandb) \cite{wandb} library to log all of our experiments.
 
 # Visualizations 
 We implemented two very efficient and easy-to use callbacks to visualize the effective receptive fields and the attention maps at train and validation time. 
