@@ -30,11 +30,19 @@ class BarlowTwins(LightningModule):
         self.backbone = get_net(
             self.network_param.backbone, self.network_param.backbone_parameters
         )
-        if self.network_param.backbone_parameters is not None:
+        if  self.network_param.backbone=="vit" and self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
-        self.in_features = list(self.backbone.modules())[-1].in_features
-        name_classif = list(self.backbone.named_children())[-1][0]
-        self.backbone._modules[name_classif] = nn.Identity()
+            self.in_features = list(self.backbone.modules())[-1].in_features
+            name_classif = list(self.backbone.named_children())[-1][0]
+            self.backbone._modules[name_classif] = nn.Identity()
+            
+        elif self.network_param.backbone=="vit_dino" : # this is for the dino vit 
+            self.patch_size = self.network_param.backbone_parameters["patch_size"]
+            self.in_features = self.network_param.backbone_parameters["dim"]
+            # self.patch_size = 16
+            # self.in_features = 1000
+            
+        
         self.head = self.get_head()
 
         if self.network_param.weight_checkpoint is not None:
@@ -76,7 +84,7 @@ class BarlowTwins(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-
+        # self.optim_param.lr *= (self.trainer.datamodule.batch_size / 256) # from the paper
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
         optimizer = optimizer(
             self.parameters(), lr=self.optim_param.lr, weight_decay=10e-6)
