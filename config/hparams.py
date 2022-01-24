@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from os import path as osp
 from typing import Any, ClassVar, Dict, List, Optional
 
-import numpy as np
 import simple_parsing
 import torch
 import torch.optim
@@ -39,7 +38,7 @@ class Hparams:
     accumulate_batch: int           = 8    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
 
-    dev_run        : bool          = True  # developpment mode, only run 1 batch of train val and test
+    dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
 @dataclass
@@ -249,7 +248,7 @@ class Parameters:
                 patch_size      = 16,
                 dim             = 1000, # 384 for vit16 small, 1000 for deit small
                 name = "deit_tiny_patch16_224",
-                pretrained=True
+                pretrained = True
             )
         
         

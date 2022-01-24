@@ -1,6 +1,7 @@
 import timm
 
-def vit_timm(vit_parameters, pretrained=False):
+def vit_timm(vit_parameters):
     name = vit_parameters["name"]
-    model =  timm.create_model(name, pretrained=pretrained)
+    pretrained = vit_parameters["pretrained"]
+    model =  timm.create_model(name, pretrained)
     return model
