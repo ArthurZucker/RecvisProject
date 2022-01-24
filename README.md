@@ -10,8 +10,9 @@ Authors : Clement Apavou & Arthur
 
 
 <p align="center">
-  <img alt="effective receptive fields" src="/assets/erf.png" width="45%" title="Effective receptive fields of 8 layers of the ddeplabv3 architecture. Credits to Apavou & Zucker" >
-&nbsp; &nbsp; &nbsp; &nbsp;
+  <img alt="effective receptive fields" src="/assets/erf.png" width="100%" title="Effective receptive fields of 8 layers of the ddeplabv3 architecture. Credits to Apavou & Zucker" >
+</p>
+<p align="center">
   <img alt="Cross coorrelation matrix" src="assets/brisk-valley-111-ccM.png" width="45%" title="Cross correlation matrix obtained by training a ViT with Barlow Twins, initialized with DINO weightds. Refer to brisk-valley-111 experiment. Credits to Apavou & Zucker" >
 </p>
 ## Abstract 
