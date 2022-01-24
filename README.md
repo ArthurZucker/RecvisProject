@@ -2,13 +2,17 @@
 # Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation  : 
 Authors : Clement Apavou & Arthur 
 
+<html>
+<body>
 <style>
 td, th {
    border: none!important;
 }
 </style>
+</body>
+</html>
 
-|<img alt="dino attention map with patch size 8" src="/assets/attention_patch8_dino.png" width="45%" title="Dino pretrained attention maps with a patch size of 8. Credits to Apavou & Zucker" >| <img alt="dino attention map with patch size 16" src="/assets/attention_patch16_dino.png" width="45%" title="Dino pretrained attention maps with a patch size of 16. Credits to Apavou & Zucker" >|
+|<img alt="dino attention map with patch size 8" src="/assets/attention_patch8_dino.png" width="100%" title="Dino pretrained attention maps with a patch size of 8. Credits to Apavou & Zucker" >| <img alt="dino attention map with patch size 16" src="/assets/attention_patch16_dino.png" width="100%" title="Dino pretrained attention maps with a patch size of 16. Credits to Apavou & Zucker" >|
 |---|---|
 |Dino pretrained attention maps with a patch size of 8. Credits to Apavou & Zucker | Dino pretrained attention maps with a patch size of 16. Credits to Apavou & Zucker |
 
