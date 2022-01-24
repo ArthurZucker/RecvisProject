@@ -80,7 +80,7 @@ class BarlowConfig:
     backbone              : str           = "vit"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-3
-    bt_proj_dim           : int           = 512      # number of channels to use for projection
+    bt_proj_dim           : int           = 1024      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = None
     backbone_parameters   : Optional[str] = None

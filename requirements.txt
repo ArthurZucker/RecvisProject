@@ -1,7 +1,8 @@
-datasets==1.17.0
-graphs==0.1.3
-imageio==2.9.0
-imgaug==0.4.0
+albumentations==1.1.0
+easydict==1.9
+einops==0.4.0
+helpers==0.2.0
+layers==0.1.5
 matplotlib==3.3.2
 numpy==1.21.0
 pandas==1.1.3
@@ -10,10 +11,9 @@ pytorch_lightning==1.5.7
 pytorch_pretrained_vit==0.0.7
 scikit_learn==1.0.1
 seaborn==0.11.0
-simple_parsing==0.0.17
+simple_parsing==0.0.18
+skimage==0.0
+timm==0.5.4
 torch==1.10.1
-torchmetrics==0.6.2
 torchvision==0.11.2
-tqdm==4.50.2
-rich==10.16.1
-einops==0.3.2
+vit_pytorch==0.26.4
