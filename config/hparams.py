@@ -24,9 +24,9 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "Segmentation"        # architecture to use
-    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "BarlowTwins"        # architecture to use
+    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
@@ -86,11 +86,10 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit_timm"
+    backbone              : str           = "vit_timm" # vit_pytorch or vit_timm
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-2
     bt_proj_dim           : int           = 512      # number of channels to use for projection
-    pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = None
     # weight_checkpoint     : Optional[str] = osp.join("weights", "leafy-water_epoch=394-step=9084.ckpt")
     # weight_checkpoint     : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
@@ -249,7 +248,8 @@ class Parameters:
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 16,
                 dim             = 1000, # 384 for vit16 small, 1000 for deit small
-                name = "deit_tiny_patch16_224"
+                name = "deit_tiny_patch16_224",
+                pretrained=True
             )
         
         

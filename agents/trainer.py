@@ -46,8 +46,13 @@ class trainer(BaseTrainer):
 
         if "Barlo" in self.config.arch:
             callbacks += [
-                LogBarlowPredictionsCallback(self.callback_param.log_pred_freq, self.callback_param.log_pred_nb), LogBarlowCCMatrixCallback(
-                    self.callback_param.log_ccM_freq),
+                LogBarlowPredictionsCallback(
+                    self.callback_param.log_pred_freq,
+                    self.callback_param.log_pred_nb
+                ),
+                LogBarlowCCMatrixCallback(
+                    self.callback_param.log_ccM_freq
+                ),
             ]
 
         if "vit" in self.encoder:
@@ -68,7 +73,9 @@ class trainer(BaseTrainer):
                 # ),
                 LogMetricsCallback(self.metric_param),
                 LogSegmentationCallback(
-                    self.callback_param.log_pred_freq, self.callback_param.log_pred_nb),
+                    self.callback_param.log_pred_freq, 
+                    self.callback_param.log_pred_nb
+                    ),
                 EarlyStopping(**self.callback_param.early_stopping_params),
             ]
             monitor = "val/iou"

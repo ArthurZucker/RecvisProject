@@ -8,9 +8,10 @@ import wandb
 from pytorch_lightning.callbacks import Callback
 from torch.autograd import grad
 
-from utils.constant import PASCAL_VOC_CLASSES, MEAN, STD 
-from utils.hooks import get_attention, get_activation
+from utils.constant import MEAN, PASCAL_VOC_CLASSES, STD
+from utils.hooks import get_activation, get_attention
 from utils.metrics_module import MetricsModule
+
 
 class LogTransformedImages(Callback):
     def __init__(self, log_img_freq, log_img_nb) -> None:
@@ -49,9 +50,9 @@ class LogTransformedImages(Callback):
             bg_image = np.clip(bg_image, 0, 1)
 
             samples.append(wandb.Image(bg_image,))
-            
+
         wandb.log({f"transformed images/{name}": samples})
-        
+
 
 class LogSegmentationCallback(Callback):
     def __init__(self, log_img_freq, log_img_nb) -> None:
@@ -113,6 +114,7 @@ class LogSegmentationCallback(Callback):
                 )
             )
         wandb.log({name: samples})
+
 
 class LogMetricsCallback(Callback):
     def __init__(self, config):
@@ -210,15 +212,16 @@ class LogBarlowCCMatrixCallback(Callback):
         plt.title(f"Cross correlation matrix")
         ax.set_axis_off()
         ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
-        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
+        plt.subplots_adjust(top=1, bottom=0, right=1,
+                            left=0, hspace=0, wspace=0)
         wandb.log({f"cc_Matrix/{name}": (wandb.Image(plt))})
         plt.close()
         self.cc_M = None
 
 
 class LogERFVisualizationCallback(Callback):
-    # FIXME memory issue 
-    def __init__(self, nb_erf,erf_freq,b_size) -> None:
+    # FIXME memory issue
+    def __init__(self, nb_erf, erf_freq, b_size) -> None:
         """Initialize the callback with the layers
         to use to compute the effective receptive fields
         FOr now TODO define the format (most probably ints for the stage or the index of the layer)
@@ -264,7 +267,8 @@ class LogERFVisualizationCallback(Callback):
                         self.gradient[name] += (
                             np.squeeze(
                                 torch.mean(
-                                    torch.sum(torch.abs(gradient_wrt_ipt), axis=1),
+                                    torch.sum(
+                                        torch.abs(gradient_wrt_ipt), axis=1),
                                     axis=0,
                                 )
                                 .cpu()
@@ -275,19 +279,22 @@ class LogERFVisualizationCallback(Callback):
                         # average over the batches but sum over the channels
 
                         del self.features[name]
-                        self.features[name] = []  # reset the hooks for the batch
+                        # reset the hooks for the batch
+                        self.features[name] = []
                     except Exception as e:
                         # the gradient can't be computed because of batchnorm, jsut ignore
-                        print(f"Tried to compute gradient error : {e}, cleaning up")
+                        print(
+                            f"Tried to compute gradient error : {e}, cleaning up")
                         del self.features[name]
-                        self.features[name] = []  # reset the hooks for the batch
+                        # reset the hooks for the batch
+                        self.features[name] = []
 
             if batch_idx % self.batch_size == 0:
                 heatmaps = []
                 for name in self.gradient:
                     heatmap = self.gradient[name]
                     # average the gradients over the batches but sum it over the channels
-                    
+
                     if type(heatmap) != float:  # FIXE ME
                         plt.ioff()
                         heatmap = heatmap / (batch_idx + 1) * self.batch_size
@@ -299,7 +306,7 @@ class LogERFVisualizationCallback(Callback):
                         ax = sns.heatmap(heatmap, cmap="rainbow", cbar=False)
                         plt.title(f"Layer {self.erf_layers_names[name]}")
                         ax.set_axis_off()
-                        
+
                         heatmaps.append(wandb.Image(plt))
                         plt.close()
 
@@ -318,46 +325,48 @@ class LogERFVisualizationCallback(Callback):
             for hooks in self.hooks:
                 hooks.remove()
             pl_module.rq_grad = False
-            
-    def _register_layer_hooks(self,pl_module): # @URGENT @TODO should be in the ERF Callabck function, would be cleaner
+
+    # @URGENT @TODO should be in the ERF Callabck function, would be cleaner
+    def _register_layer_hooks(self, pl_module):
         self.hooks = []
-        nb_erf = self.nb_erf #TODO only use those layers not every layer
+        nb_erf = self.nb_erf  # TODO only use those layers not every layer
         named_layers = list(pl_module.named_modules())[2:]
         if "loss" in named_layers[-1]:
             named_layers = named_layers[:-1]
-        layer_span = ((len(named_layers))//nb_erf) # span to take each layers
-        selected_layers = named_layers[::layer_span][:nb_erf-1]+[named_layers[-1]]
+        layer_span = ((len(named_layers))//nb_erf)  # span to take each layers
+        selected_layers = named_layers[::layer_span][:nb_erf-1] + \
+            [named_layers[-1]]
         self.erf_layers_names = list(dict(selected_layers).keys())
         if nb_erf >= 2:
-            self.features = {idx:[] for idx in range(len(selected_layers))} # trick to always take first and last layers FIXME later
-        for i,(name, module) in enumerate(selected_layers):
+            # trick to always take first and last layers FIXME later
+            self.features = {idx: [] for idx in range(len(selected_layers))}
+        for i, (name, module) in enumerate(selected_layers):
             #self.hooks.append(dict(dict_layers)[name].register_forward_hook(get_activation(i, self.features)))
-            self.hooks.append(module.register_forward_hook(get_activation(i, self.features)))
-        
-
+            self.hooks.append(module.register_forward_hook(
+                get_activation(i, self.features)))
 
 
 class LogBarlowPredictionsCallback(Callback):
-    def __init__(self,erf_freq) -> None:
+    def __init__(self, log_img_freq, log_img_nb) -> None:
         super().__init__()
-        self.erf_freq = erf_freq
+        self.log_img_freq = log_img_freq
+        self.log_img_nb = log_img_nb
+
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
 
-        if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("train", batch, min(8,len(batch)), outputs)
-
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_nb == 0:
+            self.log_images("train", batch, self.log_img_nb, outputs)
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
 
-        if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("val", batch,  min(8,len(batch)), outputs)
-
+        if batch_idx == 0 and pl_module.current_epoch % self.log_img_nb == 0:
+            self.log_images("val", batch,  self.log_img_nb, outputs)
 
     def log_images(self, name, batch, n, outputs):
 
@@ -416,8 +425,8 @@ class LogAttentionMapsCallback(Callback):
         if batch_idx == 0 and pl_module.current_epoch % self.log_freq == 0:
             attention_maps = []
             th_attention_map = []
-            for i in range(min(self.nb_attention_images,len(batch[0]))):
-                img = batch[0][i]  
+            for i in range(min(self.nb_attention_images, len(batch[0]))):
+                img = batch[0][i]
                 # only 1 image for now. The batch has [0,1,...,n_1] crops b_size images
                 w, h = (
                     img.shape[1] - img.shape[1] % pl_module.patch_size,
@@ -476,15 +485,15 @@ class LogAttentionMapsCallback(Callback):
 
             self.show(attention_maps, th_attention_map)
 
-            del attention_maps,th_attention_map
+            del attention_maps, th_attention_map
             self._clear_hooks()
-
 
     def show(self, imgs, th_attention_map):
         import torchvision.transforms.functional as F
 
         plt.ioff()
-        fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
+        fix, axs = plt.subplots(
+            nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
 
         for j, sample in enumerate(imgs):
             for i, head in enumerate(sample):
@@ -495,14 +504,15 @@ class LogAttentionMapsCallback(Callback):
                     img = head
                     img = F.to_pil_image(img)
                     axs[j, i].imshow(np.asarray(img))
-                axs[j, i].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+                axs[j, i].set(xticklabels=[], yticklabels=[],
+                              xticks=[], yticks=[])
             org = np.asarray(sample[0]).transpose(1, 2, 0)
             image = np.clip(MEAN * org + STD, 0, 1)
             self.log_th_attention(
                 image, th_attention_map[j], axs[j, i + 1]
             )  # log the thresholded attention maps
         fix.tight_layout()
-        fix.subplots_adjust(left = 0, right = 1, top = 1, bottom = 0)
+        fix.subplots_adjust(left=0, right=1, top=1, bottom=0)
         fix.subplots_adjust(wspace=0.005, hspace=0.005)
         attention_heads = wandb.Image(plt)
         wandb.log({"attention heads": attention_heads})
@@ -531,7 +541,8 @@ class LogAttentionMapsCallback(Callback):
         def apply_mask(image, mask, color, alpha=0.5):
             for c in range(3):
                 image[:, :, c] = (
-                    image[:, :, c] * (1 - alpha * mask) + alpha * mask * color[c] * 255
+                    image[:, :, c] * (1 - alpha * mask) +
+                    alpha * mask * color[c] * 255
                 )
             return image
 
@@ -549,8 +560,7 @@ class LogAttentionMapsCallback(Callback):
             ax.imshow(masked_image.astype(np.uint8))
             ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
         del masked_image
-        
-        
+
     def _register_layer_hooks(self, pl_module):
 
         self.hooks = []
@@ -561,7 +571,8 @@ class LogAttentionMapsCallback(Callback):
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(
-            attend_layers[-1].register_forward_hook(get_attention(self.attention))
+            attend_layers[-1].register_forward_hook(
+                get_attention(self.attention))
         )
 
     def _clear_hooks(self):

@@ -1,11 +1,9 @@
+import torch
 import torch.nn as nn
+from models.losses.barlow_twins import CrossCorrelationMatrixLoss
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
-from torch.nn import functional as F
-import torch
 from utils.agent_utils import get_net
-
-from models.losses.barlow_twins import CrossCorrelationMatrixLoss
 
 
 class BarlowTwins(LightningModule):
@@ -30,23 +28,21 @@ class BarlowTwins(LightningModule):
         self.backbone = get_net(
             self.network_param.backbone, self.network_param.backbone_parameters
         )
-        if  self.network_param.backbone=="vit" and self.network_param.backbone_parameters is not None:
+        if self.network_param.backbone == "vit_pytorch" : # this is for the vit from the vit_pytorch library
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
             self.in_features = list(self.backbone.modules())[-1].in_features
             name_classif = list(self.backbone.named_children())[-1][0]
             self.backbone._modules[name_classif] = nn.Identity()
-            
-        elif self.network_param.backbone=="vit_dino" : # this is for the dino vit 
+
+        elif self.network_param.backbone == "vit_timm":  # this is for the vit from the timm library 
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
             self.in_features = self.network_param.backbone_parameters["dim"]
-            # self.patch_size = 16
-            # self.in_features = 1000
-            
-        
+
         self.head = self.get_head()
 
         if self.network_param.weight_checkpoint is not None:
-            pth = torch.load(self.network_param.weight_checkpoint, map_location=torch.device('cpu'))
+            pth = torch.load(self.network_param.weight_checkpoint,
+                             map_location=torch.device('cpu'))
             self.load_state_dict(pth['state_dict'], strict=True)
 
     def get_head(self):
@@ -57,7 +53,8 @@ class BarlowTwins(LightningModule):
         for i in range(self.nb_proj_layers-1):
             proj_layers.append(nn.BatchNorm1d(self.proj_dim))
             proj_layers.append(nn.ReLU(inplace=True))
-            proj_layers.append(nn.Linear(self.proj_dim, self.proj_dim, bias=False))
+            proj_layers.append(
+                nn.Linear(self.proj_dim, self.proj_dim, bias=False))
 
         return nn.Sequential(*proj_layers)
 
@@ -88,9 +85,10 @@ class BarlowTwins(LightningModule):
         optimizer = getattr(torch.optim, self.optim_param.optimizer)
         optimizer = optimizer(
             self.parameters(), lr=self.optim_param.lr, weight_decay=10e-6)
-        
+
         if self.network_param.weight_checkpoint is not None:
-            pth = torch.load(self.network_param.weight_checkpoint, map_location=torch.device('cpu'))
+            pth = torch.load(self.network_param.weight_checkpoint,
+                             map_location=torch.device('cpu'))
             optimizer.load_state_dict(pth['optimizer_states'][0])
 
         if self.optim_param.use_scheduler:
@@ -104,7 +102,8 @@ class BarlowTwins(LightningModule):
                 * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
             )
             if self.network_param.weight_checkpoint is not None:
-                pth = torch.load(self.network_param.weight_checkpoint, map_location=torch.device('cpu'))
+                pth = torch.load(self.network_param.weight_checkpoint,
+                                 map_location=torch.device('cpu'))
                 scheduler.load_state_dict(pth['lr_schedulers'][0])
             return [[optimizer], [scheduler]]
         else:
