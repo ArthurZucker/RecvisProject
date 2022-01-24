@@ -30,7 +30,7 @@ class trainer(BaseTrainer):
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
-            # accumulate_grad_batches=self.config.accumulate_size,
+            accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
             # default_root_dir=f"{wandb.run.name}",
         )

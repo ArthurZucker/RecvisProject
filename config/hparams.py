@@ -38,6 +38,7 @@ class Hparams:
     val_freq       : int           = 1      # validation frequency
     accumulate_size: int           = 8    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
+
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -50,6 +51,7 @@ class DatasetParams:
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (224, 224)   # image_size
     batch_size        : int         = 8        # batch_size
+
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -66,6 +68,7 @@ class CallBackParams:
     log_ccM_freq       : int   = 1     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
     nb_attention       : int   = 6      # nb of images for which the attention will be visualised
+
 ################################## Self-supervised learning parameters ##################################
 
 class BarlowConfig:
@@ -123,16 +126,12 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vit"
-    model             : str           = "deeplabv3"
-    model_param       : Dict[str, Any] = dict_field(
-        dict(
-            n_classes=21,
-            freeze=True,
-            pretrained=False,
-        )
-    )
-    weight_checkpoint_backbone : Optional[str] = osp.join(os.getcwd(),"weights/solar-dew-3/epoch=61-val/loss=1144.85.ckpt")
+    backbone            : str            = "vit"
+    head                : str            = "Baseline"
+    head_params         : Optional[str]  = None
+    decoder_hidden_size : int            = 1024
+    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/light-rain-17/epoch=381-step=2291.ckpt")
+    # backbone_checkpoint : Optional[str]  = osp.join("/kaggle/input/","weights/epoch381-step2291.ckpt")
 
 
 @dataclass
@@ -147,11 +146,13 @@ class OptimizerParams_Segmentation:
     """Optimization parameters"""
 
     optimizer           : str            = "AdamW" 
-    lr                  : float          = 5e-4
+    lr                  : float          = 5e-3
     scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
+    use_scheduler : bool = True
+    
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
-            patience = 4,
+            patience = 400,
             mode = "min",
             threshold = 0.1
         )
@@ -209,9 +210,9 @@ class Parameters:
         if self.network_param.backbone=="vit" :
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 8,
+                patch_size      = 32 ,#self.data_param.input_size[0]//8,
                 num_classes     = 0,
-                dim             = 512,
+                dim             = 768,
                 depth           = 4,
                 heads           = 6,
                 mlp_dim         = 1024,
