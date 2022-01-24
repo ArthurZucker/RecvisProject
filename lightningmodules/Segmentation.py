@@ -3,7 +3,7 @@ from utils.agent_utils import get_net, import_class
 from utils.hooks import get_activation
 import torch
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-
+import models.semanticmodel
 import models.resnet50
 from utils.agent_utils import get_net, get_head
 from easydict import EasyDict
@@ -30,7 +30,8 @@ class Segmentation(LightningModule):
 
         self.network_param = config.network_param
         self.loss_param = config.loss_param
-        self.optimizer_param = config.optim_param
+        self.optim_param = config.optim_param
+
         self.input_size = config.data_param.input_size
         self.rq_grad = False
         self.max_epochs = config.hparams.max_epochs
@@ -52,6 +53,16 @@ class Segmentation(LightningModule):
             self.backbone = Extractor(
                 self.backbone, return_embeddings_only=True)
 
+        # backbone :
+        # self.net = get_net(network_param.backbone, network_param)
+        self.net = models.semanticmodel.SemanticModel(self.network_param)
+        
+        if "vit" in self.network_param.backbone :
+            if self.network_param.backbone_parameters is not None:
+                self.patch_size = self.network_param.backbone_parameters["patch_size"]
+            else: 
+                self.patch_size = self.net.patch_size
+        
         if self.network_param.backbone_parameters is not None:
             self.patch_size = self.network_param.backbone_parameters["patch_size"]
         self.in_features = list(self.backbone.modules())[-1].in_features
@@ -69,7 +80,7 @@ class Segmentation(LightningModule):
         self.loss = loss_cls(**self.loss_param.param)
 
         # optimizer parameters
-        self.lr = self.optimizer_param.lr
+        self.lr = self.optim_param.lr
 
     def forward(self, x):
         x.requires_grad_(self.rq_grad)
@@ -99,7 +110,7 @@ class Segmentation(LightningModule):
 
     def test_step(self, batch, batch_idx):
         """used for logging metrics"""
-        preds, loss, logits = self._get_preds_loss_accuracy(batch)
+        loss, logits = self._get_preds_loss_accuracy(batch)
 
         # Log loss and metric
         self.log("test/loss", loss)
@@ -116,23 +127,23 @@ class Segmentation(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        optimizer = getattr(torch.optim, self.optimizer_param.optimizer)
-        optimizer = optimizer(filter(
-            lambda p: p.requires_grad, self.parameters()), lr=self.optimizer_param.lr)
+        optimizer = getattr(torch.optim, self.optim_param.optimizer)
+        optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), lr=self.optim_param.lr)
 
-        if self.optimizer_param.use_scheduler :
+        if self.optim_param.use_scheduler :
             scheduler = LinearWarmupCosineAnnealingLR(
                 optimizer,
-                warmup_epochs=40,
-                max_epochs=self.max_epochs,
+                warmup_epochs=5,
+                max_epochs=self.optim_param.max_epochs,
                 warmup_start_lr=0.1
-                * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+                * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
                 eta_min=0.1
-                * (self.optimizer_param.lr * self.trainer.datamodule.batch_size / 256),
+                * (self.optim_param.lr * self.trainer.datamodule.batch_size / 256),
             )
             return [[optimizer], [scheduler]]
-
-        return optimizer
+        else:
+            
+            return optimizer
 
     def backward(self, loss, optimizer, optimizer_idx) -> None:
         loss.backward(

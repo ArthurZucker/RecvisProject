@@ -16,8 +16,6 @@ class BaseTrainer:
 
     def run(self):
 
-        
-
         if self.config.tune_batch_size:
             trainer = pl.Trainer(
                 logger=self.wb_run,
@@ -28,7 +26,7 @@ class BaseTrainer:
             )
             trainer.logger = self.wb_run
             trainer.tune(self.model, datamodule=self.datamodule)
-            
+
         if self.config.tune_lr:
             trainer = pl.Trainer(
                 logger=self.wb_run,

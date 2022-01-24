@@ -24,16 +24,16 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "BarlowTwins"        # architecture to use
-    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"        # architecture to use
+    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     tune_batch_size: bool          = False  # tune the model on first run
-    gpu            : int           = 1      # number or gpu
+    gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
     accumulate_size: int           = 8    # gradient accumulation batch size
@@ -80,10 +80,12 @@ class BarlowConfig:
     # so it doesn't overwhelm the invariance loss
     backbone              : str           = "vit_dino"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
-    lmbda                 : float         = 5e-3
+    lmbda                 : float         = 5e-2
     bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = None
+    # weight_checkpoint     : Optional[str] = osp.join("weights", "leafy-water_epoch=394-step=9084.ckpt")
+    # weight_checkpoint     : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -126,6 +128,25 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
+    backbone          : str           = "vitsdino16"
+    head                : str          = "SETRnaive"
+    encoder_param       : Dict[str, Any] = dict_field(
+        dict(
+            n_classes=21,
+            freeze=True,
+            pretrained=False,
+        )
+    )
+    head_param : Dict[str, Any] = dict_field(
+        dict(
+            n_classes=21,
+            pretrained=False,
+        )
+    )
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "rare_valley_epoch=330-step=7612.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/rare_valley_epoch330-step7612.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "barlow_twins/resnet50.pth")
+    backbone_parameters: Dict[str, Any] = None
     backbone            : str            = "vit"
     head                : str            = "Baseline"
     head_params         : Optional[str]  = None
@@ -147,16 +168,16 @@ class OptimizerParams_Segmentation:
 
     optimizer           : str            = "AdamW" 
     lr                  : float          = 5e-3
-    scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
-    use_scheduler : bool = True
-    
-    scheduler_parameters: Dict[str, Any] = dict_field(
-        dict(
-            patience = 400,
-            mode = "min",
-            threshold = 0.1
-        )
-    )
+    max_epochs          : int            = 400      
+    use_scheduler       : bool           = True
+    # scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
+    # scheduler_parameters: Dict[str, Any] = dict_field(
+    #     dict(
+    #         patience = 10,
+    #         mode = "min",
+    #         threshold = 0.1
+    #     )
+    # )
 
 
 @dataclass
@@ -182,7 +203,6 @@ class Parameters:
     metric_param  : MetricsParams   = MetricsParams()
     loss_param    : LossParams      = LossParams()
     
-          # name of the wandb entity, here our team
     
     
     
@@ -210,10 +230,10 @@ class Parameters:
         if self.network_param.backbone=="vit" :
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 32 ,#self.data_param.input_size[0]//8,
+                patch_size      = self.data_param.input_size[0]//16,
                 num_classes     = 0,
                 dim             = 768,
-                depth           = 4,
+                depth           = 8,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
