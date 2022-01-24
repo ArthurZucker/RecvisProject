@@ -1,8 +1,9 @@
 import os
 
+import datasets
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
-import datasets 
+
 
 class BarlowTwins(LightningDataModule):
     """Data Module for barlowtwins training
@@ -10,11 +11,12 @@ class BarlowTwins(LightningDataModule):
     Args:
         LightningDataModule ([type]): [description]
     """
+
     def __init__(self, config):
         super().__init__()
-        dataset_name    = config.hparams.dataset
-        self.dataset    = getattr(datasets,dataset_name)
-        self.config     = config.data_param
+        dataset_name = config.hparams.dataset
+        self.dataset = getattr(datasets, dataset_name)
+        self.config = config.data_param
         self.batch_size = self.config.batch_size
         if self.config.root_dataset is not None:
             self.root = self.config.root_dataset
@@ -32,10 +34,10 @@ class BarlowTwins(LightningDataModule):
         # split dataset
         if stage in (None, "fit"):
             self.train = self.dataset(
-                self.root, img_size=self.config.input_size,image_set = "train"
+                self.root, img_size=self.config.input_size, image_set="train"
             )
             self.val = self.dataset(
-                self.root, img_size=self.config.input_size,image_set = "val"
+                self.root, img_size=self.config.input_size, image_set="val"
             )
 
     def train_dataloader(self):
