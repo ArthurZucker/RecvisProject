@@ -16,22 +16,24 @@ class BaseTrainer:
 
     def run(self):
 
-        if self.config.tune_lr:
-            trainer = pl.Trainer(
-                logger=self.wb_run,
-                gpus=self.config.gpu,
-                auto_lr_find=True,
-                accelerator="auto",
-                default_root_dir=self.wb_run.save_dir
-            )
-            trainer.logger = self.wb_run
-            trainer.tune(self.model, datamodule=self.datamodule)
+        
 
         if self.config.tune_batch_size:
             trainer = pl.Trainer(
                 logger=self.wb_run,
                 gpus=self.config.gpu,
                 auto_scale_batch_size="power",
+                accelerator="auto",
+                default_root_dir=self.wb_run.save_dir
+            )
+            trainer.logger = self.wb_run
+            trainer.tune(self.model, datamodule=self.datamodule)
+            
+        if self.config.tune_lr:
+            trainer = pl.Trainer(
+                logger=self.wb_run,
+                gpus=self.config.gpu,
+                auto_lr_find=True,
                 accelerator="auto",
                 default_root_dir=self.wb_run.save_dir
             )

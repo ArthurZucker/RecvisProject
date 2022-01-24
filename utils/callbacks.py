@@ -230,9 +230,7 @@ class LogBarlowCCMatrixCallback(Callback):
         plt.title(f"Cross correlation matrix")
         ax.set_axis_off()
         ax.set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
-        ax.margins(x=0,y=0)
-        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, 
-            hspace = 0, wspace = 0)
+        plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, hspace = 0, wspace = 0)
         wandb.log({f"cc_Matrix/{name}": (wandb.Image(plt))})
         plt.close()
         self.cc_M = None
@@ -373,7 +371,8 @@ class LogBarlowPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("train", batch, min(5,len(batch)), outputs)
+            self.log_images("train", batch, min(8,len(batch)), outputs)
+
 
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
@@ -385,7 +384,8 @@ class LogBarlowPredictionsCallback(Callback):
 
         # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
-            self.log_images("val", batch,  min(5,len(batch)), outputs)
+            self.log_images("val", batch,  min(8,len(batch)), outputs)
+
 
     def log_images(self, name, batch, n, outputs):
 
@@ -588,7 +588,7 @@ class LogAttentionMapsCallback(Callback):
         named_layers = dict(pl_module.named_modules())
         attend_layers = []
         for name in named_layers:
-            if ".attend" in name:
+            if "attn.attn_drop" in name: #if ".attend" in name:
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(
