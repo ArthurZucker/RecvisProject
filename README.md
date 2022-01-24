@@ -2,18 +2,28 @@
 # Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation  : 
 Authors : Clement Apavou & Arthur 
 
-<p align="center">
-  <img alt="dino attention map with patch size 8" src="/assets/attention_patch8_dino.png" width="45%" title="Dino pretrained attention maps with a patch size of 8. Credits to Apavou & Zucker" >
-&nbsp; &nbsp; &nbsp; &nbsp;
-  <img alt="dino attention map with patch size 16" src="/assets/attention_patch16_dino.png" width="45%" title="Dino pretrained attention maps with a patch size of 16. Credits to Apavou & Zucker" >
-</p>
+<style>
+td, th {
+   border: none!important;
+}
+</style>
+
+|<img alt="dino attention map with patch size 8" src="/assets/attention_patch8_dino.png" width="45%" title="Dino pretrained attention maps with a patch size of 8. Credits to Apavou & Zucker" >| <img alt="dino attention map with patch size 16" src="/assets/attention_patch16_dino.png" width="45%" title="Dino pretrained attention maps with a patch size of 16. Credits to Apavou & Zucker" >|
+|---|---|
+|Dino pretrained attention maps with a patch size of 8. Credits to Apavou & Zucker | Dino pretrained attention maps with a patch size of 16. Credits to Apavou & Zucker |
 
 
 <p align="center">
   <img alt="effective receptive fields" src="/assets/erf.png" width="100%" title="Effective receptive fields of 8 layers of the ddeplabv3 architecture. Credits to Apavou & Zucker" >
 </p>
 <p align="center">
-  <img alt="Cross coorrelation matrix" src="assets/brisk-valley-111-ccM.png" width="45%" title="Cross correlation matrix obtained by training a ViT with Barlow Twins, initialized with DINO weightds. Refer to brisk-valley-111 experiment. Credits to Apavou & Zucker" >
+  "Effective receptive fields of 8 layers of the ddeplabv3 architecture. Credits to Apavou & Zucker"
+</p>
+<p align="center">
+  <img alt="Cross coorrelation matrix" src="assets/brisk-valley-111-ccM.png" width="45%" title="Cross correlation matrix obtained by training a ViT with Barlow Twins, initialized with DINO weightds. Refer to brisk-valley-111 experiment. Credits to Apavou & Zucker" > 
+</p>
+<p align="center">
+  Cross correlation matrix obtained by training a ViT with Barlow Twins, initialized with DINO weightds. Refer to brisk-valley-111 experiment. Credits to Apavou & Zucker
 </p>
 ## Abstract 
 
