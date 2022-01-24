@@ -1,5 +1,5 @@
 
-# Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation  : 
+# Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation 
 Authors : Clement Apavou & Arthur Zucker
 
 
@@ -38,7 +38,7 @@ You can find the complete project report in the repository or click [here](FPR_A
 
 # Experiments
 
-Ours experiments are available on wanbd [here](https://wandb.ai/recvis/sem-seg?workspace=user-clementapa).
+Ours experiments are available on wandb [here](https://wandb.ai/recvis/sem-seg?workspace=user-clementapa).
 
 # Setting up the environment 
 
@@ -52,7 +52,7 @@ pip install -r requirements.txt
 Refer to the [Barlow Twins Wiki](
 https://github.com/ArthurZucker/RecvisProject/wiki/Barlow-Twins-Training) and the [Semantic Segmentation Wiki ]() for more details
 
-# Contributions : 
+# Contributions 
 
 We implemented the global structure and the Barlow Twins method from scratch in PyTorch Lightning, our visualization of the attention maps is inspired from the official [DINO repository](https://github.com/facebookresearch/dino). Our `trainer` module takes care of initializing the lightning module and the datamodule, both of which can be chosen in our configuration file (`config/hparams.py`). *simple parsing* package extracts and parses the configuration file and allows us to switch between the two tasks: Barlow Twins training and Semantic Segmentation fine-tuning. We used the very practical Weights \& Biases (wandb) library to log all of our experiments.
 
@@ -62,7 +62,7 @@ Examples are shown  above. Both rely on pytorch `hooks` and provide more interpr
 
 We also logged the evolution of the cross-correlation matrix which is fare more interpretable than the value of the loss. As various training showed, a decreasing loss can have a cross-correlation matrix far from the identity. We used a heatmap to represent the empirical cross correlation matrix were values close to 1 are red and values close to zeros are cyan blue. 
 
-# Acknowledgments: 
+# Acknowledgments
 
 Our implementation relies on `pytorch lightning`, and thus requires its installation. We also use the `rich` library for nicer progress bars and the very handy `wandb` library to visualize our experiments.  
 
