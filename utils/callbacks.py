@@ -8,38 +8,31 @@ import wandb
 from pytorch_lightning.callbacks import Callback
 from torch.autograd import grad
 
-from utils.constant import PASCAL_VOC_classes
+from utils.constant import PASCAL_VOC_CLASSES, MEAN, STD 
 from utils.hooks import get_attention, get_activation
 from utils.metrics_module import MetricsModule
 
 class LogTransformedImages(Callback):
-    def __init__(self,log_img_freq) -> None:
+    def __init__(self, log_img_freq, log_img_nb) -> None:
         super().__init__()
         self.log_img_freq = log_img_freq
-    
+        self.log_img_nb = log_img_nb
+
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the validation batch ends."""
 
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
-            self.log_images("validation", batch, 5, outputs)
+            self.log_images("validation", batch, self.log_img_nb, outputs)
 
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
 
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
-            self.log_images("train", batch, 5, outputs)
+            self.log_images("train", batch, self.log_img_nb, outputs)
 
     def log_images(self, name, batch, n, outputs):
 
@@ -49,13 +42,10 @@ class LogTransformedImages(Callback):
 
         samples = []
 
-        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
-        std = np.array([0.229, 0.224, 0.225])
-
         for i in range(images.shape[0]):
 
             bg_image = images[i].detach().numpy().transpose((1, 2, 0))
-            bg_image = std * bg_image + mean
+            bg_image = STD * bg_image + MEAN
             bg_image = np.clip(bg_image, 0, 1)
 
             samples.append(wandb.Image(bg_image,))
@@ -64,33 +54,26 @@ class LogTransformedImages(Callback):
         
 
 class LogSegmentationCallback(Callback):
-    def __init__(self, log_img_freq) -> None:
+    def __init__(self, log_img_freq, log_img_nb) -> None:
         super().__init__()
         self.log_img_freq = log_img_freq
-        
+        self.log_img_nb = log_img_nb
+
     def on_validation_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the validation batch ends."""
 
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
-            self.log_images("validation", batch, 5, outputs)
+            self.log_images("validation", batch, self.log_img_nb, outputs)
 
     def on_train_batch_end(
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
 
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.log_img_freq == 0:
-            self.log_images("train", batch, 5, outputs)
+            self.log_images("train", batch, self.log_img_nb, outputs)
 
     def log_images(self, name, batch, n, outputs):
 
@@ -105,13 +88,10 @@ class LogSegmentationCallback(Callback):
 
         samples = []
 
-        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
-        std = np.array([0.229, 0.224, 0.225])
-
         for i in range(images.shape[0]):
 
             bg_image = images[i].detach().numpy().transpose((1, 2, 0))
-            bg_image = std * bg_image + mean
+            bg_image = STD * bg_image + MEAN
             bg_image = np.clip(bg_image, 0, 1)
 
             prediction_mask = predictions[i]
@@ -123,11 +103,11 @@ class LogSegmentationCallback(Callback):
                     masks={
                         "prediction": {
                             "mask_data": prediction_mask,
-                            "class_labels": PASCAL_VOC_classes,
+                            "class_labels": PASCAL_VOC_CLASSES,
                         },
                         "ground truth": {
                             "mask_data": true_mask,
-                            "class_labels": PASCAL_VOC_classes,
+                            "class_labels": PASCAL_VOC_CLASSES,
                         },
                     },
                 )
@@ -200,7 +180,7 @@ class LogBarlowCCMatrixCallback(Callback):
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
-        # Let's log 20 sample image predictions from first batch
+
         if self.cc_M is not None:
             self.cc_M += (pl_module.loss.cc_M - self.cc_M) / (batch_idx + 1)
         else:
@@ -214,7 +194,7 @@ class LogBarlowCCMatrixCallback(Callback):
         self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx
     ):
         """Called when the training batch ends."""
-        # Let's log 20 sample image predictions from first batch
+
         if self.cc_M is not None:
             self.cc_M += (pl_module.loss.cc_M - self.cc_M) / (batch_idx + 1)
         else:
@@ -366,10 +346,6 @@ class LogBarlowPredictionsCallback(Callback):
     ):
         """Called when the training batch ends."""
 
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
             self.log_images("train", batch, min(8,len(batch)), outputs)
 
@@ -379,10 +355,6 @@ class LogBarlowPredictionsCallback(Callback):
     ):
         """Called when the training batch ends."""
 
-        # `outputs` comes from `LightningModule.validation_step`
-        # which corresponds to our model predictions in this case
-
-        # Let's log 20 sample image predictions from first batch
         if batch_idx == 0 and pl_module.current_epoch % self.erf_freq == 0:
             self.log_images("val", batch,  min(8,len(batch)), outputs)
 
@@ -395,17 +367,15 @@ class LogBarlowPredictionsCallback(Callback):
 
         samples1 = []
         samples2 = []
-        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
-        std = np.array([0.229, 0.224, 0.225])
 
         for i in range(n):
 
             bg1 = image1[i].transpose((1, 2, 0))
-            bg1 = std * bg1 + mean
+            bg1 = STD * bg1 + MEAN
             bg1 = np.clip(bg1, 0, 1)
 
             bg2 = image2[i].transpose((1, 2, 0))
-            bg2 = std * bg2 + mean
+            bg2 = STD * bg2 + MEAN
             bg2 = np.clip(bg2, 0, 1)
 
             samples1.append(wandb.Image(bg1))
@@ -515,20 +485,19 @@ class LogAttentionMapsCallback(Callback):
 
         plt.ioff()
         fix, axs = plt.subplots(nrows=len(imgs), ncols=len(imgs[0]) + 1, squeeze=True)
-        mean = np.array([0.485, 0.456, 0.406])  # TODO this is not beautiful
-        std = np.array([0.229, 0.224, 0.225])
+
         for j, sample in enumerate(imgs):
             for i, head in enumerate(sample):
                 if i == 0:  # original crop
                     org = np.asarray(head).transpose(1, 2, 0)
-                    axs[j, 0].imshow(np.clip(mean * org + std, 0, 1))
+                    axs[j, 0].imshow(np.clip(MEAN * org + STD, 0, 1))
                 else:
                     img = head
                     img = F.to_pil_image(img)
                     axs[j, i].imshow(np.asarray(img))
                 axs[j, i].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
             org = np.asarray(sample[0]).transpose(1, 2, 0)
-            image = np.clip(mean * org + std, 0, 1)
+            image = np.clip(MEAN * org + STD, 0, 1)
             self.log_th_attention(
                 image, th_attention_map[j], axs[j, i + 1]
             )  # log the thresholded attention maps
@@ -588,7 +557,7 @@ class LogAttentionMapsCallback(Callback):
         named_layers = dict(pl_module.named_modules())
         attend_layers = []
         for name in named_layers:
-            if "attn.attn_drop" in name: #if ".attend" in name:
+            if "attn.attn_drop" in name or ".attend" in name:
                 attend_layers.append(named_layers[name])
         self.attention = []
         self.hooks.append(

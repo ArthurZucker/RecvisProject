@@ -1,11 +1,12 @@
-from torchvision.models.segmentation import deeplabv3_resnet50
-import torch.nn as nn
+import timm
 import torch
+import torch.nn as nn
+from einops.layers.torch import Rearrange
+from torchvision.models.segmentation import deeplabv3_resnet50
 from vit_pytorch import ViT
 from vit_pytorch.extractor import Extractor
+
 import models.heads as heads
-from einops.layers.torch import Rearrange
-import timm
 
 vit_dino_dict = {"vitsdino8": "vit_small_patch8_224_dino", "vitsdino16": "vit_small_patch16_224_dino",
                  "vitbdino8": "vit_base_patch8_224_dino", "vitbdino16": "vit_base_patch16_224_dino"}
@@ -16,16 +17,17 @@ class SemanticModel(nn.Module):
         super(SemanticModel, self).__init__()
         """
         backbone_pretrained : ImageNet, VOC, 
-        name_encoder : resnet50, vit, vitsdino8, vitsdino16, vitbdino8, vitbdino16
-        name_head : Linear, SETRnaive, SETRPUP, DeepLabHead
+        name_backbone : resnet50, vit, vitsdino8, vitsdino16, vitbdino8, vitbdino16
+        name_head : Linear, SETRnaive, SETRPUP
         """
         self.config = config
-        num_classes = self.config.encoder_param['n_classes']
-        self.name_encoder = config.backbone
-        self.name_head = config.head if hasattr(config, 'head') else None 
+        num_classes = self.config.head_params['n_classes']
 
-        if self.name_encoder == "resnet50":
-            if self.name_head is None :
+        self.name_backbone = config.backbone
+        self.name_head = config.head
+
+        if self.name_backbone == "resnet50":
+            if self.name_head is None:
                 # deeplabv3 deeplab head pretrain + resnet50 imagenet classification
                 self.net = deeplabv3_resnet50(
                     pretrained=False, num_classes=num_classes, pretrained_backbone=True)
@@ -36,69 +38,77 @@ class SemanticModel(nn.Module):
                 self.net.classifier = temp_net.classifier
             else:
                 self.net = deeplabv3_resnet50(
-                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes)
+                    pretrained=self.config.head_params['pretrained'], pretrained_backbone=self.config.backbone_params['pretrained'], num_classes=num_classes)
 
-                if hasattr(self.config, "weight_checkpoint_backbone"):
+                if self.config.checkpoint_backbone is not None:
                     pth = torch.load(
-                        self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
-                    if "resnet50.pth" not in self.config.weight_checkpoint_backbone:
+                        self.config.checkpoint_backbone, map_location=torch.device('cpu'))
+                    if "resnet50.pth" not in self.config.checkpoint_backbone:
                         pth = {k.replace('backbone.', ''): v for k,
                                v in pth['state_dict'].items()}
                     self.net.backbone.load_state_dict(pth, strict=False)
+                    print(
+                        f"Loaded checkpoints from {self.config.checkpoint_backbone}")
 
-            # Freeze backbone weights
-            if self.config.encoder_param['freeze']:
-                for param in self.net.backbone.parameters():
-                    param.requires_grad = False
-
-        elif self.name_encoder == "vit":  # @TODO get_net using backbone_parameters
+        elif self.name_backbone == "vit_pytorch":
             self.vit = ViT(**self.config.backbone_parameters)
 
-            if hasattr(self.config, "weight_checkpoint_backbone"):
+            if self.config.checkpoint_backbone is not None:
                 pth = torch.load(
-                    self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                    self.config.checkpoint_backbone, map_location=torch.device('cpu'))
                 state_dict = {
                     k.replace('backbone.', ''): v for k, v in pth['state_dict'].items()}
                 self.vit.load_state_dict(state_dict, strict=False)
+                print(
+                    f"Loaded checkpoints from {self.config.checkpoint_backbone}")
 
-            # for name, param in self.vit.named_parameters(): print(f"{name} : {param}")
             self.vit = Extractor(self.vit, return_embeddings_only=True)
 
-            if self.config.encoder_param['pretrained']:
-                net = deeplabv3_resnet50(
-                    pretrained=self.config.encoder_param['pretrained'], num_classes=num_classes)
-                self.classifier = net.classifier
+            input_size = self.config.backbone_parameters['image_size']
+            embedding_dim = self.config.backbone_parameters['dim']
+            self.patch_size = self.config.backbone_parameters['patch_size']
 
-            # Freeze backbone weights
-            if self.config.encoder_param['freeze']:
-                for param in self.vit.parameters():
-                    param.requires_grad = False
-
-        elif self.name_encoder in vit_dino_dict:  # @TODO get_net using backbone_parameters
+        elif self.name_backbone in vit_dino_dict:
 
             self.vit = timm.create_model(
-                vit_dino_dict[self.name_encoder], pretrained=self.config.encoder_param['pretrained'])
+                vit_dino_dict[self.name_backbone], pretrained=self.config.backbone_params['pretrained'])
 
             self.vit.head = nn.Identity()
 
-            if hasattr(self.config, "weight_checkpoint_backbone"):
+            if self.config.checkpoint_backbone is not None:
                 pth = torch.load(
-                    self.config.weight_checkpoint_backbone, map_location=torch.device('cpu'))
+                    self.config.checkpoint_backbone, map_location=torch.device('cpu'))
                 state_dict = {
                     k.replace('backbone.', ''): v for k, v in pth['state_dict'].items()}
                 self.vit.load_state_dict(state_dict, strict=False)
+                print(
+                    f"Loaded checkpoints from {self.config.checkpoint_backbone}")
 
-            if "vits" in self.name_encoder:
+            input_size = 224
+            if "vits" in self.name_backbone:
                 embedding_dim = 384
             else:
                 embedding_dim = 768
-            if "8" in self.name_encoder:
+            if "8" in self.name_backbone:
                 self.patch_size = 8
             else:
                 self.patch_size = 16
 
-            input_size = 224
+        else:
+            raise ValueError(
+                f'Backbone {self.name_backbone} not supported !')
 
+        # Freeze backbone weights
+        if self.config.backbone_params['freeze']:
+            if "vit" in self.name_backbone:
+                for param in self.vit.parameters():
+                    param.requires_grad = False
+            else:
+                for param in self.net.backbone.parameters():
+                    param.requires_grad = False
+
+        # Choose decoder head for ViT
+        if "vit" in self.name_backbone:
             if self.name_head == "Linear":
                 self.head = nn.Sequential(
                     nn.Linear(embedding_dim, self.patch_size *
@@ -116,23 +126,17 @@ class SemanticModel(nn.Module):
                     embedding_dim=embedding_dim, patch_dim=self.patch_size, img_dim=input_size, num_classes=num_classes)
 
             else:
-                raise ValueError(f'Head {self.name_head} not supported')
-
-            # Freeze backbone weights
-            if self.config.encoder_param['freeze']:
-                for param in self.vit.parameters():
-                    param.requires_grad = False
-        else:
-            raise ValueError(
-                f'option encoder {self.name_encoder} does not exist !')
+                raise ValueError(f'Head {self.name_head} not supported !')
 
     def forward(self, x):
-        
-        if self.name_encoder == "resnet50" or self.name_encoder is None:
+
+        if self.name_backbone == "resnet50":
             dic = self.net(x)
             return dic['out']
 
-        elif "vit" in self.name_encoder:
+        elif "vit" in self.name_backbone:
             embeddings = self.vit(x)
+            if self.name_backbone == "vit_pytorch":
+                embeddings = embeddings[:, 1:]  # remove cls token
             x = self.head(embeddings)
             return x

@@ -1,5 +1,5 @@
 from utils.agent_utils import import_class
-from utils.constant import PASCAL_VOC_classes
+from utils.constant import PASCAL_VOC_CLASSES
 import wandb
 import numpy as np
 import torch
@@ -53,13 +53,13 @@ class MetricsModule():
             metric = m.compute()
 
             if k == "confusionmatrix":
-                class_names = [v for k, v in PASCAL_VOC_classes.items()]
+                class_names = [v for k, v in PASCAL_VOC_CLASSES.items()]
                 class_names.remove("void")
                 wandb.log({name + "confusionmatrix": wandb.plots.HeatMap(class_names,
                           class_names, metric.cpu(), show_text=True)})
             else:
                 if metric.numel() != 1:
-                    data = [[PASCAL_VOC_classes[idx], val]
+                    data = [[PASCAL_VOC_CLASSES[idx], val]
                             for idx, val in enumerate(metric)]
                     table = wandb.Table(columns=["label", "value"], data=data)
                     wandb.log({name + k: table})

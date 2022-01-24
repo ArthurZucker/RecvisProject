@@ -30,7 +30,7 @@ class trainer(BaseTrainer):
             accelerator="auto",
             check_val_every_n_epoch=self.config.val_freq,
             fast_dev_run=self.config.dev_run,
-            accumulate_grad_batches=self.config.accumulate_size,
+            accumulate_grad_batches=self.config.accumulate_batch,
             log_every_n_steps=1,
             # default_root_dir=f"{wandb.run.name}",
         )
@@ -46,11 +46,11 @@ class trainer(BaseTrainer):
 
         if "Barlo" in self.config.arch:
             callbacks += [
-                LogBarlowPredictionsCallback(self.callback_param.log_pred_freq), LogBarlowCCMatrixCallback(
+                LogBarlowPredictionsCallback(self.callback_param.log_pred_freq, self.callback_param.log_pred_nb), LogBarlowCCMatrixCallback(
                     self.callback_param.log_ccM_freq),
             ]
 
-        if "vit" in self.encoder :
+        if "vit" in self.encoder:
             callbacks += [
                 LogAttentionMapsCallback(
                     self.callback_param.attention_threshold,
@@ -67,21 +67,20 @@ class trainer(BaseTrainer):
                 #     self.batch_size,
                 # ),
                 LogMetricsCallback(self.metric_param),
-                LogSegmentationCallback(self.callback_param.log_pred_freq),
-                EarlyStopping(monitor="val/loss", patience=50, mode="min", verbose=True),
+                LogSegmentationCallback(
+                    self.callback_param.log_pred_freq, self.callback_param.log_pred_nb),
+                EarlyStopping(**self.callback_param.early_stopping_params),
             ]
             monitor = "val/iou"
             mode = "max"
         else:
             monitor = "val/loss"
             mode = "min"
+
         wandb.define_metric(monitor, summary=mode)
-        if "Dino" in self.config.arch:
-            save_top_k = -1
-            every_n_epochs = 20
-        else:
-            save_top_k = 5
-            every_n_epochs = 1
+
+        save_top_k = 5
+        every_n_epochs = 1
 
         if self.config.test:  # don't need to save if we are just testing
             save_top_k = 0
@@ -91,7 +90,7 @@ class trainer(BaseTrainer):
                 monitor=monitor,
                 mode=mode,
                 verbose=True,
-                dirpath= f"{self.config.weights_path}/{str(wandb.run.name)}",
+                dirpath=f"{self.config.weights_path}/{str(wandb.run.name)}",
                 save_top_k=save_top_k,
                 every_n_epochs=every_n_epochs,
             )

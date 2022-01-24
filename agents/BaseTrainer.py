@@ -1,12 +1,12 @@
 import pytorch_lightning as pl
-from utils.agent_utils import get_datamodule, get_net, get_lightning_module
+from utils.agent_utils import get_datamodule, get_lightning_module
 
 
 class BaseTrainer:
     def __init__(self, config, run) -> None:
         self.config = config.hparams
         self.wb_run = run
-        self.model = get_lightning_module(config.hparams.arch,config)
+        self.model = get_lightning_module(config.hparams.arch, config)
         self.encoder = config.network_param.backbone
 
         self.wb_run.watch(self.model, log_graph=False)
