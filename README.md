@@ -65,4 +65,4 @@ https://github.com/facebookresearch/barlowtwins
 - [ ] Add AMP level : `trainer = Trainer(amp_level='O2')`
 - [ ] Add SWA : `stochastic_weight_avg=True`
 
-In vision transformer timm return all tokens in the forward (not only the cls token) (for segmentation)
+In `model/fix_tim/vision_transformer` the vision transformer returns every token in the forward pass(while only the cls token is usually returned) (for segmentation)
