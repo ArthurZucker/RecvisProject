@@ -24,20 +24,21 @@ class Hparams:
 
 
     agent       : str           = "trainer"             # trainer agent to use for training
-    arch        : str           = "BarlowTwins"        # architecture to use
-    datamodule  : str           = "BarlowTwins"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
-    dataset     : Optional[str] = "BarlowTwinsDataset"     # dataset, use <Dataset>Eval for FT
+    arch        : str           = "Segmentation"        # architecture to use
+    datamodule  : str           = "Segmentation"        # lighting datamodule @TODO will soon be deleted since it is the same, get datamodule will use arch
+    dataset     : Optional[str] = "VOCSegmentation"     # dataset, use <Dataset>Eval for FT
     weights_path: str           = osp.join(os.getcwd(), "weights") # path to save weights
     asset_path  : str           = osp.join(os.getcwd(), "assets")  # path to download datasets
         
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     tune_batch_size: bool          = False  # tune the model on first run
-    gpu            : int           = 1      # number or gpu
+    gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 512//64    # gradient accumulation batch size
-    max_epochs     : int           = 1000    # maximum number of epochs
+    accumulate_size: int           = 8    # gradient accumulation batch size
+    max_epochs     : int           = 800    # maximum number of epochs
+
     dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
 
 
@@ -48,8 +49,9 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    input_size        : tuple       = (256, 256)   # image_size
-    batch_size        : int         = 32        # batch_size
+    input_size        : tuple       = (224, 224)   # image_size
+    batch_size        : int         = 8        # batch_size
+
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
     # @TODO the numbner of classes should be contained in the dataset and extracted automatically for the network?
@@ -59,17 +61,16 @@ class DatasetParams:
 class CallBackParams:
     """Parameters to use for the logging callbacks
     """
-    log_erf_freq       : int   = 10     # effective receptive fields5
+    log_erf_freq       : int   = 1      # effective receptive fields
     nb_erf             : int   = 6
-    log_att_freq       : int   = 1     # attention maps
-    log_pred_freq      : int   = 1     # log_pred_freq
+    log_att_freq       : int   = 1      # attention maps
+    log_pred_freq      : int   = 10     # log_pred_freq
     log_ccM_freq       : int   = 1     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
-    nb_attention       : int   = 5      # nb of images for which the attention will be visualised
+    nb_attention       : int   = 6      # nb of images for which the attention will be visualised
 
 ################################## Self-supervised learning parameters ##################################
 
-@dataclass
 class BarlowConfig:
     """Hyperparameters specific to Barlow Twin Model.
     Used when the `arch` option is set to "Barlow" in the hparams
@@ -77,12 +78,14 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit"
+    backbone              : str           = "vit_dino"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
-    lmbda                 : float         = 5e-3
-    bt_proj_dim           : int           = 1024      # number of channels to use for projection
+    lmbda                 : float         = 5e-2
+    bt_proj_dim           : int           = 512      # number of channels to use for projection
     pretrained_encoder    : bool          = False     # use a pretrained model
     weight_checkpoint     : Optional[str] = None
+    # weight_checkpoint     : Optional[str] = osp.join("weights", "leafy-water_epoch=394-step=9084.ckpt")
+    # weight_checkpoint     : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/leafy-water_epoch394-step9084.ckpt")
     backbone_parameters   : Optional[str] = None
 
 @dataclass
@@ -92,10 +95,10 @@ class OptimizerParams_SSL: # @TODO change name
     optimizer           : str            = "AdamW"  # Optimizer (adam, rmsprop)
     lr                  : float          = 3e-4     # learning rate,                             default = 0.0002
     lr_sched_type       : str            = "step"   # Learning rate scheduler type.
-    min_lr              : float          = 5e-6     # minimum lr for the scheduler 5e-6 for VIT works great
+    min_lr              : float          = 2.5e-4     # minimum lr for the scheduler 5e-6 for VIT works great
     betas               : List[float]    = list_field(0.9, 0.999)  # beta1 for adam. default = (0.9, 0.999)
-    warmup_epochs       : int            = 10
-    max_epochs          : int            = 400      # @TODO duplicate of dataparam
+    warmup_epochs       : int            = 5
+    max_epochs          : int            = 1000      # @TODO duplicate of dataparam
     use_scheduler       : bool           = True
     scheduler_parameters: Dict[str, Any] = dict_field(
         dict(
@@ -125,6 +128,25 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
+    backbone          : str           = "vitsdino16"
+    head                : str          = "SETRnaive"
+    encoder_param       : Dict[str, Any] = dict_field(
+        dict(
+            n_classes=21,
+            freeze=True,
+            pretrained=False,
+        )
+    )
+    head_param : Dict[str, Any] = dict_field(
+        dict(
+            n_classes=21,
+            pretrained=False,
+        )
+    )
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "rare_valley_epoch=330-step=7612.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/rare_valley_epoch330-step7612.ckpt")
+    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "barlow_twins/resnet50.pth")
+    backbone_parameters: Dict[str, Any] = None
     backbone            : str            = "vit"
     head                : str            = "Baseline"
     head_params         : Optional[str]  = None
@@ -146,16 +168,16 @@ class OptimizerParams_Segmentation:
 
     optimizer           : str            = "AdamW" 
     lr                  : float          = 5e-3
-    scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
-    use_scheduler : bool = True
-    
-    scheduler_parameters: Dict[str, Any] = dict_field(
-        dict(
-            patience = 400,
-            mode = "min",
-            threshold = 0.1
-        )
-    )
+    max_epochs          : int            = 400      
+    use_scheduler       : bool           = True
+    # scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
+    # scheduler_parameters: Dict[str, Any] = dict_field(
+    #     dict(
+    #         patience = 10,
+    #         mode = "min",
+    #         threshold = 0.1
+    #     )
+    # )
 
 
 @dataclass
@@ -181,7 +203,6 @@ class Parameters:
     metric_param  : MetricsParams   = MetricsParams()
     loss_param    : LossParams      = LossParams()
     
-          # name of the wandb entity, here our team
     
     
     
@@ -206,19 +227,26 @@ class Parameters:
             self.hparams.seed_everything = random.randint(1, 10000)
             
             
-        if self.network_param.backbone == "vit":
+        if self.network_param.backbone=="vit" :
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = 32 ,#self.data_param.input_size[0]//8,
+                patch_size      = self.data_param.input_size[0]//16,
                 num_classes     = 0,
                 dim             = 768,
-                depth           = 4,
+                depth           = 8,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
                 emb_dropout     = 0.1,
             )
         
+        if self.network_param.backbone=="vit_dino" :
+            self.network_param.backbone_parameters = dict(
+                image_size      = self.data_param.input_size[0],
+                patch_size      = 16,
+                dim             = 1000, # 384 for vit16 small, 1000 for deit small
+                name = "deit_tiny_patch16_224"
+            )
         
         
         print("Random Seed: ", self.hparams.seed_everything)

@@ -47,3 +47,5 @@ We have to find various ways of combining the different attention maps and heads
 https://github.com/bytedance/ibot/blob/main/analysis/attention_map/visualize_attention.py 
 
 
+
+In `model/fix_tim/vision_transformer` the vision transformer returns every token in the forward pass(while only the cls token is usually returned) (for segmentation)
