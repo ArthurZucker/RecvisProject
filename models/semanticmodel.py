@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch
 from vit_pytorch import ViT
 from vit_pytorch.extractor import Extractor
-import models.decode_heads as decoder
+import models.heads as heads
 from einops.layers.torch import Rearrange
 import timm
 
@@ -107,25 +107,16 @@ class SemanticModel(nn.Module):
                               w=(input_size // self.patch_size), p1=self.patch_size, p2=self.patch_size, c=num_classes),
                 )
 
-            elif self.name_head == "DeepLabHead":
-                self.head = decoder.MyDeepLabHead(
-                    embedding_dim=embedding_dim, patch_dim=self.patch_size, img_dim=input_size, num_classes=num_classes)
-
             elif self.name_head == "SETRPUP":
-                self.head = decoder.SETR_PUP(
+                self.head = heads.SETR_PUP(
                     embedding_dim=embedding_dim, patch_dim=self.patch_size, img_dim=input_size, num_classes=num_classes)
 
             elif self.name_head == "SETRnaive":
-                self.head = decoder.SETR_Naive(
+                self.head = heads.SETR_Naive(
                     embedding_dim=embedding_dim, patch_dim=self.patch_size, img_dim=input_size, num_classes=num_classes)
 
             else:
                 raise ValueError(f'Head {self.name_head} not supported')
-
-            # self.head = decoder.SETR_MLA(
-            #     embedding_dim=384, patch_dim=8, img_dim=224, num_classes=num_classes) # doses'nt work
-            # self.head = decoder.MLAHead(mla_channels=256, mlahead_channels=128, norm_cfg=dict(
-            #     type='SyncBN', requires_grad=True)) # doses'nt work
 
             # Freeze backbone weights
             if self.config.encoder_param['freeze']:
