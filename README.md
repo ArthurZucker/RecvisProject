@@ -1,5 +1,6 @@
-# Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation  : 
 
+# Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation  : 
+Authors : Clement Apavou & Arthur Zucker
 ## Abstract 
 
 Self-supervised learning using transformers has shown interesting emerging properties and learn rich embeddings without annotations. Most recently, Barlow Twins proposed an elegant self-supervised learning technique using a ResNet-50 backbone which achieved competitive results when fine-tuned on downstream tasks. In this paper, we propose to study Vision Transformers trained using the Barlow Twins self-supervised method, and compare the results with. We demonstrate the effectiveness of the Barlow Twins method by showing that networks pretrained on the small PASCAL VOC 2012 dataset are able to generalize well while requiring less training and computing power than the DINO method. Finally we propose to leverage self-supervised vision transformers and their semantically rich attention maps for semantic segmentation tasks.
@@ -16,7 +17,8 @@ pip install -r requirements.txt
 
 # Training 
 
-Refer to the [Barlow Twins Wiki]( ) and the [Semantic Segmentation Wiki ]() for more details
+Refer to the [Barlow Twins Wiki](
+https://github.com/ArthurZucker/RecvisProject/wiki/Barlow-Twins-Training) and the [Semantic Segmentation Wiki ]() for more details
 
 # Contributions : 
 
