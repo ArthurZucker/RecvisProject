@@ -1,13 +1,4 @@
 import importlib
-from easydict import EasyDict
-
-def get_head(arch, network_param):
-    """
-    Get Network Architecture based on arguments provided
-    """
-    mod = importlib.import_module(f"models.heads.{arch}")
-    net = getattr(mod, arch)
-    return net(network_param)
 
 def get_net(arch, network_param):
     """

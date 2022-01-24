@@ -1,9 +1,11 @@
 '''
 mostly of the code was taken in https://github.com/gupta-abhay/setr-pytorch/blob/main/setr/SETR.py
 '''
-import torch.nn as nn 
+from mmcv.cnn import build_norm_layer
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
+
 
 class IntermediateSequential(nn.Sequential):
     def __init__(self, *args, return_intermediate=True):
@@ -59,7 +61,7 @@ class SETR_Naive(nn.Module):
         x = self.conv2(x)
         x = self.upsample(x)
         return x
-    
+
     def _reshape_output(self, x):
         x = x.view(
             x.size(0),
@@ -69,14 +71,13 @@ class SETR_Naive(nn.Module):
         )
         x = x.permute(0, 3, 1, 2).contiguous()
         return x
-    
+
     def _get_padding(self, padding_type, kernel_size):
         assert padding_type in ['SAME', 'VALID']
         if padding_type == 'SAME':
             _list = [(k - 1) // 2 for k in kernel_size]
             return tuple(_list)
         return tuple(0 for _ in kernel_size)
-    
 
 
 class SETR_PUP(nn.Module):
@@ -108,7 +109,7 @@ class SETR_PUP(nn.Module):
         for i, (in_channel, out_channel) in enumerate(
             zip(in_channels, out_channels)
         ):
-            if self.patch_dim == 8 and i==1:
+            if self.patch_dim == 8 and i == 1:
                 continue
             else:
                 modules.append(
@@ -126,12 +127,11 @@ class SETR_PUP(nn.Module):
             *modules, return_intermediate=False
         )
 
-
     def forward(self, x):
         x = self._reshape_output(x)
         x = self.decode_net(x)
         return x
-    
+
     def _reshape_output(self, x):
         x = x.view(
             x.size(0),
@@ -141,7 +141,7 @@ class SETR_PUP(nn.Module):
         )
         x = x.permute(0, 3, 1, 2).contiguous()
         return x
-    
+
     def _get_padding(self, padding_type, kernel_size):
         assert padding_type in ['SAME', 'VALID']
         if padding_type == 'SAME':
@@ -262,7 +262,7 @@ class SETR_MLA(nn.Module):
         )
         return model_in, model_intmd, model_out
     # fmt: on
-    
+
     def _reshape_output(self, x):
         x = x.view(
             x.size(0),
@@ -272,7 +272,7 @@ class SETR_MLA(nn.Module):
         )
         x = x.permute(0, 3, 1, 2).contiguous()
         return x
-    
+
     def _get_padding(self, padding_type, kernel_size):
         assert padding_type in ['SAME', 'VALID']
         if padding_type == 'SAME':
@@ -280,13 +280,12 @@ class SETR_MLA(nn.Module):
             return tuple(_list)
         return tuple(0 for _ in kernel_size)
 
-from mmcv.cnn import build_norm_layer
-
 
 class MLAHead(nn.Module):
     '''
     https://github.com/fudan-zvg/SETR/blob/main/mmseg/models/decode_heads/vit_mla_head.py
     '''
+
     def __init__(self, mla_channels=256, mlahead_channels=128, norm_cfg=None):
         super(MLAHead, self).__init__()
         self.head2 = nn.Sequential(nn.Conv2d(mla_channels, mlahead_channels, 3, padding=1, bias=False),

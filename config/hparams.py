@@ -36,10 +36,10 @@ class Hparams:
     gpu            : int           = 0      # number or gpu
     precision      : int           = 32     # precision
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 8    # gradient accumulation batch size
+    accumulate_batch: int           = 8    # gradient accumulation batch size
     max_epochs     : int           = 800    # maximum number of epochs
 
-    dev_run        : bool          = False  # developpment mode, only run 1 batch of train val and test
+    dev_run        : bool          = True  # developpment mode, only run 1 batch of train val and test
 
 
 @dataclass
@@ -50,7 +50,7 @@ class DatasetParams:
     
     num_workers       : int         = 20         # number of workers for dataloadersint
     input_size        : tuple       = (224, 224)   # image_size
-    batch_size        : int         = 8        # batch_size
+    batch_size        : int         = 6        # batch_size
 
     asset_path        : str         = osp.join(os.getcwd(), "assets")  # path to download the dataset
     root_dataset      : Optional[str] = None
@@ -65,10 +65,18 @@ class CallBackParams:
     nb_erf             : int   = 6
     log_att_freq       : int   = 1      # attention maps
     log_pred_freq      : int   = 10     # log_pred_freq
+    log_pred_nb         : int  = 5
     log_ccM_freq       : int   = 1     # log cc_M matrix frequency
     attention_threshold: float = 0.6    # Logging attention threshold for head fusion
     nb_attention       : int   = 6      # nb of images for which the attention will be visualised
-
+    early_stopping_params     : Dict[str, Any] = dict_field(
+        dict(
+            monitor="val/loss", 
+            patience=50,
+            mode="min",
+            verbose=True
+        )
+    )
 ################################## Self-supervised learning parameters ##################################
 
 class BarlowConfig:
@@ -78,7 +86,7 @@ class BarlowConfig:
     
     # lambda coefficient used to scale the scale of the redundancy loss
     # so it doesn't overwhelm the invariance loss
-    backbone              : str           = "vit_dino"
+    backbone              : str           = "vit_timm"
     nb_proj_layers        : int           = 3         # nb projection layers, defaults is 3 should not move
     lmbda                 : float         = 5e-2
     bt_proj_dim           : int           = 512      # number of channels to use for projection
@@ -128,31 +136,39 @@ class SegmentationConfig:
     """Hyperparameters specific to the Segmentation Model.
     Used when the `arch` option is set to "Segmentation" in the hparams
     """
-    backbone          : str           = "vitsdino16"
-    head                : str          = "SETRnaive"
-    encoder_param       : Dict[str, Any] = dict_field(
+    # Deep Lab v3 model with resnet 50 (deeplabv3 or None)
+    # backbone            : str          = "resnet50"
+    # backbone_params      : Dict[str, Any] = dict_field(
+    #     dict(
+    #         freeze=True,
+    #         pretrained=True,
+    #     )
+    # )
+    # head                : str          = "deeplab"
+    # head_params         : Dict[str, Any] = dict_field(
+    #     dict(
+    #         n_classes=21,
+    #         pretrained=True
+    #     )
+    # )
+    # ViT + heads (SETR PUP, SETR naive or Linear)
+    # backbones available : vit_pytorch, vit, vitsdino8, vitsdino16, vitbdino8, vitbdino16
+    backbone            : str          = "vit_pytorch"
+    backbone_params      : Dict[str, Any] = dict_field(
         dict(
-            n_classes=21,
             freeze=True,
-            pretrained=False,
+            pretrained=True,
         )
     )
-    head_param : Dict[str, Any] = dict_field(
+    # heads available : Linear, SETRnaive, SETRPUP
+    head                : str          = "SETRPUP"
+    head_params         : Dict[str, Any] = dict_field(
         dict(
             n_classes=21,
-            pretrained=False,
         )
     )
-    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "rare_valley_epoch=330-step=7612.ckpt")
-    # weight_checkpoint_backbone : Optional[str] = osp.join("/kaggle/input/", "weights-barlow-twins/rare_valley_epoch330-step7612.ckpt")
-    # weight_checkpoint_backbone : Optional[str] = osp.join("weights", "barlow_twins/resnet50.pth")
-    backbone_parameters: Dict[str, Any] = None
-    backbone            : str            = "vit"
-    head                : str            = "Baseline"
-    head_params         : Optional[str]  = None
-    decoder_hidden_size : int            = 1024
-    backbone_checkpoint : Optional[str]  = osp.join(os.getcwd(),"weights/light-rain-17/epoch=381-step=2291.ckpt")
-    # backbone_checkpoint : Optional[str]  = osp.join("/kaggle/input/","weights/epoch381-step2291.ckpt")
+    checkpoint_backbone : Optional[str] = None
+    # checkpoint_backbone : Optional[str] = osp.join("weights", "rare_valley_epoch=330-step=7612.ckpt")
 
 
 @dataclass
@@ -170,14 +186,6 @@ class OptimizerParams_Segmentation:
     lr                  : float          = 5e-3
     max_epochs          : int            = 400      
     use_scheduler       : bool           = True
-    # scheduler : str = "torch.optim.lr_scheduler.ReduceLROnPlateau"
-    # scheduler_parameters: Dict[str, Any] = dict_field(
-    #     dict(
-    #         patience = 10,
-    #         mode = "min",
-    #         threshold = 0.1
-    #     )
-    # )
 
 
 @dataclass
@@ -202,11 +210,7 @@ class Parameters:
     callback_param: CallBackParams  = CallBackParams()
     metric_param  : MetricsParams   = MetricsParams()
     loss_param    : LossParams      = LossParams()
-    
-    
-    
-    
-    
+
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
@@ -227,20 +231,20 @@ class Parameters:
             self.hparams.seed_everything = random.randint(1, 10000)
             
             
-        if self.network_param.backbone=="vit" :
+        if self.network_param.backbone=="vit_pytorch" :
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
-                patch_size      = self.data_param.input_size[0]//16,
+                patch_size      = self.data_param.input_size[0]//25,
                 num_classes     = 0,
-                dim             = 768,
-                depth           = 8,
+                dim             = 384,
+                depth           = 12,
                 heads           = 6,
                 mlp_dim         = 1024,
                 dropout         = 0.1,
                 emb_dropout     = 0.1,
             )
         
-        if self.network_param.backbone=="vit_dino" :
+        if self.network_param.backbone=="vit_timm" :
             self.network_param.backbone_parameters = dict(
                 image_size      = self.data_param.input_size[0],
                 patch_size      = 16,
