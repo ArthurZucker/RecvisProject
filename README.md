@@ -37,7 +37,7 @@ You can find the complete project report in the repository or click [here](FPR_A
 
 # Experiments
 
-Ours experiments are available on wandb [here](https://wandb.ai/recvis/sem-seg?workspace=user-clementapa).
+Ours experiments are available on wandb : [![](https://github.com/wandb/assets/blob/main/wandb-github-badge-gradient.svg)](https://wandb.ai/recvis/sem-seg?workspace=user-clementapa).
 
 # Setting up the environment 
 
