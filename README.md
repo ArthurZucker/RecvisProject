@@ -1,7 +1,7 @@
 
 # Study of the Emerging Properties of Self-Supervised Vision Transformers and Semantic Segmentation 
 
-> Authors : Clement Apavou & Arthur Zucker
+> Authors: [Apavou Clément](https://github.com/clementapa) & [Zucker Arthur](https://github.com/ArthurZucker)
 
 ![Python](https://img.shields.io/badge/Python-green.svg?style=plastic)
 ![PyTorch](https://img.shields.io/badge/PyTorch-orange.svg?style=plastic)
